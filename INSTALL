@@ -1,0 +1,7 @@
+Installing libgadget:
+
+$ autoreconf -i
+$ ./configure
+$ make
+$ make doxygen-doc [optional]
+$ make install

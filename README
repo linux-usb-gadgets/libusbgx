@@ -1,0 +1,49 @@
+libgadget
+---------
+
+libgadget is a C library encapsulating the kernel USB gadget-configfs
+userspace API functionality.
+
+It provides routines for creating and parsing USB gadget devices using
+the configfs API. Currently, all USB gadget configfs functions that can
+be enabled in kernel release 3.11 (Linux for Workgroups!) are supported.
+
+See the Doxygen docs and examples for complete details on the
+programming API and INSTALL for installation of the library and
+examples.
+
+To run the examples:
+
+$ mkdir /config
+$ mount -t configfs none /config
+$ gadget-acm-ecm
+$ show-gadgets
+ID 1d6b:0104 'g1'
+  UDC			3f120000.usbotg
+  bDeviceClass		0x00
+  bDeviceSubClass	0x00
+  bDeviceProtocol	0x00
+  bMaxPacketSize0	0x40
+  bcdDevice		0x0311
+  bcdUSB		0x0000
+  idVendor		0x1d6b
+  idProduct		0x0104
+  Serial Number		0123456789
+  Manufacturer		Foo Inc.
+  Product		Bar Gadget
+  Function 'acm.usb0'
+    port_num		0
+  Function 'acm.usb1'
+    port_num		1
+  Function 'ecm.usb0'
+    dev_addr		32:1b:dc:a4:bc:a2
+    host_addr		82:b7:58:62:f6:31
+    ifname		usb0
+    qmult		5
+  Configuration 'c.1'
+    MaxPower		2
+    bmAttributes	0x80
+    configuration	CDC 2xACM+ECM
+    acm.GS0 -> acm.usb0
+    acm.GS1 -> acm.usb0
+    ecm.usb0 -> ecm.usb0
