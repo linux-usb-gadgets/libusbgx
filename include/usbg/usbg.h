@@ -33,13 +33,17 @@
 #define DEFAULT_UDC		NULL
 #define LANG_US_ENG		0x0409
 
+#define USBG_MAX_STR_LENGTH 256
+#define USBG_MAX_PATH_LENGTH 256
+#define USBG_MAX_NAME_LENGTH 40
+
 /**
  * @struct state
  * @brief State of the gadget devices in the system
  */
 struct state
 {
-	char path[256];
+	char path[USBG_MAX_PATH_LENGTH];
 
 	TAILQ_HEAD(ghead, gadget) gadgets;
 };
@@ -50,9 +54,9 @@ struct state
  */
 struct gadget
 {
-	char name[40];
-	char path[256];
-	char udc[256];
+	char name[USBG_MAX_NAME_LENGTH];
+	char path[USBG_MAX_PATH_LENGTH];
+	char udc[USBG_MAX_STR_LENGTH];
 	int dclass;
 	int dsubclass;
 	int dproto;
@@ -61,9 +65,9 @@ struct gadget
 	int bcdusb;
 	int product;
 	int vendor;
-	char str_ser[256];
-	char str_mnf[256];
-	char str_prd[256];
+	char str_ser[USBG_MAX_STR_LENGTH];
+	char str_mnf[USBG_MAX_STR_LENGTH];
+	char str_prd[USBG_MAX_STR_LENGTH];
 	TAILQ_ENTRY(gadget) gnode;
 	TAILQ_HEAD(chead, config) configs;
 	TAILQ_HEAD(fhead, function) functions;
@@ -80,11 +84,11 @@ struct config
 	TAILQ_HEAD(bhead, binding) bindings;
 	struct gadget *parent;
 
-	char name[40];
-	char path[256];
+	char name[USBG_MAX_NAME_LENGTH];
+	char path[USBG_MAX_PATH_LENGTH];
 	int maxpower;
 	int bmattrs;
-	char str_cfg[256];
+	char str_cfg[USBG_MAX_STR_LENGTH];
 };
 
 /**
@@ -136,7 +140,7 @@ struct serial_attrs {
 struct net_attrs {
 	struct ether_addr dev_addr;
 	struct ether_addr host_addr;
-	char ifname[256];
+	char ifname[USBG_MAX_STR_LENGTH];
 	int qmult;
 };
 
@@ -145,7 +149,7 @@ struct net_attrs {
  * @brief Attributes for the phonet USB function
  */
 struct phonet_attrs {
-	char ifname[256];
+	char ifname[USBG_MAX_STR_LENGTH];
 };
 
 /**
@@ -167,8 +171,8 @@ struct function
 	TAILQ_ENTRY(function) fnode;
 	struct gadget *parent;
 
-	char name[40];
-	char path[256];
+	char name[USBG_MAX_NAME_LENGTH];
+	char path[USBG_MAX_PATH_LENGTH];
 
 	enum function_type type;
 	union attrs attr;
@@ -186,8 +190,8 @@ struct binding
 	struct config *parent;
 	struct function *target;
 
-	char name[40];
-	char path[256];
+	char name[USBG_MAX_NAME_LENGTH];
+	char path[USBG_MAX_PATH_LENGTH];
 };
 
 /* Library init and cleanup */

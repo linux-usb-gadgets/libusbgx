@@ -82,7 +82,7 @@ static int file_select(const struct dirent *dent)
 
 static char *usbg_read_buf(char *path, char *name, char *file, char *buf)
 {
-	char p[256];
+	char p[USBG_MAX_STR_LENGTH];
 	FILE *fp;
 	char *ret = NULL;
 
@@ -92,7 +92,7 @@ static char *usbg_read_buf(char *path, char *name, char *file, char *buf)
 	if (!fp)
 		goto out;
 
-	ret = fgets(buf, 256, fp);
+	ret = fgets(buf, USBG_MAX_STR_LENGTH, fp);
 
 	fclose(fp);
 
@@ -102,7 +102,7 @@ out:
 
 static int usbg_read_int(char *path, char *name, char *file, int base)
 {
-	char buf[256];
+	char buf[USBG_MAX_STR_LENGTH];
 
 	if (usbg_read_buf(path, name, file, buf))
 		return strtol(buf, NULL, base);
@@ -125,7 +125,7 @@ static void usbg_read_string(char *path, char *name, char *file, char *buf)
 
 static void usbg_write_buf(char *path, char *name, char *file, char *buf)
 {
-	char p[256];
+	char p[USBG_MAX_STR_LENGTH];
 	FILE *fp;
 
 	sprintf(p, "%s/%s/%s", path, name, file);
@@ -143,7 +143,7 @@ static void usbg_write_buf(char *path, char *name, char *file, char *buf)
 
 static void usbg_write_int(char *path, char *name, char *file, int value, char *str)
 {
-	char buf[256];
+	char buf[USBG_MAX_STR_LENGTH];
 
 	sprintf(buf, str, value);
 	usbg_write_buf(path, name, file, buf);
@@ -196,7 +196,7 @@ static int usbg_parse_functions(char *path, struct gadget *g)
 	struct function *f;
 	int i, n;
 	struct dirent **dent;
-	char fpath[256];
+	char fpath[USBG_MAX_PATH_LENGTH];
 
 	sprintf(fpath, "%s/%s/functions", path, g->name);
 
@@ -227,7 +227,7 @@ static void usbg_parse_config_bindings(struct config *c)
 {
 	int i, n;
 	struct dirent **dent;
-	char bpath[256];
+	char bpath[USBG_MAX_PATH_LENGTH];
 	struct gadget *g = c->parent;
 	struct binding *b;
 	struct function *f;
@@ -240,12 +240,12 @@ static void usbg_parse_config_bindings(struct config *c)
 	for (i=0; i < n; i++) {
 		TAILQ_FOREACH(f, &g->functions, fnode) {
 			int n;
-			char contents[256];
-			char cpath[256];
+			char contents[USBG_MAX_STR_LENGTH];
+			char cpath[USBG_MAX_PATH_LENGTH];
 			char fname[40];
 
 			sprintf(cpath, "%s/%s", bpath, dent[i]->d_name);
-			n = readlink(cpath, contents, 256);
+			n = readlink(cpath, contents, USBG_MAX_PATH_LENGTH);
 			if (n<0)
 				ERRORNO("bytes %d contents %s\n", n, contents);
 			strcpy(fname, f->name);
@@ -268,7 +268,7 @@ static int usbg_parse_configs(char *path, struct gadget *g)
 	struct config *c;
 	int i, n;
 	struct dirent **dent;
-	char cpath[256];
+	char cpath[USBG_MAX_PATH_LENGTH];
 
 	sprintf(cpath, "%s/%s/configs", path, g->name);
 
@@ -354,7 +354,7 @@ struct state *usbg_init(char *configfs_path)
 {
 	int ret;
 	struct stat sts;
-	char path[256];
+	char path[USBG_MAX_PATH_LENGTH];
 	struct state *s = NULL;
 
 	strcpy(path, configfs_path);
@@ -468,7 +468,7 @@ struct binding *usbg_get_link_binding(struct config *c, struct function *f)
 struct gadget *usbg_create_gadget(struct state *s, char *name,
 				    int vendor, int product)
 {
-	char gpath[256];
+	char gpath[USBG_MAX_PATH_LENGTH];
 	struct gadget *g, *cur;
 	int ret;
 
@@ -560,7 +560,7 @@ void usbg_set_gadget_device_bcd_usb(struct gadget *g, int bcdusb)
 
 void usbg_set_gadget_serial_number(struct gadget *g, int lang, char *serno)
 {
-	char path[256];
+	char path[USBG_MAX_PATH_LENGTH];
 
 	sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, "strings", lang);
 
@@ -573,7 +573,7 @@ void usbg_set_gadget_serial_number(struct gadget *g, int lang, char *serno)
 
 void usbg_set_gadget_manufacturer(struct gadget *g, int lang, char *mnf)
 {
-	char path[256];
+	char path[USBG_MAX_PATH_LENGTH];
 
 	sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, "strings", lang);
 
@@ -586,7 +586,7 @@ void usbg_set_gadget_manufacturer(struct gadget *g, int lang, char *mnf)
 
 void usbg_set_gadget_product(struct gadget *g, int lang, char *prd)
 {
-	char path[256];
+	char path[USBG_MAX_PATH_LENGTH];
 
 	sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, "strings", lang);
 
@@ -599,8 +599,8 @@ void usbg_set_gadget_product(struct gadget *g, int lang, char *prd)
 
 struct function *usbg_create_function(struct gadget *g, enum function_type type, char *instance)
 {
-	char fpath[256];
-	char name[256];
+	char fpath[USBG_MAX_PATH_LENGTH];
+	char name[USBG_MAX_STR_LENGTH];
 	struct function *f, *cur;
 	int ret;
 
@@ -655,7 +655,7 @@ struct function *usbg_create_function(struct gadget *g, enum function_type type,
 
 struct config *usbg_create_config(struct gadget *g, char *name)
 {
-	char cpath[256];
+	char cpath[USBG_MAX_PATH_LENGTH];
 	struct config *c, *cur;
 	int ret;
 
@@ -719,7 +719,7 @@ void usbg_set_config_bm_attrs(struct config *c, int bmattrs)
 
 void usbg_set_config_string(struct config *c, int lang, char *str)
 {
-	char path[256];
+	char path[USBG_MAX_PATH_LENGTH];
 
 	sprintf(path, "%s/%s/0x%x", c->path, "strings", lang);
 
@@ -732,8 +732,8 @@ void usbg_set_config_string(struct config *c, int lang, char *str)
 
 int usbg_add_config_function(struct config *c, char *name, struct function *f)
 {
-	char bpath[256];
-	char fpath[256];
+	char bpath[USBG_MAX_PATH_LENGTH];
+	char fpath[USBG_MAX_PATH_LENGTH];
 	struct binding *b;
 	struct binding *cur;
 	int ret = -1;
@@ -795,7 +795,7 @@ int usbg_get_udcs(struct dirent ***udc_list)
 
 void usbg_enable_gadget(struct gadget *g, char *udc)
 {
-	char gudc[256];
+	char gudc[USBG_MAX_STR_LENGTH];
 	struct dirent **udc_list;
 	int n;
 
