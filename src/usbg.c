@@ -36,12 +36,14 @@
                         char *str;\
                         fprintf(stderr, "%s()  "msg" \n", \
                                 __func__, ##__VA_ARGS__);\
+                        fflush(stderr);\
                     } while (0)
 
 #define ERRORNO(msg, ...) do {\
                         char *str;\
                         fprintf(stderr, "%s()  %s: "msg" \n", \
                                 __func__, strerror(errno), ##__VA_ARGS__);\
+                        fflush(stderr);\
                     } while (0)
 
 static int usbg_lookup_function_type(char *name)
@@ -93,6 +95,11 @@ static char *usbg_read_buf(char *path, char *name, char *file, char *buf)
 		goto out;
 
 	ret = fgets(buf, USBG_MAX_STR_LENGTH, fp);
+	if (ret == NULL) {
+		ERROR("read error");
+		fclose(fp);
+		return ret;
+	}
 
 	fclose(fp);
 
@@ -127,6 +134,7 @@ static void usbg_write_buf(char *path, char *name, char *file, char *buf)
 {
 	char p[USBG_MAX_STR_LENGTH];
 	FILE *fp;
+	int err;
 
 	sprintf(p, "%s/%s/%s", path, name, file);
 
@@ -137,8 +145,14 @@ static void usbg_write_buf(char *path, char *name, char *file, char *buf)
 	}
 
 	fputs(buf, fp);
-
+	fflush(fp);
+	err = ferror(fp);
 	fclose(fp);
+	
+	if (err){
+		ERROR("write error");
+		return;
+	}
 }
 
 static void usbg_write_int(char *path, char *name, char *file, int value, char *str)
