@@ -497,12 +497,6 @@ struct gadget *usbg_create_gadget(struct state *s, char *name,
 
 	sprintf(gpath, "%s/%s", s->path, name);
 
-	ret = mkdir(gpath, S_IRWXU|S_IRWXG|S_IRWXO);
-	if (ret < 0) {
-		ERRORNO("%s\n", gpath);
-		return NULL;
-	}
-
 	g = malloc(sizeof(struct gadget));
 	if (!g) {
 		ERRORNO("allocating gadget\n");
@@ -519,6 +513,12 @@ struct gadget *usbg_create_gadget(struct state *s, char *name,
 
 	usbg_write_hex16(s->path, name, "idVendor", vendor);
 	usbg_write_hex16(s->path, name, "idProduct", product);
+
+	ret = mkdir(gpath, S_IRWXU|S_IRWXG|S_IRWXO);
+	if (ret < 0) {
+		ERRORNO("%s\n", gpath);
+		return NULL;
+	}
 
 	/* Insert in string order */
 	if (TAILQ_EMPTY(&s->gadgets) ||
@@ -633,12 +633,6 @@ struct function *usbg_create_function(struct gadget *g, enum function_type type,
 
 	sprintf(fpath, "%s/%s/functions/%s", g->path, g->name, name);
 
-	ret = mkdir(fpath, S_IRWXU|S_IRWXG|S_IRWXO);
-	if (ret < 0) {
-		ERRORNO("%s\n", fpath);
-		return NULL;
-	}
-
 	f = malloc(sizeof(struct function));
 	if (!f) {
 		ERRORNO("allocating function\n");
@@ -650,6 +644,12 @@ struct function *usbg_create_function(struct gadget *g, enum function_type type,
 	f->type = type;
 
 	usbg_parse_function_attrs(f);
+
+	ret = mkdir(fpath, S_IRWXU|S_IRWXG|S_IRWXO);
+	if (ret < 0) {
+		ERRORNO("%s\n", fpath);
+		return NULL;
+	}
 
 	/* Insert in string order */
 	if (TAILQ_EMPTY(&g->functions) ||
@@ -687,12 +687,6 @@ struct config *usbg_create_config(struct gadget *g, char *name)
 
 	sprintf(cpath, "%s/%s/configs/%s", g->path, g->name, name);
 
-	ret = mkdir(cpath, S_IRWXU|S_IRWXG|S_IRWXO);
-	if (ret < 0) {
-		ERRORNO("%s\n", cpath);
-		return NULL;
-	}
-
 	c = malloc(sizeof(struct config));
 	if (!c) {
 		ERRORNO("allocating configuration\n");
@@ -702,6 +696,12 @@ struct config *usbg_create_config(struct gadget *g, char *name)
 	TAILQ_INIT(&c->bindings);
 	strcpy(c->name, name);
 	sprintf(c->path, "%s/%s/%s/%s", g->path, g->name, "configs", name);
+
+	ret = mkdir(cpath, S_IRWXU|S_IRWXG|S_IRWXO);
+	if (ret < 0) {
+		ERRORNO("%s\n", cpath);
+		return NULL;
+	}
 
 	/* Insert in string order */
 	if (TAILQ_EMPTY(&g->configs) ||
