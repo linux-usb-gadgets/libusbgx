@@ -167,7 +167,7 @@ static void usbg_write_int(char *path, char *name, char *file, int value, char *
 #define usbg_write_hex16(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%04x\n")
 #define usbg_write_hex8(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%02x\n")
 
-static void usbg_write_string(char *path, char *name, char *file, char *buf)
+static inline void usbg_write_string(char *path, char *name, char *file, char *buf)
 {
 	usbg_write_buf(path, name, file, buf);
 }
