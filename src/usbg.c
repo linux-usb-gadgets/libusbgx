@@ -515,14 +515,14 @@ struct gadget *usbg_create_gadget(struct state *s, char *name,
 	g->vendor = vendor;
 	g->product = product;
 
-	usbg_write_hex16(s->path, name, "idVendor", vendor);
-	usbg_write_hex16(s->path, name, "idProduct", product);
-
 	ret = mkdir(gpath, S_IRWXU|S_IRWXG|S_IRWXO);
 	if (ret < 0) {
 		ERRORNO("%s\n", gpath);
 		return NULL;
 	}
+
+	usbg_write_hex16(s->path, name, "idVendor", vendor);
+	usbg_write_hex16(s->path, name, "idProduct", product);
 
 	/* Insert in string order */
 	if (TAILQ_EMPTY(&s->gadgets) ||
@@ -647,13 +647,13 @@ struct function *usbg_create_function(struct gadget *g, enum function_type type,
 	sprintf(f->path, "%s/%s/%s", g->path, g->name, "functions");
 	f->type = type;
 
-	usbg_parse_function_attrs(f);
-
 	ret = mkdir(fpath, S_IRWXU|S_IRWXG|S_IRWXO);
 	if (ret < 0) {
 		ERRORNO("%s\n", fpath);
 		return NULL;
 	}
+
+	usbg_parse_function_attrs(f);
 
 	/* Insert in string order */
 	if (TAILQ_EMPTY(&g->functions) ||
