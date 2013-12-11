@@ -14,6 +14,9 @@
  * Lesser General Public License for more details.
  */
 
+#ifndef __USBG_H__
+#define __USBG_H__
+
 #include <dirent.h>
 #include <sys/queue.h>
 #include <netinet/ether.h>
@@ -439,3 +442,4 @@ extern void usbg_set_net_qmult(struct function *f, int qmult);
 /**
  * @}
  */
+#endif /* __USBG_H__ */
