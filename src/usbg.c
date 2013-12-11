@@ -228,6 +228,8 @@ static int usbg_parse_functions(char *path, struct gadget *g)
 		free(dent[i]);
 	}
 	free(dent);
+
+	return 0;
 }
 
 static void usbg_parse_config_attrs(struct config *c)
@@ -300,6 +302,8 @@ static int usbg_parse_configs(char *path, struct gadget *g)
 		free(dent[i]);
 	}
 	free(dent);
+
+	return 0;
 }
 
 static void usbg_parse_attrs(char *path, struct gadget *g)
