@@ -721,6 +721,8 @@ struct config *usbg_create_config(struct gadget *g, char *name)
 		return NULL;
 	}
 
+	usbg_parse_config_attrs(c);
+
 	/* Insert in string order */
 	if (TAILQ_EMPTY(&g->configs) ||
 	    (strcmp(name, TAILQ_FIRST(&g->configs)->name) < 0))
