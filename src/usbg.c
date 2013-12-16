@@ -518,6 +518,7 @@ struct gadget *usbg_create_gadget(struct state *s, char *name,
 	ret = mkdir(gpath, S_IRWXU|S_IRWXG|S_IRWXO);
 	if (ret < 0) {
 		ERRORNO("%s\n", gpath);
+		free(g);
 		return NULL;
 	}
 
@@ -650,6 +651,7 @@ struct function *usbg_create_function(struct gadget *g, enum function_type type,
 	ret = mkdir(fpath, S_IRWXU|S_IRWXG|S_IRWXO);
 	if (ret < 0) {
 		ERRORNO("%s\n", fpath);
+		free(f);
 		return NULL;
 	}
 
@@ -704,6 +706,7 @@ struct config *usbg_create_config(struct gadget *g, char *name)
 	ret = mkdir(cpath, S_IRWXU|S_IRWXG|S_IRWXO);
 	if (ret < 0) {
 		ERRORNO("%s\n", cpath);
+		free(c);
 		return NULL;
 	}
 
