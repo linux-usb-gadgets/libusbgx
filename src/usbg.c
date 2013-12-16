@@ -26,6 +26,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#define STRINGS_DIR "strings"
+#define CONFIGS_DIR "configs"
+#define FUNCTIONS_DIR "functions"
+
 /**
  * @file usbg.c
  * @todo Handle buffer overflows
@@ -223,7 +227,7 @@ static int usbg_parse_functions(char *path, struct gadget *g)
 	struct dirent **dent;
 	char fpath[USBG_MAX_PATH_LENGTH];
 
-	sprintf(fpath, "%s/%s/functions", path, g->name);
+	sprintf(fpath, "%s/%s/%s", path, g->name, FUNCTIONS_DIR);
 
 	TAILQ_INIT(&g->functions);
 
@@ -297,7 +301,7 @@ static int usbg_parse_configs(char *path, struct gadget *g)
 	struct dirent **dent;
 	char cpath[USBG_MAX_PATH_LENGTH];
 
-	sprintf(cpath, "%s/%s/configs", path, g->name);
+	sprintf(cpath, "%s/%s/%s", path, g->name, CONFIGS_DIR);
 
 	TAILQ_INIT(&g->configs);
 
@@ -333,9 +337,14 @@ static void usbg_parse_attrs(char *path, struct gadget *g)
 static void usbg_parse_strings(char *path, struct gadget *g)
 {
 	/* Strings - hardcoded to U.S. English only for now */
-	usbg_read_string(path, g->name, "strings/0x409/serialnumber", g->str_ser);
-	usbg_read_string(path, g->name, "strings/0x409/manufacturer", g->str_mnf);
-	usbg_read_string(path, g->name, "strings/0x409/product", g->str_prd);
+	int lang = LANG_US_ENG;
+	char spath[USBG_MAX_PATH_LENGTH];
+
+	sprintf(spath, "%s/%s/%s/0x%x", path, g->name, STRINGS_DIR, lang);
+
+	usbg_read_string(spath, "", "serialnumber", g->str_ser);
+	usbg_read_string(spath, "", "manufacturer", g->str_mnf);
+	usbg_read_string(spath, "", "product", g->str_prd);
 }
 
 static int usbg_parse_gadgets(char *path, struct state *s)
@@ -354,7 +363,7 @@ static int usbg_parse_gadgets(char *path, struct state *s)
 		g->parent = s;
 		/* UDC bound to, if any */
 		usbg_read_string(path, g->name, "UDC", g->udc);
-		usbg_parse_configs(path, g);
+		usbg_parse_attrs(path, g);
 		usbg_parse_strings(path, g);
 		usbg_parse_functions(path, g);
 		usbg_parse_configs(path, g);
@@ -596,7 +605,7 @@ void usbg_set_gadget_serial_number(struct gadget *g, int lang, char *serno)
 {
 	char path[USBG_MAX_PATH_LENGTH];
 
-	sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, "strings", lang);
+	sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, STRINGS_DIR, lang);
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
@@ -609,7 +618,7 @@ void usbg_set_gadget_manufacturer(struct gadget *g, int lang, char *mnf)
 {
 	char path[USBG_MAX_PATH_LENGTH];
 
-	sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, "strings", lang);
+	sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, STRINGS_DIR, lang);
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
@@ -622,7 +631,7 @@ void usbg_set_gadget_product(struct gadget *g, int lang, char *prd)
 {
 	char path[USBG_MAX_PATH_LENGTH];
 
-	sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, "strings", lang);
+	sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, STRINGS_DIR, lang);
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
@@ -651,7 +660,7 @@ struct function *usbg_create_function(struct gadget *g, enum function_type type,
 		return NULL;
 	}
 
-	sprintf(fpath, "%s/%s/functions/%s", g->path, g->name, name);
+	sprintf(fpath, "%s/%s/%s/%s", g->path, g->name, FUNCTIONS_DIR, name);
 
 	f = malloc(sizeof(struct function));
 	if (!f) {
@@ -660,7 +669,7 @@ struct function *usbg_create_function(struct gadget *g, enum function_type type,
 	}
 
 	strcpy(f->name, name);
-	sprintf(f->path, "%s/%s/%s", g->path, g->name, "functions");
+	sprintf(f->path, "%s/%s/%s", g->path, g->name, FUNCTIONS_DIR);
 	f->type = type;
 
 	ret = mkdir(fpath, S_IRWXU|S_IRWXG|S_IRWXO);
@@ -706,7 +715,7 @@ struct config *usbg_create_config(struct gadget *g, char *name)
 		return NULL;
 	}
 
-	sprintf(cpath, "%s/%s/configs/%s", g->path, g->name, name);
+	sprintf(cpath, "%s/%s/%s/%s", g->path, g->name, CONFIGS_DIR, name);
 
 	c = malloc(sizeof(struct config));
 	if (!c) {
@@ -716,7 +725,7 @@ struct config *usbg_create_config(struct gadget *g, char *name)
 
 	TAILQ_INIT(&c->bindings);
 	strcpy(c->name, name);
-	sprintf(c->path, "%s/%s/%s/%s", g->path, g->name, "configs", name);
+	sprintf(c->path, "%s/%s/%s", g->path, g->name, CONFIGS_DIR);
 
 	ret = mkdir(cpath, S_IRWXU|S_IRWXG|S_IRWXO);
 	if (ret < 0) {
@@ -759,7 +768,7 @@ void usbg_set_config_string(struct config *c, int lang, char *str)
 {
 	char path[USBG_MAX_PATH_LENGTH];
 
-	sprintf(path, "%s/%s/0x%x", c->path, "strings", lang);
+	sprintf(path, "%s/%s/%s/0x%x", c->path, c->name, STRINGS_DIR, lang);
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
@@ -791,7 +800,7 @@ int usbg_add_config_function(struct config *c, char *name, struct function *f)
 		return ret;
 	}
 
-	sprintf(bpath, "%s/%s", c->path, name);
+	sprintf(bpath, "%s/%s/%s", c->path, c->name, name);
 	sprintf(fpath, "%s/%s", f->path, f->name);
 
 	b = malloc(sizeof(struct binding));
