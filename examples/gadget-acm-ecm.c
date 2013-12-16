@@ -39,13 +39,13 @@ int main(void)
 	s = usbg_init("/sys/kernel/config");
 	if (!s) {
 		fprintf(stderr, "Error on USB gadget init\n");
-		goto error1;
+		goto out1;
 	}
 
 	g = usbg_create_gadget(s, "g1", VENDOR, PRODUCT);
 	if (!g) {
 		fprintf(stderr, "Error on create gadget\n");
-		goto error2;
+		goto out2;
 	}
 	usbg_set_gadget_serial_number(g, LANG_US_ENG, "0123456789");
 	usbg_set_gadget_manufacturer(g, LANG_US_ENG, "Foo Inc.");
@@ -54,25 +54,25 @@ int main(void)
 	f_acm0 = usbg_create_function(g, F_ACM, "usb0");
 	if (!f_acm0) {
 		fprintf(stderr, "Error creating acm0 function\n");
-		goto error2;
+		goto out2;
 	}
 
 	f_acm1 = usbg_create_function(g, F_ACM, "usb1");
 	if (!f_acm1) {
 		fprintf(stderr, "Error creating acm1 function\n");
-		goto error2;
+		goto out2;
 	}
 
 	f_ecm = usbg_create_function(g, F_ECM, "usb0");
 	if (!f_ecm) {
 		fprintf(stderr, "Error creating ecm function\n");
-		goto error2;
+		goto out2;
 	}
 
 	c = usbg_create_config(g, "c.1");
 	if (!c) {
 		fprintf(stderr, "Error creating config\n");
-		goto error2;
+		goto out2;
 	}
 	usbg_set_config_string(c, LANG_US_ENG, "CDC 2xACM+ECM");
 	usbg_add_config_function(c, "acm.GS0", f_acm0);
@@ -81,11 +81,11 @@ int main(void)
 
 	usbg_enable_gadget(g, DEFAULT_UDC);
 
-	return 0;
+	ret = 0;
 
-error2:
+out2:
 	usbg_cleanup(s);
 
-error1:
-	return -EINVAL;
+out1:
+	return ret;
 }
