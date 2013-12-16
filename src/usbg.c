@@ -198,12 +198,12 @@ static void usbg_parse_function_attrs(struct function *f)
 		usbg_read_string(f->path, f->name, "dev_addr", str_addr);
 		addr = ether_aton(str_addr);
 		if (addr)
-			memcpy(&f->attr.net.dev_addr, addr, sizeof(struct ether_addr));
+			f->attr.net.dev_addr = *addr;
 
 		usbg_read_string(f->path, f->name, "host_addr", str_addr);
 		addr = ether_aton(str_addr);
 		if(addr)
-			memcpy(&f->attr.net.host_addr, addr, sizeof(struct ether_addr));
+			f->attr.net.host_addr = *addr;
 
 		usbg_read_string(f->path, f->name, "ifname", f->attr.net.ifname);
 		f->attr.net.qmult = usbg_read_dec(f->path, f->name, "qmult");
@@ -867,7 +867,7 @@ void usbg_set_net_dev_addr(struct function *f, struct ether_addr *dev_addr)
 {
 	char *str_addr;
 
-	memcpy(&f->attr.net.dev_addr, dev_addr, 6);
+	f->attr.net.dev_addr = *dev_addr;
 
 	str_addr = ether_ntoa(dev_addr);
 	usbg_write_string(f->path, f->name, "dev_addr", str_addr);
@@ -877,7 +877,7 @@ void usbg_set_net_host_addr(struct function *f, struct ether_addr *host_addr)
 {
 	char *str_addr;
 
-	memcpy(&f->attr.net.host_addr, host_addr, 6);
+	f->attr.net.host_addr = *host_addr;
 
 	str_addr = ether_ntoa(host_addr);
 	usbg_write_string(f->path, f->name, "host_addr", str_addr);
