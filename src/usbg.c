@@ -526,8 +526,6 @@ struct gadget *usbg_create_gadget(struct state *s, char *name,
 	strcpy(g->name, name);
 	sprintf(g->path, "%s", s->path);
 	g->parent = s;
-	g->vendor = vendor;
-	g->product = product;
 
 	ret = mkdir(gpath, S_IRWXU|S_IRWXG|S_IRWXO);
 	if (ret < 0) {
@@ -538,6 +536,9 @@ struct gadget *usbg_create_gadget(struct state *s, char *name,
 
 	usbg_write_hex16(s->path, name, "idVendor", vendor);
 	usbg_write_hex16(s->path, name, "idProduct", product);
+
+	usbg_parse_attrs(s->path, g);
+	usbg_parse_strings(s->path, g);
 
 	/* Insert in string order */
 	if (TAILQ_EMPTY(&s->gadgets) ||
