@@ -794,21 +794,22 @@ int usbg_add_config_function(struct config *c, char *name, struct function *f)
 	sprintf(bpath, "%s/%s", c->path, name);
 	sprintf(fpath, "%s/%s", f->path, f->name);
 
-	ret = symlink(fpath, bpath);
-	if (ret < 0) {
-		ERRORNO("%s -> %s\n", bpath, fpath);
-		return ret;
-	}
-
 	b = malloc(sizeof(struct binding));
 	if (!b) {
 		ERRORNO("allocating binding\n");
 		return -1;
 	}
 
+	ret = symlink(fpath, bpath);
+	if (ret < 0) {
+		ERRORNO("%s -> %s\n", bpath, fpath);
+		return ret;
+	}
+
 	strcpy(b->name, name);
 	strcpy(b->path, bpath);
 	b->target = f;
+	b->parent = c;
 
 	/* Insert in string order */
 	if (TAILQ_EMPTY(&c->bindings) ||
