@@ -123,11 +123,18 @@ static int usbg_read_int(char *path, char *name, char *file, int base)
 
 static void usbg_read_string(char *path, char *name, char *file, char *buf)
 {
-	char *p;
+	char *p = NULL;
 
-	usbg_read_buf(path, name, file, buf);
-	if ((p = strchr(buf, '\n')) != NULL)
-		*p = '\0';
+	p = usbg_read_buf(path, name, file, buf);
+	/* Check whether read was successful */
+	if (p != NULL) {
+		if ((p = strchr(buf, '\n')) != NULL)
+				*p = '\0';
+	} else {
+		/* Set this as empty string */
+		*buf = '\0';
+	}
+
 }
 
 static void usbg_write_buf(char *path, char *name, char *file, char *buf)
@@ -190,10 +197,14 @@ static void usbg_parse_function_attrs(struct function *f)
 	case F_RNDIS:
 		usbg_read_string(f->path, f->name, "dev_addr", str_addr);
 		addr = ether_aton(str_addr);
-		memcpy(&f->attr.net.dev_addr, addr, 6);
+		if (addr)
+			memcpy(&f->attr.net.dev_addr, addr, sizeof(struct ether_addr));
+
 		usbg_read_string(f->path, f->name, "host_addr", str_addr);
 		addr = ether_aton(str_addr);
-		memcpy(&f->attr.net.host_addr, addr, 6);
+		if(addr)
+			memcpy(&f->attr.net.host_addr, addr, sizeof(struct ether_addr));
+
 		usbg_read_string(f->path, f->name, "ifname", f->attr.net.ifname);
 		f->attr.net.qmult = usbg_read_dec(f->path, f->name, "qmult");
 		break;
