@@ -319,9 +319,6 @@ static int usbg_parse_configs(char *path, struct gadget *g)
 
 static void usbg_parse_attrs(char *path, struct gadget *g)
 {
-	/* UDC bound to, if any */
-	usbg_read_string(path, g->name, "UDC", g->udc);
-
 	/* Actual attributes */
 	g->dclass = usbg_read_hex(path, g->name, "bDeviceClass");
 	g->dsubclass = usbg_read_hex(path, g->name, "bDeviceSubClass");
@@ -331,7 +328,10 @@ static void usbg_parse_attrs(char *path, struct gadget *g)
 	g->bcdusb = usbg_read_hex(path, g->name, "bcdUSB");
 	g->vendor = usbg_read_hex(path, g->name, "idVendor");
 	g->product = usbg_read_hex(path, g->name, "idProduct");
+}
 
+static void usbg_parse_strings(char *path, struct gadget *g)
+{
 	/* Strings - hardcoded to U.S. English only for now */
 	usbg_read_string(path, g->name, "strings/0x409/serialnumber", g->str_ser);
 	usbg_read_string(path, g->name, "strings/0x409/manufacturer", g->str_mnf);
@@ -352,7 +352,10 @@ static int usbg_parse_gadgets(char *path, struct state *s)
 		strcpy(g->name, dent[i]->d_name);
 		strcpy(g->path, s->path);
 		g->parent = s;
-		usbg_parse_attrs(path, g);
+		/* UDC bound to, if any */
+		usbg_read_string(path, g->name, "UDC", g->udc);
+		usbg_parse_configs(path, g);
+		usbg_parse_strings(path, g);
 		usbg_parse_functions(path, g);
 		usbg_parse_configs(path, g);
 		TAILQ_INSERT_TAIL(&s->gadgets, g, gnode);
