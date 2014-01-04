@@ -16,7 +16,7 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include <gadget/gadget.h>
+#include <usbg/usbg.h>
 
 /**
  * @file gadget-acm-ecm.c
@@ -36,55 +36,55 @@ int main(void)
 	struct function *f_acm0, *f_acm1, *f_ecm;
 	int ret = -EINVAL;
 
-	s = gadget_init("/config");
+	s = usbg_init("/config");
 	if (!s) {
 		fprintf(stderr, "Error on USB gadget init\n");
 		goto error1;
 	}
 
-	g = gadget_create_gadget(s, "g1", VENDOR, PRODUCT);
+	g = usbg_create_gadget(s, "g1", VENDOR, PRODUCT);
 	if (!g) {
 		fprintf(stderr, "Error on create gadget\n");
 		goto error2;
 	}
-	gadget_set_gadget_serial_number(g, LANG_US_ENG, "0123456789");
-	gadget_set_gadget_manufacturer(g, LANG_US_ENG, "Foo Inc.");
-	gadget_set_gadget_product(g, LANG_US_ENG, "Bar Gadget");
+	usbg_set_gadget_serial_number(g, LANG_US_ENG, "0123456789");
+	usbg_set_gadget_manufacturer(g, LANG_US_ENG, "Foo Inc.");
+	usbg_set_gadget_product(g, LANG_US_ENG, "Bar Gadget");
 
-	f_acm0 = gadget_create_function(g, F_ACM, "usb0");
+	f_acm0 = usbg_create_function(g, F_ACM, "usb0");
 	if (!f_acm0) {
 		fprintf(stderr, "Error creating acm0 function\n");
 		goto error2;
 	}
 
-	f_acm1 = gadget_create_function(g, F_ACM, "usb1");
+	f_acm1 = usbg_create_function(g, F_ACM, "usb1");
 	if (!f_acm1) {
 		fprintf(stderr, "Error creating acm1 function\n");
 		goto error2;
 	}
 
-	f_ecm = gadget_create_function(g, F_ECM, "usb0");
+	f_ecm = usbg_create_function(g, F_ECM, "usb0");
 	if (!f_ecm) {
 		fprintf(stderr, "Error creating ecm function\n");
 		goto error2;
 	}
 
-	c = gadget_create_config(g, "c.1");
+	c = usbg_create_config(g, "c.1");
 	if (!c) {
 		fprintf(stderr, "Error creating config\n");
 		goto error2;
 	}
-	gadget_set_config_string(c, LANG_US_ENG, "CDC 2xACM+ECM");
-	gadget_add_config_function(c, "acm.GS0", f_acm0);
-	gadget_add_config_function(c, "acm.GS1", f_acm1);
-	gadget_add_config_function(c, "ecm.usb0", f_ecm);
+	usbg_set_config_string(c, LANG_US_ENG, "CDC 2xACM+ECM");
+	usbg_add_config_function(c, "acm.GS0", f_acm0);
+	usbg_add_config_function(c, "acm.GS1", f_acm1);
+	usbg_add_config_function(c, "ecm.usb0", f_ecm);
 
-	gadget_enable_gadget(g, DEFAULT_UDC);
+	usbg_enable_gadget(g, DEFAULT_UDC);
 
 	return 0;
 
 error2:
-	gadget_cleanup(s);
+	usbg_cleanup(s);
 
 error1:
 	return -EINVAL;

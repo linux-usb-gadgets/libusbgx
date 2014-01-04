@@ -1,4 +1,4 @@
-Installing libgadget:
+Installing libusbg:
 
 $ autoreconf -i
 $ ./configure

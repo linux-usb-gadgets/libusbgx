@@ -1,7 +1,7 @@
-libgadget
----------
+libusbg
+-------
 
-libgadget is a C library encapsulating the kernel USB gadget-configfs
+libusbg is a C library encapsulating the kernel USB gadget-configfs
 userspace API functionality.
 
 It provides routines for creating and parsing USB gadget devices using

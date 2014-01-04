@@ -3,9 +3,9 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libgadget
+Name: libusbg
 Description: USB gadget-configfs library
 Requires:
 Version: @PACKAGE_VERSION@
-Libs: -L${libdir} -lgadget
+Libs: -L${libdir} -lusbg
 Cflags: -I${includedir}

@@ -17,8 +17,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <gadget/gadget.h>
 #include <netinet/ether.h>
+#include <usbg/usbg.h>
 
 /**
  * @file show-gadgets.c
@@ -83,7 +83,7 @@ void show_config(struct config *c)
 	fprintf(stdout, "    MaxPower\t\t%d\n", c->maxpower);
 	fprintf(stdout, "    bmAttributes\t0x%02x\n", c->bmattrs);
 	fprintf(stdout, "    configuration\t%s\n", c->str_cfg);
-	gadget_for_each_binding(b, c)
+	usbg_for_each_binding(b, c)
 		fprintf(stdout, "    %s -> %s\n", b->name,b->target->name);
 }
 
@@ -96,21 +96,21 @@ int main(void)
 	struct binding *b;
 	struct function *f_acm0, *f_acm1, *f_ecm;
 
-	s = gadget_init("/config");
+	s = usbg_init("/config");
 	if (!s) {
 		fprintf(stderr, "Error on USB gadget init\n");
 		return -EINVAL;
 	}
 
-	gadget_for_each_gadget(g, s) {
+	usbg_for_each_gadget(g, s) {
 		show_gadget(g);
-		gadget_for_each_function(f, g)
+		usbg_for_each_function(f, g)
 			show_function(f);
-		gadget_for_each_config(c, g)
+		usbg_for_each_config(c, g)
 			show_config(c);
 	}
 
-	gadget_cleanup(s);
+	usbg_cleanup(s);
 
 	return 0;
 }

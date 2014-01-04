@@ -16,7 +16,7 @@
 
 #include <dirent.h>
 #include <errno.h>
-#include <gadget/gadget.h>
+#include <usbg/usbg.h>
 #include <netinet/ether.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,7 +27,7 @@
 #include <unistd.h>
 
 /**
- * @file gadget.c
+ * @file usbg.c
  * @todo Handle buffer overflows
  * @todo Error checking and return code propagation
  */
@@ -44,7 +44,7 @@
                                 __func__, strerror(errno), ##__VA_ARGS__);\
                     } while (0)
 
-static int gadget_lookup_function_type(char *name)
+static int usbg_lookup_function_type(char *name)
 {
 	int i = 0;
 	int max = sizeof(function_names)/sizeof(char *);
@@ -80,7 +80,7 @@ static int file_select(const struct dirent *dent)
 		return 1;
 }
 
-static char *gadget_read_buf(char *path, char *name, char *file, char *buf)
+static char *usbg_read_buf(char *path, char *name, char *file, char *buf)
 {
 	char p[256];
 	FILE *fp;
@@ -100,30 +100,30 @@ out:
 	return ret;
 }
 
-static int gadget_read_int(char *path, char *name, char *file, int base)
+static int usbg_read_int(char *path, char *name, char *file, int base)
 {
 	char buf[256];
 
-	if (gadget_read_buf(path, name, file, buf))
+	if (usbg_read_buf(path, name, file, buf))
 		return strtol(buf, NULL, base);
 	else
 		return 0;
 
 }
 
-#define gadget_read_dec(p, n, f)	gadget_read_int(p, n, f, 10)
-#define gadget_read_hex(p, n, f)	gadget_read_int(p, n, f, 16)
+#define usbg_read_dec(p, n, f)	usbg_read_int(p, n, f, 10)
+#define usbg_read_hex(p, n, f)	usbg_read_int(p, n, f, 16)
 
-static void gadget_read_string(char *path, char *name, char *file, char *buf)
+static void usbg_read_string(char *path, char *name, char *file, char *buf)
 {
 	char *p;
 
-	gadget_read_buf(path, name, file, buf);
+	usbg_read_buf(path, name, file, buf);
 	if ((p = strchr(buf, '\n')) != NULL)
 		*p = '\0';
 }
 
-static void gadget_write_buf(char *path, char *name, char *file, char *buf)
+static void usbg_write_buf(char *path, char *name, char *file, char *buf)
 {
 	char p[256];
 	FILE *fp;
@@ -141,24 +141,24 @@ static void gadget_write_buf(char *path, char *name, char *file, char *buf)
 	fclose(fp);
 }
 
-static void gadget_write_int(char *path, char *name, char *file, int value, char *str)
+static void usbg_write_int(char *path, char *name, char *file, int value, char *str)
 {
 	char buf[256];
 
 	sprintf(buf, str, value);
-	gadget_write_buf(path, name, file, buf);
+	usbg_write_buf(path, name, file, buf);
 }
 
-#define gadget_write_dec(p, n, f, v)	gadget_write_int(p, n, f, v, "%d\n")
-#define gadget_write_hex16(p, n, f, v)	gadget_write_int(p, n, f, v, "0x%04x\n")
-#define gadget_write_hex8(p, n, f, v)	gadget_write_int(p, n, f, v, "0x%02x\n")
+#define usbg_write_dec(p, n, f, v)	usbg_write_int(p, n, f, v, "%d\n")
+#define usbg_write_hex16(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%04x\n")
+#define usbg_write_hex8(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%02x\n")
 
-static void gadget_write_string(char *path, char *name, char *file, char *buf)
+static void usbg_write_string(char *path, char *name, char *file, char *buf)
 {
-	gadget_write_buf(path, name, file, buf);
+	usbg_write_buf(path, name, file, buf);
 }
 
-static void gadget_parse_function_attrs(struct function *f)
+static void usbg_parse_function_attrs(struct function *f)
 {
 	struct ether_addr *addr;
 	char str_addr[40];
@@ -167,31 +167,31 @@ static void gadget_parse_function_attrs(struct function *f)
 	case F_SERIAL:
 	case F_ACM:
 	case F_OBEX:
-		f->attr.serial.port_num = gadget_read_dec(f->path, f->name, "port_num");
+		f->attr.serial.port_num = usbg_read_dec(f->path, f->name, "port_num");
 		break;
 	case F_ECM:
 	case F_SUBSET:
 	case F_NCM:
 	case F_EEM:
 	case F_RNDIS:
-		gadget_read_string(f->path, f->name, "dev_addr", str_addr);
+		usbg_read_string(f->path, f->name, "dev_addr", str_addr);
 		addr = ether_aton(str_addr);
 		memcpy(&f->attr.net.dev_addr, addr, 6);
-		gadget_read_string(f->path, f->name, "host_addr", str_addr);
+		usbg_read_string(f->path, f->name, "host_addr", str_addr);
 		addr = ether_aton(str_addr);
 		memcpy(&f->attr.net.host_addr, addr, 6);
-		gadget_read_string(f->path, f->name, "ifname", f->attr.net.ifname);
-		f->attr.net.qmult = gadget_read_dec(f->path, f->name, "qmult");
+		usbg_read_string(f->path, f->name, "ifname", f->attr.net.ifname);
+		f->attr.net.qmult = usbg_read_dec(f->path, f->name, "qmult");
 		break;
 	case F_PHONET:
-		gadget_read_string(f->path, f->name, "ifname", f->attr.phonet.ifname);
+		usbg_read_string(f->path, f->name, "ifname", f->attr.phonet.ifname);
 		break;
 	default:
 		ERROR("Unsupported function type\n");
 	}
 }
 
-static int gadget_parse_functions(char *path, struct gadget *g)
+static int usbg_parse_functions(char *path, struct gadget *g)
 {
 	struct function *f;
 	int i, n;
@@ -208,22 +208,22 @@ static int gadget_parse_functions(char *path, struct gadget *g)
 		f->parent = g;
 		strcpy(f->name, dent[i]->d_name);
 		strcpy(f->path, fpath);
-		f->type = gadget_lookup_function_type(strtok(dent[i]->d_name, "."));
-		gadget_parse_function_attrs(f);
+		f->type = usbg_lookup_function_type(strtok(dent[i]->d_name, "."));
+		usbg_parse_function_attrs(f);
 		TAILQ_INSERT_TAIL(&g->functions, f, fnode);
 		free(dent[i]);
 	}
 	free(dent);
 }
 
-static void gadget_parse_config_attrs(struct config *c)
+static void usbg_parse_config_attrs(struct config *c)
 {
-	c->maxpower = gadget_read_dec(c->path, c->name, "MaxPower");
-	c->bmattrs = gadget_read_hex(c->path, c->name, "bmAttributes");
-	gadget_read_string(c->path, c->name, "strings/0x409/configuration", c->str_cfg);
+	c->maxpower = usbg_read_dec(c->path, c->name, "MaxPower");
+	c->bmattrs = usbg_read_hex(c->path, c->name, "bmAttributes");
+	usbg_read_string(c->path, c->name, "strings/0x409/configuration", c->str_cfg);
 }
 
-static void gadget_parse_config_bindings(struct config *c)
+static void usbg_parse_config_bindings(struct config *c)
 {
 	int i, n;
 	struct dirent **dent;
@@ -263,7 +263,7 @@ static void gadget_parse_config_bindings(struct config *c)
 	free(dent);
 }
 
-static int gadget_parse_configs(char *path, struct gadget *g)
+static int usbg_parse_configs(char *path, struct gadget *g)
 {
 	struct config *c;
 	int i, n;
@@ -280,36 +280,36 @@ static int gadget_parse_configs(char *path, struct gadget *g)
 		c->parent = g;
 		strcpy(c->name, dent[i]->d_name);
 		strcpy(c->path, cpath);
-		gadget_parse_config_attrs(c);
-		gadget_parse_config_bindings(c);
+		usbg_parse_config_attrs(c);
+		usbg_parse_config_bindings(c);
 		TAILQ_INSERT_TAIL(&g->configs, c, cnode);
 		free(dent[i]);
 	}
 	free(dent);
 }
 
-static void gadget_parse_attrs(char *path, struct gadget *g)
+static void usbg_parse_attrs(char *path, struct gadget *g)
 {
 	/* UDC bound to, if any */
-	gadget_read_string(path, g->name, "UDC", g->udc);
+	usbg_read_string(path, g->name, "UDC", g->udc);
 
 	/* Actual attributes */
-	g->dclass = gadget_read_hex(path, g->name, "bDeviceClass");
-	g->dsubclass = gadget_read_hex(path, g->name, "bDeviceSubClass");
-	g->dproto = gadget_read_hex(path, g->name, "bDeviceProtocol");
-	g->maxpacket = gadget_read_hex(path, g->name, "bMaxPacketSize0");
-	g->bcddevice = gadget_read_hex(path, g->name, "bcdDevice");
-	g->bcdusb = gadget_read_hex(path, g->name, "bcdUSB");
-	g->vendor = gadget_read_hex(path, g->name, "idVendor");
-	g->product = gadget_read_hex(path, g->name, "idProduct");
+	g->dclass = usbg_read_hex(path, g->name, "bDeviceClass");
+	g->dsubclass = usbg_read_hex(path, g->name, "bDeviceSubClass");
+	g->dproto = usbg_read_hex(path, g->name, "bDeviceProtocol");
+	g->maxpacket = usbg_read_hex(path, g->name, "bMaxPacketSize0");
+	g->bcddevice = usbg_read_hex(path, g->name, "bcdDevice");
+	g->bcdusb = usbg_read_hex(path, g->name, "bcdUSB");
+	g->vendor = usbg_read_hex(path, g->name, "idVendor");
+	g->product = usbg_read_hex(path, g->name, "idProduct");
 
 	/* Strings - hardcoded to U.S. English only for now */
-	gadget_read_string(path, g->name, "strings/0x409/serialnumber", g->str_ser);
-	gadget_read_string(path, g->name, "strings/0x409/manufacturer", g->str_mnf);
-	gadget_read_string(path, g->name, "strings/0x409/product", g->str_prd);
+	usbg_read_string(path, g->name, "strings/0x409/serialnumber", g->str_ser);
+	usbg_read_string(path, g->name, "strings/0x409/manufacturer", g->str_mnf);
+	usbg_read_string(path, g->name, "strings/0x409/product", g->str_prd);
 }
 
-static int gadget_parse_gadgets(char *path, struct state *s)
+static int usbg_parse_gadgets(char *path, struct state *s)
 {
 	struct gadget *g;
 	int i, n;
@@ -323,9 +323,9 @@ static int gadget_parse_gadgets(char *path, struct state *s)
 		strcpy(g->name, dent[i]->d_name);
 		strcpy(g->path, s->path);
 		g->parent = s;
-		gadget_parse_attrs(path, g);
-		gadget_parse_functions(path, g);
-		gadget_parse_configs(path, g);
+		usbg_parse_attrs(path, g);
+		usbg_parse_functions(path, g);
+		usbg_parse_configs(path, g);
 		TAILQ_INSERT_TAIL(&s->gadgets, g, gnode);
 		free(dent[i]);
 	}
@@ -334,11 +334,11 @@ static int gadget_parse_gadgets(char *path, struct state *s)
 	return 0;
 }
 
-static int gadget_init_state(char *path, struct state *s)
+static int usbg_init_state(char *path, struct state *s)
 {
 	strcpy(s->path, path);
 
-	if (gadget_parse_gadgets(path, s) < 0) {
+	if (usbg_parse_gadgets(path, s) < 0) {
 		ERRORNO("unable to parse %s\n", path);
 		return -1;
 	}
@@ -350,7 +350,7 @@ static int gadget_init_state(char *path, struct state *s)
  * User API
  */
 
-struct state *gadget_init(char *configfs_path)
+struct state *usbg_init(char *configfs_path)
 {
 	int ret;
 	struct stat sts;
@@ -371,7 +371,7 @@ struct state *gadget_init(char *configfs_path)
 
 	s = malloc(sizeof(struct state));
 	if (s)
-		gadget_init_state(path, s);
+		usbg_init_state(path, s);
 	else
 		ERRORNO("couldn't init gadget state\n");
 
@@ -379,7 +379,7 @@ out:
 	return s;
 }
 
-void gadget_cleanup(struct state *s)
+void usbg_cleanup(struct state *s)
 {
 	struct gadget *g;
 	struct config *c;
@@ -410,7 +410,7 @@ void gadget_cleanup(struct state *s)
 	free(s);
 }
 
-struct gadget *gadget_get_gadget(struct state *s, const char *name)
+struct gadget *usbg_get_gadget(struct state *s, const char *name)
 {
 	struct gadget *g;
 
@@ -421,7 +421,7 @@ struct gadget *gadget_get_gadget(struct state *s, const char *name)
 	return NULL;
 }
 
-struct function *gadget_get_function(struct gadget *g, const char *name)
+struct function *usbg_get_function(struct gadget *g, const char *name)
 {
 	struct function *f;
 
@@ -432,7 +432,7 @@ struct function *gadget_get_function(struct gadget *g, const char *name)
 	return NULL;
 }
 
-struct config *gadget_get_config(struct gadget *g, const char *name)
+struct config *usbg_get_config(struct gadget *g, const char *name)
 {
 	struct config *c;
 
@@ -443,7 +443,7 @@ struct config *gadget_get_config(struct gadget *g, const char *name)
 	return NULL;
 }
 
-struct binding *gadget_get_binding(struct config *c, const char *name)
+struct binding *usbg_get_binding(struct config *c, const char *name)
 {
 	struct binding *b;
 
@@ -454,7 +454,7 @@ struct binding *gadget_get_binding(struct config *c, const char *name)
 	return NULL;
 }
 
-struct binding *gadget_get_link_binding(struct config *c, struct function *f)
+struct binding *usbg_get_link_binding(struct config *c, struct function *f)
 {
 	struct binding *b;
 
@@ -465,7 +465,7 @@ struct binding *gadget_get_link_binding(struct config *c, struct function *f)
 	return NULL;
 }
 
-struct gadget *gadget_create_gadget(struct state *s, char *name,
+struct gadget *usbg_create_gadget(struct state *s, char *name,
 				    int vendor, int product)
 {
 	char gpath[256];
@@ -475,7 +475,7 @@ struct gadget *gadget_create_gadget(struct state *s, char *name,
 	if (!s)
 		return NULL;
 
-	g = gadget_get_gadget(s, name);
+	g = usbg_get_gadget(s, name);
 	if (g) {
 		ERROR("duplicate gadget name\n");
 		return NULL;
@@ -503,8 +503,8 @@ struct gadget *gadget_create_gadget(struct state *s, char *name,
 	g->vendor = vendor;
 	g->product = product;
 
-	gadget_write_hex16(s->path, name, "idVendor", vendor);
-	gadget_write_hex16(s->path, name, "idProduct", product);
+	usbg_write_hex16(s->path, name, "idVendor", vendor);
+	usbg_write_hex16(s->path, name, "idProduct", product);
 
 	/* Insert in string order */
 	if (TAILQ_EMPTY(&s->gadgets) ||
@@ -522,43 +522,43 @@ struct gadget *gadget_create_gadget(struct state *s, char *name,
 	return g;
 }
 
-void gadget_set_gadget_device_class(struct gadget *g, int dclass)
+void usbg_set_gadget_device_class(struct gadget *g, int dclass)
 {
 	g->dclass = dclass;
-	gadget_write_hex8(g->path, "", "bDeviceClass", dclass);
+	usbg_write_hex8(g->path, "", "bDeviceClass", dclass);
 }
 
-void gadget_set_gadget_device_protocol(struct gadget *g, int dproto)
+void usbg_set_gadget_device_protocol(struct gadget *g, int dproto)
 {
 	g->dproto = dproto;
-	 gadget_write_hex8(g->path, "", "bDeviceProtocol", dproto);
+	 usbg_write_hex8(g->path, "", "bDeviceProtocol", dproto);
 }
 
-void gadget_set_gadget_device_subclass(struct gadget *g, int dsubclass)
+void usbg_set_gadget_device_subclass(struct gadget *g, int dsubclass)
 {
 	g->dsubclass = dsubclass;
-	gadget_write_hex8(g->path, "", "bDeviceSubClass", dsubclass);
+	usbg_write_hex8(g->path, "", "bDeviceSubClass", dsubclass);
 }
 
-void gadget_set_gadget_device_max_packet(struct gadget *g, int maxpacket)
+void usbg_set_gadget_device_max_packet(struct gadget *g, int maxpacket)
 {
 	g->maxpacket = maxpacket;
-	gadget_write_hex8(g->path, "", "bMaxPacketSize0", maxpacket);
+	usbg_write_hex8(g->path, "", "bMaxPacketSize0", maxpacket);
 }
 
-void gadget_set_gadget_device_bcd_device(struct gadget *g, int bcddevice)
+void usbg_set_gadget_device_bcd_device(struct gadget *g, int bcddevice)
 {
 	g->bcddevice = bcddevice;
-	gadget_write_hex16(g->path, "", "bcdDevice", bcddevice);
+	usbg_write_hex16(g->path, "", "bcdDevice", bcddevice);
 }
 
-void gadget_set_gadget_device_bcd_usb(struct gadget *g, int bcdusb)
+void usbg_set_gadget_device_bcd_usb(struct gadget *g, int bcdusb)
 {
 	g->bcdusb = bcdusb;
-	gadget_write_hex16(g->path, "", "bcdUSB", bcdusb);
+	usbg_write_hex16(g->path, "", "bcdUSB", bcdusb);
 }
 
-void gadget_set_gadget_serial_number(struct gadget *g, int lang, char *serno)
+void usbg_set_gadget_serial_number(struct gadget *g, int lang, char *serno)
 {
 	char path[256];
 
@@ -568,10 +568,10 @@ void gadget_set_gadget_serial_number(struct gadget *g, int lang, char *serno)
 
 	strcpy(g->str_ser, serno);
 
-	gadget_write_string(path, "", "serialnumber", serno);
+	usbg_write_string(path, "", "serialnumber", serno);
 }
 
-void gadget_set_gadget_manufacturer(struct gadget *g, int lang, char *mnf)
+void usbg_set_gadget_manufacturer(struct gadget *g, int lang, char *mnf)
 {
 	char path[256];
 
@@ -581,10 +581,10 @@ void gadget_set_gadget_manufacturer(struct gadget *g, int lang, char *mnf)
 
 	strcpy(g->str_mnf, mnf);
 
-	gadget_write_string(path, "", "manufacturer", mnf);
+	usbg_write_string(path, "", "manufacturer", mnf);
 }
 
-void gadget_set_gadget_product(struct gadget *g, int lang, char *prd)
+void usbg_set_gadget_product(struct gadget *g, int lang, char *prd)
 {
 	char path[256];
 
@@ -594,10 +594,10 @@ void gadget_set_gadget_product(struct gadget *g, int lang, char *prd)
 
 	strcpy(g->str_prd, prd);
 
-	gadget_write_string(path, "", "product", prd);
+	usbg_write_string(path, "", "product", prd);
 }
 
-struct function *gadget_create_function(struct gadget *g, enum function_type type, char *instance)
+struct function *usbg_create_function(struct gadget *g, enum function_type type, char *instance)
 {
 	char fpath[256];
 	char name[256];
@@ -611,7 +611,7 @@ struct function *gadget_create_function(struct gadget *g, enum function_type typ
 	 * @todo Check for legal function type
 	 */
 	sprintf(name, "%s.%s", function_names[type], instance);
-	f = gadget_get_function(g, name);
+	f = usbg_get_function(g, name);
 	if (f) {
 		ERROR("duplicate function name\n");
 		return NULL;
@@ -635,7 +635,7 @@ struct function *gadget_create_function(struct gadget *g, enum function_type typ
 	sprintf(f->path, "%s/%s/%s", g->path, g->name, "functions");
 	f->type = type;
 
-	gadget_parse_function_attrs(f);
+	usbg_parse_function_attrs(f);
 
 	/* Insert in string order */
 	if (TAILQ_EMPTY(&g->functions) ||
@@ -653,7 +653,7 @@ struct function *gadget_create_function(struct gadget *g, enum function_type typ
 	return f;
 }
 
-struct config *gadget_create_config(struct gadget *g, char *name)
+struct config *usbg_create_config(struct gadget *g, char *name)
 {
 	char cpath[256];
 	struct config *c, *cur;
@@ -665,7 +665,7 @@ struct config *gadget_create_config(struct gadget *g, char *name)
 	/**
 	 * @todo Check for legal configuration name
 	 */
-	c = gadget_get_config(g, name);
+	c = usbg_get_config(g, name);
 	if (c) {
 		ERROR("duplicate configuration name\n");
 		return NULL;
@@ -705,19 +705,19 @@ struct config *gadget_create_config(struct gadget *g, char *name)
 	return c;
 }
 
-void gadget_set_config_max_power(struct config *c, int maxpower)
+void usbg_set_config_max_power(struct config *c, int maxpower)
 {
 	c->maxpower = maxpower;
-	gadget_write_dec(c->path, c->name, "MaxPower", maxpower);
+	usbg_write_dec(c->path, c->name, "MaxPower", maxpower);
 }
 
-void gadget_set_config_bm_attrs(struct config *c, int bmattrs)
+void usbg_set_config_bm_attrs(struct config *c, int bmattrs)
 {
 	c->bmattrs = bmattrs;
-	gadget_write_hex8(c->path, c->name, "bmAttributes", bmattrs);
+	usbg_write_hex8(c->path, c->name, "bmAttributes", bmattrs);
 }
 
-void gadget_set_config_string(struct config *c, int lang, char *str)
+void usbg_set_config_string(struct config *c, int lang, char *str)
 {
 	char path[256];
 
@@ -727,10 +727,10 @@ void gadget_set_config_string(struct config *c, int lang, char *str)
 
 	strcpy(c->str_cfg, str);
 
-	gadget_write_string(path, "", "configuration", str);
+	usbg_write_string(path, "", "configuration", str);
 }
 
-int gadget_add_config_function(struct config *c, char *name, struct function *f)
+int usbg_add_config_function(struct config *c, char *name, struct function *f)
 {
 	char bpath[256];
 	char fpath[256];
@@ -741,13 +741,13 @@ int gadget_add_config_function(struct config *c, char *name, struct function *f)
 	if (!c || !f)
 		return ret;
 
-	b = gadget_get_binding(c, name);
+	b = usbg_get_binding(c, name);
 	if (b) {
 		ERROR("duplicate binding name\n");
 		return ret;
 	}
 
-	b = gadget_get_link_binding(c, f);
+	b = usbg_get_link_binding(c, f);
 	if (b) {
 		ERROR("duplicate binding link\n");
 		return ret;
@@ -788,19 +788,19 @@ int gadget_add_config_function(struct config *c, char *name, struct function *f)
 	return 0;
 }
 
-int gadget_get_udcs(struct dirent ***udc_list)
+int usbg_get_udcs(struct dirent ***udc_list)
 {
 	return scandir("/sys/class/udc", udc_list, file_select, alphasort);
 }
 
-void gadget_enable_gadget(struct gadget *g, char *udc)
+void usbg_enable_gadget(struct gadget *g, char *udc)
 {
 	char gudc[256];
 	struct dirent **udc_list;
 	int n;
 
 	if (!udc) {
-		n = gadget_get_udcs(&udc_list);
+		n = usbg_get_udcs(&udc_list);
 		if (!n)
 			return;
 		strcpy(gudc, udc_list[0]->d_name);
@@ -811,41 +811,41 @@ void gadget_enable_gadget(struct gadget *g, char *udc)
 		strcpy (gudc, udc);
 
 	strcpy(g->udc, gudc);
-	gadget_write_string(g->path, g->name, "UDC", gudc);
+	usbg_write_string(g->path, g->name, "UDC", gudc);
 }
 
-void gadget_disable_gadget(struct gadget *g)
+void usbg_disable_gadget(struct gadget *g)
 {
 	strcpy(g->udc, "");
-	gadget_write_string(g->path, g->name, "UDC", "");
+	usbg_write_string(g->path, g->name, "UDC", "");
 }
 
 /*
  * USB function-specific attribute configuration
  */
 
-void gadget_set_net_dev_addr(struct function *f, struct ether_addr *dev_addr)
+void usbg_set_net_dev_addr(struct function *f, struct ether_addr *dev_addr)
 {
 	char *str_addr;
 
 	memcpy(&f->attr.net.dev_addr, dev_addr, 6);
 
 	str_addr = ether_ntoa(dev_addr);
-	gadget_write_string(f->path, f->name, "dev_addr", str_addr);
+	usbg_write_string(f->path, f->name, "dev_addr", str_addr);
 }
 
-void gadget_set_net_host_addr(struct function *f, struct ether_addr *host_addr)
+void usbg_set_net_host_addr(struct function *f, struct ether_addr *host_addr)
 {
 	char *str_addr;
 
 	memcpy(&f->attr.net.host_addr, host_addr, 6);
 
 	str_addr = ether_ntoa(host_addr);
-	gadget_write_string(f->path, f->name, "host_addr", str_addr);
+	usbg_write_string(f->path, f->name, "host_addr", str_addr);
 }
 
-void gadget_set_net_qmult(struct function *f, int qmult)
+void usbg_set_net_qmult(struct function *f, int qmult)
 {
 	f->attr.net.qmult = qmult;
-	gadget_write_dec(f->path, f->name, "qmult", qmult);
+	usbg_write_dec(f->path, f->name, "qmult", qmult);
 }

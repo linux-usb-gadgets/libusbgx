@@ -19,13 +19,13 @@
 #include <netinet/ether.h>
 
 /**
- * @file include/gadget/gadget.h
- * @todo Add gadget_remove_[gadget|config|function|binding] APIs
+ * @file include/usbg/usbg.h
+ * @todo Add usbg_remove_[gadget|config|function|binding] APIs
  * @todo Clean up static buffers in structures
  */
 
 /**
- * @addtogroup libgadget
+ * @addtogroup libusbg
  * Public API for USB gadget-configfs library
  * @{
  */
@@ -193,17 +193,17 @@ struct binding
 /* Library init and cleanup */
 
 /**
- * @brief Initialize the libgadget library state
+ * @brief Initialize the libusbg library state
  * @param configfs_path Path to the mounted configfs filesystem
  * @return Pointer to a state structure
  */
-extern struct state *gadget_init(char *configfs_path);
+extern struct state *usbg_init(char *configfs_path);
 
 /**
- * @brief Clean up the libgadget library state
+ * @brief Clean up the libusbg library state
  * @param s Pointer to state
  */
-extern void gadget_cleanup(struct state *s);
+extern void usbg_cleanup(struct state *s);
 
 /* USB gadget queries */
 
@@ -213,7 +213,7 @@ extern void gadget_cleanup(struct state *s);
  * @param name Name of the gadget device
  * @return Pointer to gadget or NULL if a matching gadget isn't found
  */
-extern struct gadget *gadget_get_gadget(struct state *s, const char *name);
+extern struct gadget *usbg_get_gadget(struct state *s, const char *name);
 
 /**
  * @brief Get a function by name
@@ -221,7 +221,7 @@ extern struct gadget *gadget_get_gadget(struct state *s, const char *name);
  * @param name Name of the function
  * @return Pointer to function or NULL if a matching function isn't found
  */
-extern struct function *gadget_get_function(struct gadget *g, const char *name);
+extern struct function *usbg_get_function(struct gadget *g, const char *name);
 
 /**
  * @brief Get a configuration by name
@@ -229,7 +229,7 @@ extern struct function *gadget_get_function(struct gadget *g, const char *name);
  * @param name Name of the configuration
  * @return Pointer to config or NULL if a matching config isn't found
  */
-extern struct config *gadget_get_config(struct gadget *g, const char *name);
+extern struct config *usbg_get_config(struct gadget *g, const char *name);
 
 /* USB gadget allocation and configuration */
 
@@ -241,49 +241,49 @@ extern struct config *gadget_get_config(struct gadget *g, const char *name);
  * @param product Gadget product ID
  * @return Pointer to gadget or NULL if the gadget cannot be created
  */
-extern struct gadget *gadget_create_gadget(struct state *s, char *name, int vendor, int product);
+extern struct gadget *usbg_create_gadget(struct state *s, char *name, int vendor, int product);
 
 /**
  * @brief Set the USB gadget device class code
  * @param g Pointer to gadget
  * @param dclass USB device class code
  */
-extern void gadget_set_gadget_device_class(struct gadget *g, int dclass);
+extern void usbg_set_gadget_device_class(struct gadget *g, int dclass);
 
 /**
  * @brief Set the USB gadget protocol code
  * @param g Pointer to gadget
  * @param dprotocol USB protocol code
  */
-extern void gadget_set_gadget_device_protocol(struct gadget *g, int dproto);
+extern void usbg_set_gadget_device_protocol(struct gadget *g, int dproto);
 
 /**
  * @brief Set the USB gadget device subclass code
  * @param g Pointer to gadget
  * @param dsubclass USB device subclass code
  */
-extern void gadget_set_gadget_device_subclass(struct gadget *g, int dsubclass);
+extern void usbg_set_gadget_device_subclass(struct gadget *g, int dsubclass);
 
 /**
  * @brief Set the maximum packet size for a gadget
  * @param g Pointer to gadget
  * @param maxpacket Maximum packet size
  */
-extern void gadget_set_gadget_device_max_packet(struct gadget *g, int maxpacket);
+extern void usbg_set_gadget_device_max_packet(struct gadget *g, int maxpacket);
 
 /**
  * @brief Set the gadget device BCD release number
  * @param g Pointer to gadget
  * @param bcddevice BCD release number
  */
-extern void gadget_set_gadget_device_bcd_device(struct gadget *g, int bcddevice);
+extern void usbg_set_gadget_device_bcd_device(struct gadget *g, int bcddevice);
 
 /**
  * @brief Set the gadget device BCD USB version
  * @param g Pointer to gadget
  * @param bcdusb BCD USB version
  */
-extern void gadget_set_gadget_device_bcd_usb(struct gadget *g, int bcdusb);
+extern void usbg_set_gadget_device_bcd_usb(struct gadget *g, int bcdusb);
 
 /**
  * @brief Set the serial number for a gadget
@@ -291,7 +291,7 @@ extern void gadget_set_gadget_device_bcd_usb(struct gadget *g, int bcdusb);
  * @param lang USB language ID
  * @param ser Serial number
  */
-extern void gadget_set_gadget_serial_number(struct gadget *g, int lang, char *ser);
+extern void usbg_set_gadget_serial_number(struct gadget *g, int lang, char *ser);
 
 /**
  * @brief Set the manufacturer name for a gadget
@@ -299,7 +299,7 @@ extern void gadget_set_gadget_serial_number(struct gadget *g, int lang, char *se
  * @param lang USB language ID
  * @param mnf Manufacturer
  */
-extern void gadget_set_gadget_manufacturer(struct gadget *g, int lang, char *mnf);
+extern void usbg_set_gadget_manufacturer(struct gadget *g, int lang, char *mnf);
 
 /**
  * @brief Set the product name for a gadget
@@ -307,7 +307,7 @@ extern void gadget_set_gadget_manufacturer(struct gadget *g, int lang, char *mnf
  * @param lang USB language ID
  * @param prd Product
  */
-extern void gadget_set_gadget_product(struct gadget *g, int lang, char *prd);
+extern void usbg_set_gadget_product(struct gadget *g, int lang, char *prd);
 
 /* USB function allocation and configuration */
 
@@ -318,7 +318,7 @@ extern void gadget_set_gadget_product(struct gadget *g, int lang, char *prd);
  * @param instance Function instance name
  * @return Pointer to function or NULL if it cannot be created
  */
-extern struct function *gadget_create_function(struct gadget *g, enum function_type type, char *instance);
+extern struct function *usbg_create_function(struct gadget *g, enum function_type type, char *instance);
 
 /* USB configurations allocation and configuration */
 
@@ -328,21 +328,21 @@ extern struct function *gadget_create_function(struct gadget *g, enum function_t
  * @param name Name of configuration
  * @return Pointer to configuration or NULL if it cannot be created
  */
-extern struct config *gadget_create_config(struct gadget *g, char *name);
+extern struct config *usbg_create_config(struct gadget *g, char *name);
 
 /**
  * @brief Set the configuration maximum power
  * @param c Pointer to config
  * @param maxpower Maximum power (in 2 mA units)
  */
-extern void gadget_set_config_max_power(struct config *c, int maxpower);
+extern void usbg_set_config_max_power(struct config *c, int maxpower);
 
 /**
  * @brief Set the configuration bitmap attributes
  * @param c Pointer to config
  * @param bmattrs Configuration characteristics
  */
-extern void gadget_set_config_bm_attrs(struct config *c, int bmattrs);
+extern void usbg_set_config_bm_attrs(struct config *c, int bmattrs);
 
 /**
  * @brief Set the configuration string
@@ -350,7 +350,7 @@ extern void gadget_set_config_bm_attrs(struct config *c, int bmattrs);
  * @param lang USB language ID
  * @param string Configuration description
  */
-extern void gadget_set_config_string(struct config *c, int lang, char *string);
+extern void usbg_set_config_string(struct config *c, int lang, char *string);
 
 /**
  * @brief Add a function to a configuration
@@ -359,7 +359,7 @@ extern void gadget_set_config_string(struct config *c, int lang, char *string);
  * @param f Pointer to function
  * @return 0 on success, -1 on failure.
  */
-extern int gadget_add_config_function(struct config *c, char *name, struct function *f);
+extern int usbg_add_config_function(struct config *c, char *name, struct function *f);
 
 /* USB gadget setup and teardown */
 
@@ -368,20 +368,20 @@ extern int gadget_add_config_function(struct config *c, char *name, struct funct
  * @param udc_list Pointer to pointer to dirent pointer
  * @return Number of UDC devices on success, -1 on failure
  */
-extern int gadget_get_udcs(struct dirent ***udc_list);
+extern int usbg_get_udcs(struct dirent ***udc_list);
 
 /**
  * @brief Enable a USB gadget device
  * @param g Pointer to gadget
  * @param udc Name of UDC to enable gadget
  */
-extern void gadget_enable_gadget(struct gadget *g, char *udc);
+extern void usbg_enable_gadget(struct gadget *g, char *udc);
 
 /**
  * @brief Disable a USB gadget device
  * @param g Pointer to gadget
  */
-extern void gadget_disable_gadget(struct gadget *g);
+extern void usbg_disable_gadget(struct gadget *g);
 
 /*
  * USB function-specific attribute configuration
@@ -392,45 +392,45 @@ extern void gadget_disable_gadget(struct gadget *g);
  * @param f Pointer to function
  * @param addr Pointer to Ethernet address
  */
-extern void gadget_set_net_dev_addr(struct function *f, struct ether_addr *addr);
+extern void usbg_set_net_dev_addr(struct function *f, struct ether_addr *addr);
 
 /**
  * @brief Set USB function network host address
  * @param f Pointer to function
  * @param addr Pointer to Ethernet address
  */
-extern void gadget_set_net_host_addr(struct function *f, struct ether_addr *addr);
+extern void usbg_set_net_host_addr(struct function *f, struct ether_addr *addr);
 
 /**
  * @brief Set USB function network qmult
  * @param f Pointer to function
  * @param qmult Queue length multiplier
  */
-extern void gadget_set_net_qmult(struct function *f, int qmult);
+extern void usbg_set_net_qmult(struct function *f, int qmult);
 
 /**
- * @def gadget_for_each_gadget(g, s)
+ * @def usbg_for_each_gadget(g, s)
  * Iterates over each gadget
  */
-#define gadget_for_each_gadget(g, s)	TAILQ_FOREACH(g, &s->gadgets, gnode)
+#define usbg_for_each_gadget(g, s)	TAILQ_FOREACH(g, &s->gadgets, gnode)
 
 /**
- * @def gadget_for_each_function(f, g)
+ * @def usbg_for_each_function(f, g)
  * Iterates over each function
  */
-#define gadget_for_each_function(f, g)	TAILQ_FOREACH(f, &g->functions, fnode)
+#define usbg_for_each_function(f, g)	TAILQ_FOREACH(f, &g->functions, fnode)
 
 /**
- * @def gadget_for_each_config(c, g)
+ * @def usbg_for_each_config(c, g)
  * Iterates over each config
  */
-#define gadget_for_each_config(c, g)	TAILQ_FOREACH(c, &g->configs, cnode)
+#define usbg_for_each_config(c, g)	TAILQ_FOREACH(c, &g->configs, cnode)
 
 /**
- * @def gadget_for_each_binding(b, c)
+ * @def usbg_for_each_binding(b, c)
  * Iterates over each binding
  */
-#define gadget_for_each_binding(b, c)	TAILQ_FOREACH(b, &c->bindings, bnode)
+#define usbg_for_each_binding(b, c)	TAILQ_FOREACH(b, &c->bindings, bnode)
 
 /**
  * @}
