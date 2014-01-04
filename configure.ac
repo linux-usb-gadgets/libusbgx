@@ -1,4 +1,4 @@
-AC_INIT([libusbg], [0.0.1], [matt.porter@linaro.org])
+AC_INIT([libusbg], [0.0.1], [mporter@linaro.org])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
 AM_PROG_AR

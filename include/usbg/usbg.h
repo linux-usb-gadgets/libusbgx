@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2013 Linaro Limited
  *
- * Matt Porter <matt.porter@linaro.org>
+ * Matt Porter <mporter@linaro.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
