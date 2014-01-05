@@ -36,7 +36,7 @@ int main(void)
 	struct function *f_acm0, *f_acm1, *f_ecm;
 	int ret = -EINVAL;
 
-	s = usbg_init("/config");
+	s = usbg_init("/sys/kernel/config");
 	if (!s) {
 		fprintf(stderr, "Error on USB gadget init\n");
 		goto error1;

@@ -14,8 +14,7 @@ examples.
 
 To run the examples:
 
-$ mkdir /config
-$ mount -t configfs none /config
+$ mount -t configfs none /sys/kernel/config
 $ gadget-acm-ecm
 $ show-gadgets
 ID 1d6b:0104 'g1'
