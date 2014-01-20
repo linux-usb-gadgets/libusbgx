@@ -1,2 +1,5 @@
+Mon, 20 Jan 2014  Matt Porter <mporter@linaro.org>  0.1.0
+- Rename from libgadget->libusbg
+- Update examples to use standard configfs mount point
 Wed, 04 Sep 2013  Matt Porter <mporter@linaro.org>  0.0.1
 - Initial release
