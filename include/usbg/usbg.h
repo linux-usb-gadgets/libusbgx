@@ -52,22 +52,34 @@ struct state
 };
 
 /**
- * @struct gadget
+ * @struct gadget_attrs
  * @brief USB gadget device attributes
+ */
+struct gadget_attrs
+{
+	int bcdusb;
+	int dclass;
+	int dsubclass;
+	int dproto;
+	int maxpacket;
+	int vendor;
+	int product;
+	int bcddevice;
+};
+
+
+/**
+ * @struct gadget
+ * @brief USB gadget device
  */
 struct gadget
 {
 	char name[USBG_MAX_NAME_LENGTH];
 	char path[USBG_MAX_PATH_LENGTH];
 	char udc[USBG_MAX_STR_LENGTH];
-	int dclass;
-	int dsubclass;
-	int dproto;
-	int maxpacket;
-	int bcddevice;
-	int bcdusb;
-	int product;
-	int vendor;
+
+	struct gadget_attrs attrs;
+
 	char str_ser[USBG_MAX_STR_LENGTH];
 	char str_mnf[USBG_MAX_STR_LENGTH];
 	char str_prd[USBG_MAX_STR_LENGTH];

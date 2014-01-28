@@ -321,17 +321,18 @@ static int usbg_parse_configs(char *path, struct gadget *g)
 	return 0;
 }
 
-static void usbg_parse_attrs(char *path, struct gadget *g)
+static void usbg_parse_gadget_attrs(char *path, char *name,
+		struct gadget_attrs *g_attrs)
 {
 	/* Actual attributes */
-	g->dclass = usbg_read_hex(path, g->name, "bDeviceClass");
-	g->dsubclass = usbg_read_hex(path, g->name, "bDeviceSubClass");
-	g->dproto = usbg_read_hex(path, g->name, "bDeviceProtocol");
-	g->maxpacket = usbg_read_hex(path, g->name, "bMaxPacketSize0");
-	g->bcddevice = usbg_read_hex(path, g->name, "bcdDevice");
-	g->bcdusb = usbg_read_hex(path, g->name, "bcdUSB");
-	g->vendor = usbg_read_hex(path, g->name, "idVendor");
-	g->product = usbg_read_hex(path, g->name, "idProduct");
+	g_attrs->dclass = usbg_read_hex(path, name, "bDeviceClass");
+	g_attrs->dsubclass = usbg_read_hex(path, name, "bDeviceSubClass");
+	g_attrs->dproto = usbg_read_hex(path, name, "bDeviceProtocol");
+	g_attrs->maxpacket = usbg_read_hex(path, name, "bMaxPacketSize0");
+	g_attrs->bcddevice = usbg_read_hex(path, name, "bcdDevice");
+	g_attrs->bcdusb = usbg_read_hex(path, name, "bcdUSB");
+	g_attrs->vendor = usbg_read_hex(path, name, "idVendor");
+	g_attrs->product = usbg_read_hex(path, name, "idProduct");
 }
 
 static void usbg_parse_strings(char *path, struct gadget *g)
@@ -363,7 +364,7 @@ static int usbg_parse_gadgets(char *path, struct state *s)
 		g->parent = s;
 		/* UDC bound to, if any */
 		usbg_read_string(path, g->name, "UDC", g->udc);
-		usbg_parse_attrs(path, g);
+		usbg_parse_gadget_attrs(path, g->name, &g->attrs);
 		usbg_parse_strings(path, g);
 		usbg_parse_functions(path, g);
 		usbg_parse_configs(path, g);
@@ -546,7 +547,7 @@ struct gadget *usbg_create_gadget(struct state *s, char *name,
 	usbg_write_hex16(s->path, name, "idVendor", vendor);
 	usbg_write_hex16(s->path, name, "idProduct", product);
 
-	usbg_parse_attrs(s->path, g);
+	usbg_parse_gadget_attrs(s->path, name, &g->attrs);
 	usbg_parse_strings(s->path, g);
 
 	/* Insert in string order */
@@ -567,37 +568,37 @@ struct gadget *usbg_create_gadget(struct state *s, char *name,
 
 void usbg_set_gadget_device_class(struct gadget *g, int dclass)
 {
-	g->dclass = dclass;
+	g->attrs.dclass = dclass;
 	usbg_write_hex8(g->path, "", "bDeviceClass", dclass);
 }
 
 void usbg_set_gadget_device_protocol(struct gadget *g, int dproto)
 {
-	g->dproto = dproto;
+	g->attrs.dproto = dproto;
 	 usbg_write_hex8(g->path, "", "bDeviceProtocol", dproto);
 }
 
 void usbg_set_gadget_device_subclass(struct gadget *g, int dsubclass)
 {
-	g->dsubclass = dsubclass;
+	g->attrs.dsubclass = dsubclass;
 	usbg_write_hex8(g->path, "", "bDeviceSubClass", dsubclass);
 }
 
 void usbg_set_gadget_device_max_packet(struct gadget *g, int maxpacket)
 {
-	g->maxpacket = maxpacket;
+	g->attrs.maxpacket = maxpacket;
 	usbg_write_hex8(g->path, "", "bMaxPacketSize0", maxpacket);
 }
 
 void usbg_set_gadget_device_bcd_device(struct gadget *g, int bcddevice)
 {
-	g->bcddevice = bcddevice;
+	g->attrs.bcddevice = bcddevice;
 	usbg_write_hex16(g->path, "", "bcdDevice", bcddevice);
 }
 
 void usbg_set_gadget_device_bcd_usb(struct gadget *g, int bcdusb)
 {
-	g->bcdusb = bcdusb;
+	g->attrs.bcdusb = bcdusb;
 	usbg_write_hex16(g->path, "", "bcdUSB", bcdusb);
 }
 
