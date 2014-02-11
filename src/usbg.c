@@ -335,17 +335,17 @@ static void usbg_parse_gadget_attrs(char *path, char *name,
 	g_attrs->bcdDevice = (uint16_t)usbg_read_hex(path, name, "bcdDevice");
 }
 
-static void usbg_parse_strings(char *path, struct gadget *g)
+static void usbg_parse_strings(char *path, char *name, struct gadget_strs *g_strs)
 {
 	/* Strings - hardcoded to U.S. English only for now */
 	int lang = LANG_US_ENG;
 	char spath[USBG_MAX_PATH_LENGTH];
 
-	sprintf(spath, "%s/%s/%s/0x%x", path, g->name, STRINGS_DIR, lang);
+	sprintf(spath, "%s/%s/%s/0x%x", path, name, STRINGS_DIR, lang);
 
-	usbg_read_string(spath, "", "serialnumber", g->str_ser);
-	usbg_read_string(spath, "", "manufacturer", g->str_mnf);
-	usbg_read_string(spath, "", "product", g->str_prd);
+	usbg_read_string(spath, "", "serialnumber", g_strs->str_ser);
+	usbg_read_string(spath, "", "manufacturer", g_strs->str_mnf);
+	usbg_read_string(spath, "", "product", g_strs->str_prd);
 }
 
 static int usbg_parse_gadgets(char *path, struct state *s)
@@ -365,7 +365,7 @@ static int usbg_parse_gadgets(char *path, struct state *s)
 		/* UDC bound to, if any */
 		usbg_read_string(path, g->name, "UDC", g->udc);
 		usbg_parse_gadget_attrs(path, g->name, &g->attrs);
-		usbg_parse_strings(path, g);
+		usbg_parse_strings(path, g->name, &g->strs);
 		usbg_parse_functions(path, g);
 		usbg_parse_configs(path, g);
 		TAILQ_INSERT_TAIL(&s->gadgets, g, gnode);
@@ -548,7 +548,7 @@ struct gadget *usbg_create_gadget(struct state *s, char *name,
 	usbg_write_hex16(s->path, name, "idProduct", idProduct);
 
 	usbg_parse_gadget_attrs(s->path, name, &g->attrs);
-	usbg_parse_strings(s->path, g);
+	usbg_parse_strings(s->path, name, &g->strs);
 
 	/* Insert in string order */
 	if (TAILQ_EMPTY(&s->gadgets) ||
@@ -610,7 +610,7 @@ void usbg_set_gadget_serial_number(struct gadget *g, int lang, char *serno)
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
-	strcpy(g->str_ser, serno);
+	strcpy(g->strs.str_ser, serno);
 
 	usbg_write_string(path, "", "serialnumber", serno);
 }
@@ -623,7 +623,7 @@ void usbg_set_gadget_manufacturer(struct gadget *g, int lang, char *mnf)
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
-	strcpy(g->str_mnf, mnf);
+	strcpy(g->strs.str_mnf, mnf);
 
 	usbg_write_string(path, "", "manufacturer", mnf);
 }
@@ -636,7 +636,7 @@ void usbg_set_gadget_product(struct gadget *g, int lang, char *prd)
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
-	strcpy(g->str_prd, prd);
+	strcpy(g->strs.str_prd, prd);
 
 	usbg_write_string(path, "", "product", prd);
 }

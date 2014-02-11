@@ -68,6 +68,16 @@ struct gadget_attrs
 	uint16_t bcdDevice;
 };
 
+/**
+ * @struct gadget_strs
+ * @brief USB gadget device strings
+ */
+struct gadget_strs
+{
+	char str_ser[USBG_MAX_STR_LENGTH];
+	char str_mnf[USBG_MAX_STR_LENGTH];
+	char str_prd[USBG_MAX_STR_LENGTH];
+};
 
 /**
  * @struct gadget
@@ -80,10 +90,8 @@ struct gadget
 	char udc[USBG_MAX_STR_LENGTH];
 
 	struct gadget_attrs attrs;
+	struct gadget_strs strs;
 
-	char str_ser[USBG_MAX_STR_LENGTH];
-	char str_mnf[USBG_MAX_STR_LENGTH];
-	char str_prd[USBG_MAX_STR_LENGTH];
 	TAILQ_ENTRY(gadget) gnode;
 	TAILQ_HEAD(chead, config) configs;
 	TAILQ_HEAD(fhead, function) functions;

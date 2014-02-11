@@ -40,9 +40,9 @@ void show_gadget(struct gadget *g)
 	fprintf(stdout, "  bcdUSB\t\t0x%04x\n", g->attrs.bcdUSB);
 	fprintf(stdout, "  idVendor\t\t0x%04x\n", g->attrs.idVendor);
 	fprintf(stdout, "  idProduct\t\t0x%04x\n", g->attrs.idProduct);
-	fprintf(stdout, "  Serial Number\t\t%s\n", g->str_ser);
-	fprintf(stdout, "  Manufacturer\t\t%s\n", g->str_mnf);
-	fprintf(stdout, "  Product\t\t%s\n", g->str_prd);
+	fprintf(stdout, "  Serial Number\t\t%s\n", g->strs.str_ser);
+	fprintf(stdout, "  Manufacturer\t\t%s\n", g->strs.str_mnf);
+	fprintf(stdout, "  Product\t\t%s\n", g->strs.str_prd);
 }
 
 void show_function(struct function *f)
