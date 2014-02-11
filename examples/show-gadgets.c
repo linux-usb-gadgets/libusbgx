@@ -30,16 +30,16 @@
 void show_gadget(struct gadget *g)
 {
 	fprintf(stdout, "ID %04x:%04x '%s'\n",
-		g->attrs.vendor, g->attrs.product, g->name);
+		g->attrs.idVendor, g->attrs.idProduct, g->name);
 	fprintf(stdout, "  UDC\t\t\t%s\n", g->udc);
-	fprintf(stdout, "  bDeviceClass\t\t0x%02x\n", g->attrs.dclass);
-	fprintf(stdout, "  bDeviceSubClass\t0x%02x\n", g->attrs.dsubclass);
-	fprintf(stdout, "  bDeviceProtocol\t0x%02x\n", g->attrs.dproto);
-	fprintf(stdout, "  bMaxPacketSize0\t0x%02x\n", g->attrs.maxpacket);
-	fprintf(stdout, "  bcdDevice\t\t0x%04x\n", g->attrs.bcddevice);
-	fprintf(stdout, "  bcdUSB\t\t0x%04x\n", g->attrs.bcdusb);
-	fprintf(stdout, "  idVendor\t\t0x%04x\n", g->attrs.vendor);
-	fprintf(stdout, "  idProduct\t\t0x%04x\n", g->attrs.product);
+	fprintf(stdout, "  bDeviceClass\t\t0x%02x\n", g->attrs.bDeviceClass);
+	fprintf(stdout, "  bDeviceSubClass\t0x%02x\n", g->attrs.bDeviceSubClass);
+	fprintf(stdout, "  bDeviceProtocol\t0x%02x\n", g->attrs.bDeviceProtocol);
+	fprintf(stdout, "  bMaxPacketSize0\t0x%02x\n", g->attrs.bMaxPacketSize0);
+	fprintf(stdout, "  bcdDevice\t\t0x%04x\n", g->attrs.bcdDevice);
+	fprintf(stdout, "  bcdUSB\t\t0x%04x\n", g->attrs.bcdUSB);
+	fprintf(stdout, "  idVendor\t\t0x%04x\n", g->attrs.idVendor);
+	fprintf(stdout, "  idProduct\t\t0x%04x\n", g->attrs.idProduct);
 	fprintf(stdout, "  Serial Number\t\t%s\n", g->str_ser);
 	fprintf(stdout, "  Manufacturer\t\t%s\n", g->str_mnf);
 	fprintf(stdout, "  Product\t\t%s\n", g->str_prd);

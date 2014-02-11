@@ -20,6 +20,7 @@
 #include <dirent.h>
 #include <sys/queue.h>
 #include <netinet/ether.h>
+#include <stdint.h>
 
 /**
  * @file include/usbg/usbg.h
@@ -57,14 +58,14 @@ struct state
  */
 struct gadget_attrs
 {
-	int bcdusb;
-	int dclass;
-	int dsubclass;
-	int dproto;
-	int maxpacket;
-	int vendor;
-	int product;
-	int bcddevice;
+	uint16_t bcdUSB;
+	uint8_t bDeviceClass;
+	uint8_t bDeviceSubClass;
+	uint8_t bDeviceProtocol;
+	uint8_t bMaxPacketSize0;
+	uint16_t idVendor;
+	uint16_t idProduct;
+	uint16_t bcdDevice;
 };
 
 
@@ -256,53 +257,59 @@ extern struct config *usbg_get_config(struct gadget *g, const char *name);
  * @brief Create a new USB gadget device
  * @param s Pointer to state
  * @param name Name of the gadget
- * @param vendor Gadget vendor ID
- * @param product Gadget product ID
+ * @param idVendor Gadget vendor ID
+ * @param idProduct Gadget product ID
  * @return Pointer to gadget or NULL if the gadget cannot be created
  */
-extern struct gadget *usbg_create_gadget(struct state *s, char *name, int vendor, int product);
+extern struct gadget *usbg_create_gadget(struct state *s, char *name,
+		uint16_t idVendor, uint16_t idProduct);
 
 /**
  * @brief Set the USB gadget device class code
  * @param g Pointer to gadget
- * @param dclass USB device class code
+ * @param bDeviceClass USB device class code
  */
-extern void usbg_set_gadget_device_class(struct gadget *g, int dclass);
+extern void usbg_set_gadget_device_class(struct gadget *g,
+		uint8_t bDeviceClass);
 
 /**
  * @brief Set the USB gadget protocol code
  * @param g Pointer to gadget
- * @param dprotocol USB protocol code
+ * @param bDeviceProtocol USB protocol code
  */
-extern void usbg_set_gadget_device_protocol(struct gadget *g, int dproto);
+extern void usbg_set_gadget_device_protocol(struct gadget *g,
+		uint8_t bDeviceProtocol);
 
 /**
  * @brief Set the USB gadget device subclass code
  * @param g Pointer to gadget
- * @param dsubclass USB device subclass code
+ * @param bDeviceSubClass USB device subclass code
  */
-extern void usbg_set_gadget_device_subclass(struct gadget *g, int dsubclass);
+extern void usbg_set_gadget_device_subclass(struct gadget *g,
+		uint8_t bDeviceSubClass);
 
 /**
  * @brief Set the maximum packet size for a gadget
  * @param g Pointer to gadget
- * @param maxpacket Maximum packet size
+ * @param bMaxPacketSize0 Maximum packet size
  */
-extern void usbg_set_gadget_device_max_packet(struct gadget *g, int maxpacket);
+extern void usbg_set_gadget_device_max_packet(struct gadget *g,
+		uint8_t bMaxPacketSize0);
 
 /**
  * @brief Set the gadget device BCD release number
  * @param g Pointer to gadget
- * @param bcddevice BCD release number
+ * @param bcdDevice BCD release number
  */
-extern void usbg_set_gadget_device_bcd_device(struct gadget *g, int bcddevice);
+extern void usbg_set_gadget_device_bcd_device(struct gadget *g,
+		uint16_t bcdDevice);
 
 /**
  * @brief Set the gadget device BCD USB version
  * @param g Pointer to gadget
- * @param bcdusb BCD USB version
+ * @param bcdUSB BCD USB version
  */
-extern void usbg_set_gadget_device_bcd_usb(struct gadget *g, int bcdusb);
+extern void usbg_set_gadget_device_bcd_usb(struct gadget *g, uint16_t bcdUSB);
 
 /**
  * @brief Set the serial number for a gadget
