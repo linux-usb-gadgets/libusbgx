@@ -41,16 +41,15 @@
 #define USBG_MAX_PATH_LENGTH 256
 #define USBG_MAX_NAME_LENGTH 40
 
+/*
+ * Internal structures
+ */
+struct usbg_state;
+
 /**
- * @struct state
  * @brief State of the gadget devices in the system
  */
-struct state
-{
-	char path[USBG_MAX_PATH_LENGTH];
-
-	TAILQ_HEAD(ghead, gadget) gadgets;
-};
+typedef struct usbg_state usbg_state;
 
 /**
  * @struct gadget_attrs
@@ -95,7 +94,7 @@ struct gadget
 	TAILQ_ENTRY(gadget) gnode;
 	TAILQ_HEAD(chead, config) configs;
 	TAILQ_HEAD(fhead, function) functions;
-	struct state *parent;
+	usbg_state *parent;
 };
 
 /**
@@ -226,20 +225,20 @@ struct binding
  * @param configfs_path Path to the mounted configfs filesystem
  * @return Pointer to a state structure
  */
-extern struct state *usbg_init(char *configfs_path);
+extern usbg_state *usbg_init(char *configfs_path);
 
 /**
  * @brief Clean up the libusbgx library state
  * @param s Pointer to state
  */
-extern void usbg_cleanup(struct state *s);
+extern void usbg_cleanup(usbg_state *s);
 
 /**
  * @brief Get ConfigFS path length
  * @param s Pointer to state
  * @return Length of path or -1 if error occurred.
  */
-extern size_t usbg_get_configfs_path_len(struct state *s);
+extern size_t usbg_get_configfs_path_len(usbg_state *s);
 
 /**
  * @brieg Get ConfigFS path
@@ -248,7 +247,7 @@ extern size_t usbg_get_configfs_path_len(struct state *s);
  * @param len Length of given buffer
  * @return Pointer to destination or NULL if error occurred.
  */
-extern char *usbg_get_configfs_path(struct state *s, char *buf, size_t len);
+extern char *usbg_get_configfs_path(usbg_state *s, char *buf, size_t len);
 
 /* USB gadget queries */
 
@@ -258,7 +257,7 @@ extern char *usbg_get_configfs_path(struct state *s, char *buf, size_t len);
  * @param name Name of the gadget device
  * @return Pointer to gadget or NULL if a matching gadget isn't found
  */
-extern struct gadget *usbg_get_gadget(struct state *s, const char *name);
+extern struct gadget *usbg_get_gadget(usbg_state *s, const char *name);
 
 /**
  * @brief Get a function by name
@@ -286,7 +285,7 @@ extern struct config *usbg_get_config(struct gadget *g, const char *name);
  * @param idProduct Gadget product ID
  * @return Pointer to gadget or NULL if the gadget cannot be created
  */
-extern struct gadget *usbg_create_gadget_vid_pid(struct state *s, char *name,
+extern struct gadget *usbg_create_gadget_vid_pid(usbg_state *s, char *name,
 		uint16_t idVendor, uint16_t idProduct);
 
 /**
@@ -299,7 +298,7 @@ extern struct gadget *usbg_create_gadget_vid_pid(struct state *s, char *name,
  * @note Given strings are assumed to be in US English
  * @return Pointer to gadget or NULL if the gadget cannot be created
  */
-extern struct gadget *usbg_create_gadget(struct state *s, char *name,
+extern struct gadget *usbg_create_gadget(usbg_state *s, char *name,
 		struct gadget_attrs *g_attrs, struct gadget_strs *g_strs);
 
 /**
@@ -716,7 +715,7 @@ extern void usbg_set_net_qmult(struct function *f, int qmult);
  * @return Pointer to gadget or NULL if list is empty.
  * @note Gadgets are sorted in strings (name) order
  */
-extern struct gadget *usbg_get_first_gadget(struct state *s);
+extern struct gadget *usbg_get_first_gadget(usbg_state *s);
 
 /**
  * @brief Get first function in function list

@@ -89,7 +89,7 @@ void show_config(struct config *c)
 
 int main(void)
 {
-	struct state *s;
+	usbg_state *s;
 	struct gadget *g;
 	struct function *f;
 	struct config *c;

@@ -36,6 +36,13 @@
  * @todo Error checking and return code propagation
  */
 
+struct usbg_state
+{
+	char path[USBG_MAX_PATH_LENGTH];
+
+	TAILQ_HEAD(ghead, gadget) gadgets;
+};
+
 /**
  * @var function_names
  * @brief Name strings for supported USB function types
@@ -395,7 +402,7 @@ static void usbg_parse_strings(char *path, char *name, struct gadget_strs *g_str
 	usbg_read_string(spath, "", "product", g_strs->str_prd);
 }
 
-static int usbg_parse_gadgets(char *path, struct state *s)
+static int usbg_parse_gadgets(char *path, usbg_state *s)
 {
 	struct gadget *g;
 	int i, n;
@@ -423,7 +430,7 @@ static int usbg_parse_gadgets(char *path, struct state *s)
 	return 0;
 }
 
-static int usbg_init_state(char *path, struct state *s)
+static int usbg_init_state(char *path, usbg_state *s)
 {
 	strcpy(s->path, path);
 
@@ -439,12 +446,12 @@ static int usbg_init_state(char *path, struct state *s)
  * User API
  */
 
-struct state *usbg_init(char *configfs_path)
+usbg_state *usbg_init(char *configfs_path)
 {
 	int ret;
 	struct stat sts;
 	char path[USBG_MAX_PATH_LENGTH];
-	struct state *s = NULL;
+	usbg_state *s = NULL;
 
 	strcpy(path, configfs_path);
 	ret = stat(strcat(path, "/usb_gadget"), &sts);
@@ -458,7 +465,7 @@ struct state *usbg_init(char *configfs_path)
 		goto out;
 	}
 
-	s = malloc(sizeof(struct state));
+	s = malloc(sizeof(usbg_state));
 	if (s)
 		usbg_init_state(path, s);
 	else
@@ -468,7 +475,7 @@ out:
 	return s;
 }
 
-void usbg_cleanup(struct state *s)
+void usbg_cleanup(usbg_state *s)
 {
 	struct gadget *g;
 	struct config *c;
@@ -499,17 +506,17 @@ void usbg_cleanup(struct state *s)
 	free(s);
 }
 
-size_t usbg_get_configfs_path_len(struct state *s)
+size_t usbg_get_configfs_path_len(usbg_state *s)
 {
 	return s ? strlen(s->path) : -1;
 }
 
-char *usbg_get_configfs_path(struct state *s, char *buf, size_t len)
+char *usbg_get_configfs_path(usbg_state *s, char *buf, size_t len)
 {
 	return s ? strncpy(buf, s->path, len) : NULL;
 }
 
-struct gadget *usbg_get_gadget(struct state *s, const char *name)
+struct gadget *usbg_get_gadget(usbg_state *s, const char *name)
 {
 	struct gadget *g;
 
@@ -564,7 +571,7 @@ struct binding *usbg_get_link_binding(struct config *c, struct function *f)
 	return NULL;
 }
 
-static struct gadget *usbg_create_empty_gadget(struct state *s, char *name)
+static struct gadget *usbg_create_empty_gadget(usbg_state *s, char *name)
 {
 	char gpath[USBG_MAX_PATH_LENGTH];
 	struct gadget *g;
@@ -599,7 +606,7 @@ static struct gadget *usbg_create_empty_gadget(struct state *s, char *name)
 
 
 
-struct gadget *usbg_create_gadget_vid_pid(struct state *s, char *name,
+struct gadget *usbg_create_gadget_vid_pid(usbg_state *s, char *name,
 		uint16_t idVendor, uint16_t idProduct)
 {
 	struct gadget *g;
@@ -629,7 +636,7 @@ struct gadget *usbg_create_gadget_vid_pid(struct state *s, char *name,
 	return g;
 }
 
-struct gadget *usbg_create_gadget(struct state *s, char *name,
+struct gadget *usbg_create_gadget(usbg_state *s, char *name,
 		struct gadget_attrs *g_attrs, struct gadget_strs *g_strs)
 {
 	struct gadget *g;
@@ -1198,7 +1205,7 @@ void usbg_set_net_qmult(struct function *f, int qmult)
 	usbg_write_dec(f->path, f->name, "qmult", qmult);
 }
 
-struct gadget *usbg_get_first_gadget(struct state *s)
+struct gadget *usbg_get_first_gadget(usbg_state *s)
 {
 	return s ? TAILQ_FIRST(&s->gadgets) : NULL;
 }
