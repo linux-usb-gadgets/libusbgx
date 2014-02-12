@@ -294,6 +294,15 @@ extern void usbg_set_gadget_attrs(struct gadget *g,
 		struct gadget_attrs *g_attrs);
 
 /**
+ * @brief Get the USB gadget strings
+ * @param g Pointer to gadget
+ * @param g_attrs Structure to be filled
+ * @retur Pointer to filled structure or NULL if error occurred.
+ */
+extern struct gadget_attrs *usbg_get_gadget_attrs(struct gadget *g,
+		struct gadget_attrs *g_attrs);
+
+/**
  * @brief Set the USB gadget vendor id
  * @param g Pointer to gadget
  * @param idVendor USB device vendor id
@@ -353,6 +362,15 @@ extern void usbg_set_gadget_device_bcd_device(struct gadget *g,
  * @param bcdUSB BCD USB version
  */
 extern void usbg_set_gadget_device_bcd_usb(struct gadget *g, uint16_t bcdUSB);
+
+/**
+ * @brief Get the USB gadget strings
+ * @param g Pointer to gadget
+ * @param g_sttrs Structure to be filled
+ * @retur Pointer to filled structure or NULL if error occurred.
+ */
+extern struct gadget_strs *usbg_get_gadget_strs(struct gadget *g,
+		struct gadget_strs *g_strs);
 
 /**
  * @brief Set the USB gadget strings
