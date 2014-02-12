@@ -617,7 +617,9 @@ void usbg_set_gadget_serial_number(struct gadget *g, int lang, char *serno)
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
-	strcpy(g->strs.str_ser, serno);
+	/* strings in library are hardcoded to US English for now */
+	if (lang == LANG_US_ENG)
+		strcpy(g->strs.str_ser, serno);
 
 	usbg_write_string(path, "", "serialnumber", serno);
 }
@@ -630,7 +632,9 @@ void usbg_set_gadget_manufacturer(struct gadget *g, int lang, char *mnf)
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
-	strcpy(g->strs.str_mnf, mnf);
+	/* strings in library are hardcoded to US English for now */
+	if (lang == LANG_US_ENG)
+		strcpy(g->strs.str_mnf, mnf);
 
 	usbg_write_string(path, "", "manufacturer", mnf);
 }
@@ -643,7 +647,9 @@ void usbg_set_gadget_product(struct gadget *g, int lang, char *prd)
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
-	strcpy(g->strs.str_prd, prd);
+	/* strings in library are hardcoded to US English for now */
+	if (lang == LANG_US_ENG)
+		strcpy(g->strs.str_prd, prd);
 
 	usbg_write_string(path, "", "product", prd);
 }
@@ -758,7 +764,9 @@ void usbg_set_config_string(struct config *c, int lang, char *str)
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
-	strcpy(c->str_cfg, str);
+	/* strings in library are hardcoded to US English for now */
+	if (lang == LANG_US_ENG)
+		strcpy(c->str_cfg, str);
 
 	usbg_write_string(path, "", "configuration", str);
 }
