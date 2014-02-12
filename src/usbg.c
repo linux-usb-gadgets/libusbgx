@@ -1018,3 +1018,43 @@ void usbg_set_net_qmult(struct function *f, int qmult)
 	f->attr.net.qmult = qmult;
 	usbg_write_dec(f->path, f->name, "qmult", qmult);
 }
+
+struct gadget *usbg_get_first_gadget(struct state *s)
+{
+	return s ? TAILQ_FIRST(&s->gadgets) : NULL;
+}
+
+struct function *usbg_get_first_function(struct gadget *g)
+{
+	return g ? TAILQ_FIRST(&g->functions) : NULL;
+}
+
+struct config *usbg_get_first_config(struct gadget *g)
+{
+	return g ? TAILQ_FIRST(&g->configs) : NULL;
+}
+
+struct binding *usbg_get_first_binding(struct config *c)
+{
+	return c ? TAILQ_FIRST(&c->bindings) : NULL;
+}
+
+struct gadget *usbg_get_next_gadget(struct gadget *g)
+{
+	return g ? TAILQ_NEXT(g, gnode) : NULL;
+}
+
+struct function *usbg_get_next_function(struct function *f)
+{
+	return f ? TAILQ_NEXT(f, fnode) : NULL;
+}
+
+struct config *usbg_get_next_config(struct config *c)
+{
+	return c ? TAILQ_NEXT(c, cnode) : NULL;
+}
+
+struct binding *usbg_get_next_binding(struct binding *b)
+{
+	return b ? TAILQ_NEXT(b, bnode) : NULL;
+}

@@ -542,25 +542,97 @@ extern void usbg_set_net_qmult(struct function *f, int qmult);
  * @def usbg_for_each_gadget(g, s)
  * Iterates over each gadget
  */
-#define usbg_for_each_gadget(g, s)	TAILQ_FOREACH(g, &s->gadgets, gnode)
+#define usbg_for_each_gadget(g, s) \
+	for (g = usbg_get_first_gadget(s); \
+	g != NULL; \
+	g = usbg_get_next_gadget(g))
 
 /**
  * @def usbg_for_each_function(f, g)
  * Iterates over each function
  */
-#define usbg_for_each_function(f, g)	TAILQ_FOREACH(f, &g->functions, fnode)
+#define usbg_for_each_function(f, g) \
+	for (f = usbg_get_first_function(g); \
+	f != NULL; \
+	f = usbg_get_next_function(f))
 
 /**
  * @def usbg_for_each_config(c, g)
  * Iterates over each config
  */
-#define usbg_for_each_config(c, g)	TAILQ_FOREACH(c, &g->configs, cnode)
+#define usbg_for_each_config(c, g) \
+	for (c = usbg_get_first_config(g); \
+	c != NULL; \
+	c = usbg_get_next_config(c))
 
 /**
  * @def usbg_for_each_binding(b, c)
  * Iterates over each binding
  */
-#define usbg_for_each_binding(b, c)	TAILQ_FOREACH(b, &c->bindings, bnode)
+#define usbg_for_each_binding(b, c)	\
+	for (b = usbg_get_first_binding(c); \
+	b != NULL; \
+	b = usbg_get_next_binding(b))
+
+/**
+ * @brief Get first gadget in gadget list
+ * @param s State of library
+ * @return Pointer to gadget or NULL if list is empty.
+ * @note Gadgets are sorted in strings (name) order
+ */
+extern struct gadget *usbg_get_first_gadget(struct state *s);
+
+/**
+ * @brief Get first function in function list
+ * @param g Pointer of gadget
+ * @return Pointer to function or NULL if list is empty.
+ * @note Functions are sorted in strings (name) order
+ */
+extern struct function *usbg_get_first_function(struct gadget *g);
+
+/**
+ * @brief Get first config in config list
+ * @param g Pointer of gadget
+ * @return Pointer to configuration or NULL if list is empty.
+ * @note Configs are sorted in strings (name) order
+ */
+extern struct config *usbg_get_first_config(struct gadget *g);
+
+/**
+ * @brief Get first binding in binding list
+ * @param C Pointer to configuration
+ * @return Pointer to binding or NULL if list is empty.
+ * @note Bindings are sorted in strings (name) order
+ */
+extern struct binding *usbg_get_first_binding(struct config *c);
+
+/**
+ * @brief Get the next gadget on a list.
+ * @pram g Pointer to current gadget
+ * @return Next gadget or NULL if end of list.
+ */
+extern struct gadget *usbg_get_next_gadget(struct gadget *g);
+
+/**
+ * @brief Get the next function on a list.
+ * @pram g Pointer to current function
+ * @return Next function or NULL if end of list.
+ */
+extern struct function *usbg_get_next_function(struct function *f);
+
+/**
+ * @brief Get the next config on a list.
+ * @pram g Pointer to current config
+ * @return Next config or NULL if end of list.
+ */
+extern struct config *usbg_get_next_config(struct config *c);
+
+/**
+ * @brief Get the next binding on a list.
+ * @pram g Pointer to current binding
+ * @return Next binding or NULL if end of list.
+ */
+extern struct binding *usbg_get_next_binding(struct binding *b);
 
 /**
  * @}
