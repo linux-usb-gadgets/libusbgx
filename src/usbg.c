@@ -573,6 +573,18 @@ struct gadget *usbg_create_gadget(struct state *s, char *name,
 	return g;
 }
 
+void usbg_set_gadget_vendor_id(struct gadget *g, uint16_t idVendor)
+{
+	g->attrs.idVendor = idVendor;
+	usbg_write_hex16(g->path, "", "idVendor", idVendor);
+}
+
+void usbg_set_gadget_product_id(struct gadget *g, uint16_t idProduct)
+{
+	g->attrs.idProduct = idProduct;
+	usbg_write_hex16(g->path, "", "idProduct", idProduct);
+}
+
 void usbg_set_gadget_device_class(struct gadget *g, uint8_t bDeviceClass)
 {
 	g->attrs.bDeviceClass = bDeviceClass;

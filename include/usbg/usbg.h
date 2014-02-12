@@ -273,6 +273,20 @@ extern struct gadget *usbg_create_gadget(struct state *s, char *name,
 		uint16_t idVendor, uint16_t idProduct);
 
 /**
+ * @brief Set the USB gadget vendor id
+ * @param g Pointer to gadget
+ * @param idVendor USB device vendor id
+ */
+extern void usbg_set_gadget_vendor_id(struct gadget *g, uint16_t idVendor);
+
+/**
+ * @brief Set the USB gadget product id
+ * @param g Pointer to gadget
+ * @param idProduct USB device product id
+ */
+extern void usbg_set_gadget_product_id(struct gadget *g, uint16_t idProduct);
+
+/**
  * @brief Set the USB gadget device class code
  * @param g Pointer to gadget
  * @param bDeviceClass USB device class code
