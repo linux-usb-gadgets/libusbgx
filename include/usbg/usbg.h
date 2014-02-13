@@ -151,23 +151,6 @@ enum function_type
 };
 
 /**
- * @var function_names
- * @brief Name strings for supported USB function types
- */
-const char *function_names[] =
-{
-	"gser",
-	"acm",
-	"obex",
-	"ecm",
-	"geth",
-	"ncm",
-	"eem",
-	"rndis",
-	"phonet",
-};
-
-/**
  * @struct serial_attrs
  * @brief Attributes for Serial, ACM, and OBEX USB functions
  */

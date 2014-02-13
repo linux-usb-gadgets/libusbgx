@@ -36,6 +36,23 @@
  * @todo Error checking and return code propagation
  */
 
+/**
+ * @var function_names
+ * @brief Name strings for supported USB function types
+ */
+const char *function_names[] =
+{
+	"gser",
+	"acm",
+	"obex",
+	"ecm",
+	"geth",
+	"ncm",
+	"eem",
+	"rndis",
+	"phonet",
+};
+
 #define ERROR(msg, ...) do {\
                         char *str;\
                         fprintf(stderr, "%s()  "msg" \n", \
