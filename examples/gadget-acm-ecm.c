@@ -51,19 +51,19 @@ int main(void)
 	usbg_set_gadget_manufacturer(g, LANG_US_ENG, "Foo Inc.");
 	usbg_set_gadget_product(g, LANG_US_ENG, "Bar Gadget");
 
-	f_acm0 = usbg_create_function(g, F_ACM, "usb0");
+	f_acm0 = usbg_create_function(g, F_ACM, "usb0", NULL);
 	if (!f_acm0) {
 		fprintf(stderr, "Error creating acm0 function\n");
 		goto out2;
 	}
 
-	f_acm1 = usbg_create_function(g, F_ACM, "usb1");
+	f_acm1 = usbg_create_function(g, F_ACM, "usb1", NULL);
 	if (!f_acm1) {
 		fprintf(stderr, "Error creating acm1 function\n");
 		goto out2;
 	}
 
-	f_ecm = usbg_create_function(g, F_ECM, "usb0");
+	f_ecm = usbg_create_function(g, F_ECM, "usb0", NULL);
 	if (!f_ecm) {
 		fprintf(stderr, "Error creating ecm function\n");
 		goto out2;

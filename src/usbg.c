@@ -832,7 +832,8 @@ void usbg_set_gadget_product(struct gadget *g, int lang, char *prd)
 	usbg_write_string(path, "", "product", prd);
 }
 
-struct function *usbg_create_function(struct gadget *g, enum function_type type, char *instance)
+struct function *usbg_create_function(struct gadget *g, enum function_type type,
+		char *instance, union attrs *f_attrs)
 {
 	char fpath[USBG_MAX_PATH_LENGTH];
 	char name[USBG_MAX_STR_LENGTH];
@@ -871,7 +872,10 @@ struct function *usbg_create_function(struct gadget *g, enum function_type type,
 		return NULL;
 	}
 
-	usbg_parse_function_attrs(f);
+	if (f_attrs)
+		usbg_set_function_attrs(f, f_attrs);
+	else
+		usbg_parse_function_attrs(f);
 
 	INSERT_TAILQ_STRING_ORDER(&g->functions, fhead, name, f, fnode);
 
@@ -1089,6 +1093,59 @@ void usbg_disable_gadget(struct gadget *g)
 /*
  * USB function-specific attribute configuration
  */
+
+enum function_type usbg_get_function_type(struct function *f)
+{
+	return f->type;
+}
+
+union attrs *usbg_get_function_attrs(struct function *f, union attrs *f_attrs)
+{
+	if (f && f_attrs)
+		*f_attrs = f->attr;
+	else
+		f_attrs = NULL;
+
+	return f_attrs;
+}
+
+void usbg_set_function_attrs(struct function *f, union attrs *f_attrs)
+{
+	char *addr;
+
+	if (!f || !f_attrs)
+		return;
+
+	f->attr = *f_attrs;
+
+	switch (f->type) {
+	case F_SERIAL:
+	case F_ACM:
+	case F_OBEX:
+		usbg_write_dec(f->path, f->name, "port_num", f_attrs->serial.port_num);
+		break;
+	case F_ECM:
+	case F_SUBSET:
+	case F_NCM:
+	case F_EEM:
+	case F_RNDIS:
+		addr = ether_ntoa(&f_attrs->net.dev_addr);
+		usbg_write_string(f->path, f->name, "dev_addr", addr);
+
+		addr = ether_ntoa(&f_attrs->net.host_addr);
+		usbg_write_string(f->path, f->name, "host_addr", addr);
+
+		usbg_write_string(f->path, f->name, "ifname", f_attrs->net.ifname);
+
+		usbg_write_dec(f->path, f->name, "qmult", f_attrs->net.qmult);
+		break;
+	case F_PHONET:
+		usbg_write_string(f->path, f->name, "ifname", f_attrs->phonet.ifname);
+		break;
+	default:
+		ERROR("Unsupported function type\n");
+	}
+}
 
 void usbg_set_net_dev_addr(struct function *f, struct ether_addr *dev_addr)
 {

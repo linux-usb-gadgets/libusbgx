@@ -441,13 +441,15 @@ extern void usbg_set_gadget_product(struct gadget *g, int lang, char *prd);
 /* USB function allocation and configuration */
 
 /**
- * @brief Create a new USB gadget function
+ * @brief Create a new USB gadget function and set its attributes
  * @param g Pointer to gadget
  * @param type Type of function
  * @param instance Function instance name
+ * @param f_attrs Function attributes to be set. If NULL setting is omitted.
  * @return Pointer to function or NULL if it cannot be created
  */
-extern struct function *usbg_create_function(struct gadget *g, enum function_type type, char *instance);
+extern struct function *usbg_create_function(struct gadget *g, enum function_type type,
+		char *instance, union attrs *f_attrs);
 
 /* USB configurations allocation and configuration */
 
@@ -587,6 +589,30 @@ extern char *usbg_get_gadget_udc(struct gadget *g, char *buf, size_t len);
 /*
  * USB function-specific attribute configuration
  */
+
+/**
+ * @brief Get type of given function
+ * @param f Pointer to function
+ * @return Type of function
+ * @warning Pointer to function has to be valid.
+ */
+extern enum function_type usbg_get_function_type(struct function *f);
+
+/**
+ * @brief Get attributes of given function
+ * @param f Pointer to function
+ * @param f_attrs Union to be filled
+ * @return Pointer to filled structure or NULL if error occurred.
+ */
+extern union attrs *usbg_get_function_attrs(struct function *f,
+		union attrs *f_attrs);
+
+/**
+ * @brief Set attributes of given function
+ * @param f Pointer to function
+ * @param f_attrs Attributes to be set
+ */
+extern void usbg_set_function_attrs(struct function *f, union attrs *f_attrs);
 
 /**
  * @brief Set USB function network device address
