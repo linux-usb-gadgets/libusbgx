@@ -562,6 +562,29 @@ extern void usbg_set_config_string(struct config *c, int lang, char *string);
  */
 extern int usbg_add_config_function(struct config *c, char *name, struct function *f);
 
+/**
+ * @brief Get target function of given binding
+ * @param b Binding between configuration and function
+ * @return Pointer to USB function which is target for this binding
+ */
+extern struct function *usbg_get_binding_target(struct binding *b);
+
+/**
+ * @brief Get binding name length
+ * @param b Binding which name length should be returned
+ * @return Length of name string or -1 if error occurred.
+ */
+extern size_t usbg_get_binding_name_len(struct binding *b);
+
+/**
+ * @brief Get binding name
+ * @param b Pointer to binding
+ * @param buf Buffer where name should be copied
+ * @param len Length of given buffer
+ * @return Pointer to destination or NULL if error occurred.
+ */
+extern char *usbg_get_binding_name(struct binding *b, char *buf, size_t len);
+
 /* USB gadget setup and teardown */
 
 /**

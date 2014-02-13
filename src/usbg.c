@@ -1068,6 +1068,21 @@ int usbg_add_config_function(struct config *c, char *name, struct function *f)
 	return 0;
 }
 
+struct function *usbg_get_binding_target(struct binding *b)
+{
+	return b ? b->target : NULL;
+}
+
+size_t usbg_get_binding_name_len(struct binding *b)
+{
+	return b ? strlen(b->name) : -1;
+}
+
+char *usbg_get_binding_name(struct binding *b, char *buf, size_t len)
+{
+	return b ? strncpy(buf, b->name, len) : NULL;
+}
+
 int usbg_get_udcs(struct dirent ***udc_list)
 {
 	return scandir("/sys/class/udc", udc_list, file_select, alphasort);
