@@ -945,6 +945,16 @@ char *usbg_get_config_name(struct config *c, char *buf, size_t len)
 	return c ? strncpy(buf, c->name, len) : NULL;
 }
 
+size_t usbg_get_function_name_len(struct function *f)
+{
+	return f ? strlen(f->name) : -1;
+}
+
+char *usbg_get_function_name(struct function *f, char *buf, size_t len)
+{
+	return f ? strncpy(buf, f->name, len) : NULL;
+}
+
 void usbg_set_config_attrs(struct config *c, struct config_attrs *c_attrs)
 {
 	if (!c || !c_attrs)

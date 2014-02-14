@@ -451,6 +451,22 @@ extern void usbg_set_gadget_product(struct gadget *g, int lang, char *prd);
 extern struct function *usbg_create_function(struct gadget *g, enum function_type type,
 		char *instance, union attrs *f_attrs);
 
+/**
+ * @brief Get function name length
+ * @param f Config which name length should be returned
+ * @return Length of name string or -1 if error occurred.
+ */
+extern size_t usbg_get_function_name_len(struct function *f);
+
+/**
+ * @brieg Get config name
+ * @param f Pointer to function
+ * @param buf Buffer where name should be copied
+ * @param len Length of given buffer
+ * @return Pointer to destination or NULL if error occurred.
+ */
+extern char *usbg_get_function_name(struct function *f, char *buf, size_t len);
+
 /* USB configurations allocation and configuration */
 
 /**
