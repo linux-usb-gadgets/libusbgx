@@ -480,6 +480,22 @@ extern struct config *usbg_create_config(struct gadget *g, char *name,
 		struct config_attrs *c_attrs, struct config_strs *c_strs);
 
 /**
+ * @brief Get config name length
+ * @param c Config which name length should be returned
+ * @return Length of name string or -1 if error occurred.
+ */
+extern size_t usbg_get_config_name_len(struct config *c);
+
+/**
+ * @brieg Get config name
+ * @param c Pointer to config
+ * @param buf Buffer where name should be copied
+ * @param len Length of given buffer
+ * @return Pointer to destination or NULL if error occurred.
+ */
+extern char *usbg_get_config_name(struct config *c, char *buf, size_t len);
+
+/**
  * @brief Set the USB configuration attributes
  * @param c Pointer to configuration
  * @param c_attrs Configuration attributes

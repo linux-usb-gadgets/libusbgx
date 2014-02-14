@@ -914,6 +914,16 @@ struct config *usbg_create_config(struct gadget *g, char *name,
 	return c;
 }
 
+size_t usbg_get_config_name_len(struct config *c)
+{
+	return c ? strlen(c->name) : -1;
+}
+
+char *usbg_get_config_name(struct config *c, char *buf, size_t len)
+{
+	return c ? strncpy(buf, c->name, len) : NULL;
+}
+
 void usbg_set_config_attrs(struct config *c, struct config_attrs *c_attrs)
 {
 	if (!c || !c_attrs)
