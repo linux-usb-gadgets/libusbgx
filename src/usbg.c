@@ -635,6 +635,26 @@ struct gadget_attrs *usbg_get_gadget_attrs(struct gadget *g,
 	return g_attrs;
 }
 
+size_t usbg_get_gadget_name_len(struct gadget *g)
+{
+	return g ? strlen(g->name) : -1;
+}
+
+char *usbg_get_gadget_name(struct gadget *g, char *buf, size_t len)
+{
+	return g ? strncpy(buf, g->name, len) : NULL;
+}
+
+size_t usbg_get_gadget_udc_len(struct gadget *g)
+{
+	return g ? strlen(g->udc) : -1;
+}
+
+char *usbg_get_gadget_udc(struct gadget *g, char *buf, size_t len)
+{
+	return g ? strncpy(buf, g->udc, len) : NULL;
+}
+
 void usbg_set_gadget_attrs(struct gadget *g, struct gadget_attrs *g_attrs)
 {
 	if (!g || !g_attrs)

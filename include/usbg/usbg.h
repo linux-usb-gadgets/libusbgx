@@ -303,6 +303,22 @@ extern struct gadget_attrs *usbg_get_gadget_attrs(struct gadget *g,
 		struct gadget_attrs *g_attrs);
 
 /**
+ * @brief Get gadget name length
+ * @param g Gadget which name length should be returned
+ * @return Length of name string or -1 if error occurred.
+ */
+extern size_t usbg_get_gadget_name_len(struct gadget *g);
+
+/**
+ * @brieg Get gadget name
+ * @param b Pointer to gadget
+ * @param buf Buffer where name should be copied
+ * @param len Length of given buffer
+ * @return Pointer to destination or NULL if error occurred.
+ */
+extern char *usbg_get_gadget_name(struct gadget *g, char *buf, size_t len);
+
+/**
  * @brief Set the USB gadget vendor id
  * @param g Pointer to gadget
  * @param idVendor USB device vendor id
@@ -478,6 +494,24 @@ extern void usbg_enable_gadget(struct gadget *g, char *udc);
  * @param g Pointer to gadget
  */
 extern void usbg_disable_gadget(struct gadget *g);
+
+/**
+ * @brief Get gadget name length
+ * @param g Gadget which name length should be returned
+ * @return Length of name string or -1 if error occurred.
+ * @note If gadget isn't enabled on any udc returned size is 0.
+ */
+extern size_t usbg_get_gadget_udc_len(struct gadget *g);
+
+/**
+ * @brieg Get name of udc to which gadget is binded
+ * @param b Pointer to gadget
+ * @param buf Buffer where udc name should be copied
+ * @param len Length of given buffer
+ * @return Pointer to destination or NULL if error occurred.
+ * @note If gadget isn't enabled on any udc returned string is empty.
+ */
+extern char *usbg_get_gadget_udc(struct gadget *g, char *buf, size_t len);
 
 /*
  * USB function-specific attribute configuration
