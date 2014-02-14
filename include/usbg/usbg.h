@@ -233,6 +233,22 @@ extern struct state *usbg_init(char *configfs_path);
  */
 extern void usbg_cleanup(struct state *s);
 
+/**
+ * @brief Get ConfigFS path length
+ * @param s Pointer to state
+ * @return Length of path or -1 if error occurred.
+ */
+extern size_t usbg_get_configfs_path_len(struct state *s);
+
+/**
+ * @brieg Get ConfigFS path
+ * @param s Pointer to state
+ * @param buf Buffer where path should be copied
+ * @param len Length of given buffer
+ * @return Pointer to destination or NULL if error occurred.
+ */
+extern char *usbg_get_configfs_path(struct state *s, char *buf, size_t len);
+
 /* USB gadget queries */
 
 /**

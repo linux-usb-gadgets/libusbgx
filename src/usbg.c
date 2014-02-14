@@ -470,6 +470,16 @@ void usbg_cleanup(struct state *s)
 	free(s);
 }
 
+size_t usbg_get_configfs_path_len(struct state *s)
+{
+	return s ? strlen(s->path) : -1;
+}
+
+char *usbg_get_configfs_path(struct state *s, char *buf, size_t len)
+{
+	return s ? strncpy(buf, s->path, len) : NULL;
+}
+
 struct gadget *usbg_get_gadget(struct state *s, const char *name)
 {
 	struct gadget *g;
