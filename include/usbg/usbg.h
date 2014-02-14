@@ -269,8 +269,29 @@ extern struct config *usbg_get_config(struct gadget *g, const char *name);
  * @param idProduct Gadget product ID
  * @return Pointer to gadget or NULL if the gadget cannot be created
  */
-extern struct gadget *usbg_create_gadget(struct state *s, char *name,
+extern struct gadget *usbg_create_gadget_vid_pid(struct state *s, char *name,
 		uint16_t idVendor, uint16_t idProduct);
+
+/**
+ * @brief Create a new USB gadget device and set given attributes
+ * and strings
+ * @param s Pointer to state
+ * @param name Name of the gadget
+ * @param g_attrs Gadget attributes to be set. If NULL setting is omitted.
+ * @param g_strs Gadget strings to be set. If NULL setting is omitted.
+ * @note Given strings are assumed to be in US English
+ * @return Pointer to gadget or NULL if the gadget cannot be created
+ */
+extern struct gadget *usbg_create_gadget(struct state *s, char *name,
+		struct gadget_attrs *g_attrs, struct gadget_strs *g_strs);
+
+/**
+ * @brief Set the USB gadget attributes
+ * @param g Pointer to gadget
+ * @param g_attrs Gadget attributes
+ */
+extern void usbg_set_gadget_attrs(struct gadget *g,
+		struct gadget_attrs *g_attrs);
 
 /**
  * @brief Set the USB gadget vendor id
@@ -332,6 +353,15 @@ extern void usbg_set_gadget_device_bcd_device(struct gadget *g,
  * @param bcdUSB BCD USB version
  */
 extern void usbg_set_gadget_device_bcd_usb(struct gadget *g, uint16_t bcdUSB);
+
+/**
+ * @brief Set the USB gadget strings
+ * @param g Pointer to gadget
+ * @param lang USB language ID
+ * @param g_sttrs Gadget attributes
+ */
+extern void usbg_set_gadget_strs(struct gadget *g, int lang,
+		struct gadget_strs *g_strs);
 
 /**
  * @brief Set the serial number for a gadget

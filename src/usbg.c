@@ -525,21 +525,11 @@ struct binding *usbg_get_link_binding(struct config *c, struct function *f)
 	return NULL;
 }
 
-struct gadget *usbg_create_gadget(struct state *s, char *name,
-		uint16_t idVendor, uint16_t idProduct)
+static struct gadget *usbg_create_empty_gadget(struct state *s, char *name)
 {
 	char gpath[USBG_MAX_PATH_LENGTH];
-	struct gadget *g, *cur;
+	struct gadget *g;
 	int ret;
-
-	if (!s)
-		return NULL;
-
-	g = usbg_get_gadget(s, name);
-	if (g) {
-		ERROR("duplicate gadget name\n");
-		return NULL;
-	}
 
 	sprintf(gpath, "%s/%s", s->path, name);
 
@@ -552,7 +542,7 @@ struct gadget *usbg_create_gadget(struct state *s, char *name,
 	TAILQ_INIT(&g->configs);
 	TAILQ_INIT(&g->functions);
 	strcpy(g->name, name);
-	sprintf(g->path, "%s", s->path);
+	strcpy(g->path, s->path);
 	g->parent = s;
 
 	ret = mkdir(gpath, S_IRWXU|S_IRWXG|S_IRWXO);
@@ -562,15 +552,92 @@ struct gadget *usbg_create_gadget(struct state *s, char *name,
 		return NULL;
 	}
 
-	usbg_write_hex16(s->path, name, "idVendor", idVendor);
-	usbg_write_hex16(s->path, name, "idProduct", idProduct);
-
-	usbg_parse_gadget_attrs(s->path, name, &g->attrs);
-	usbg_parse_strings(s->path, name, &g->strs);
-
-	INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name, g, gnode);
+	/* Should be empty but read the default */
+	usbg_read_string(g->path, g->name, "UDC", g->udc);
 
 	return g;
+}
+
+
+
+struct gadget *usbg_create_gadget_vid_pid(struct state *s, char *name,
+		uint16_t idVendor, uint16_t idProduct)
+{
+	struct gadget *g;
+
+	if (!s)
+		return NULL;
+
+	g = usbg_get_gadget(s, name);
+	if (g) {
+		ERROR("duplicate gadget name\n");
+		return NULL;
+	}
+
+	g = usbg_create_empty_gadget(s, name);
+
+	/* Check if gadget creation was successful and set attributes */
+	if (g) {
+		usbg_write_hex16(s->path, name, "idVendor", idVendor);
+		usbg_write_hex16(s->path, name, "idProduct", idProduct);
+
+		usbg_parse_gadget_attrs(s->path, name, &g->attrs);
+		usbg_parse_strings(s->path, name, &g->strs);
+
+		INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name, g, gnode);
+	}
+
+	return g;
+}
+
+struct gadget *usbg_create_gadget(struct state *s, char *name,
+		struct gadget_attrs *g_attrs, struct gadget_strs *g_strs)
+{
+	struct gadget *g;
+
+	if (!s)
+		return NULL;
+
+	g = usbg_get_gadget(s, name);
+	if (g) {
+		ERROR("duplicate gadget name\n");
+		return NULL;
+	}
+
+	g = usbg_create_empty_gadget(s, name);
+
+	/* Check if gadget creation was successful and set attrs and strings */
+	if (g) {
+		if (g_attrs)
+			usbg_set_gadget_attrs(g, g_attrs);
+		else
+			usbg_parse_gadget_attrs(s->path, name, &g->attrs);
+
+		if (g_strs)
+			usbg_set_gadget_strs(g, LANG_US_ENG, g_strs);
+		else
+			usbg_parse_strings(s->path, name, &g->strs);
+
+		INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name, g, gnode);
+	}
+
+	return g;
+}
+
+void usbg_set_gadget_attrs(struct gadget *g, struct gadget_attrs *g_attrs)
+{
+	if (!g || !g_attrs)
+		return;
+
+	g->attrs = *g_attrs;
+	usbg_write_hex16(g->path, g->name, "bcdUSB", g_attrs->bcdUSB);
+	usbg_write_hex8(g->path, g->name, "bDeviceClass", g_attrs->bDeviceClass);
+	usbg_write_hex8(g->path, g->name, "bDeviceSubClass", g_attrs->bDeviceSubClass);
+	usbg_write_hex8(g->path, g->name, "bDeviceProtocol", g_attrs->bDeviceProtocol);
+	usbg_write_hex8(g->path, g->name, "bMaxPacketSize0", g_attrs->bMaxPacketSize0);
+	usbg_write_hex16(g->path, g->name, "idVendor", g_attrs->idVendor);
+	usbg_write_hex16(g->path, g->name, "idProduct", g_attrs->idProduct);
+	usbg_write_hex16(g->path, g->name, "bcdDevice", g_attrs->bcdDevice);
 }
 
 void usbg_set_gadget_vendor_id(struct gadget *g, uint16_t idVendor)
@@ -619,6 +686,24 @@ void usbg_set_gadget_device_bcd_usb(struct gadget *g, uint16_t bcdUSB)
 {
 	g->attrs.bcdUSB = bcdUSB;
 	usbg_write_hex16(g->path, g->name, "bcdUSB", bcdUSB);
+}
+
+void usbg_set_gadget_strs(struct gadget *g, int lang,
+		struct gadget_strs *g_strs)
+{
+	char path[USBG_MAX_PATH_LENGTH];
+
+	sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, STRINGS_DIR, lang);
+
+	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
+
+	/* strings in library are hardcoded to US English for now */
+	if (lang == LANG_US_ENG)
+		g->strs = *g_strs;
+
+	usbg_write_string(path, "", "serialnumber", g_strs->str_ser);
+	usbg_write_string(path, "", "manufacturer", g_strs->str_mnf);
+	usbg_write_string(path, "", "product", g_strs->str_prd);
 }
 
 void usbg_set_gadget_serial_number(struct gadget *g, int lang, char *serno)
