@@ -54,7 +54,7 @@ struct usbg_gadget
 
 	TAILQ_ENTRY(usbg_gadget) gnode;
 	TAILQ_HEAD(chead, usbg_config) configs;
-	TAILQ_HEAD(fhead, function) functions;
+	TAILQ_HEAD(fhead, usbg_function) functions;
 	usbg_state *parent;
 };
 
@@ -68,6 +68,18 @@ struct usbg_config
 	char path[USBG_MAX_PATH_LENGTH];
 	struct config_attrs attrs;
 	struct config_strs strs;
+};
+
+struct usbg_function
+{
+	TAILQ_ENTRY(usbg_function) fnode;
+	usbg_gadget *parent;
+
+	char name[USBG_MAX_NAME_LENGTH];
+	char path[USBG_MAX_PATH_LENGTH];
+
+	enum function_type type;
+	union attrs attr;
 };
 
 /**
@@ -252,7 +264,7 @@ static inline void usbg_write_string(char *path, char *name, char *file, char *b
 	usbg_write_buf(path, name, file, buf);
 }
 
-static void usbg_parse_function_attrs(struct function *f)
+static void usbg_parse_function_attrs(usbg_function *f)
 {
 	struct ether_addr *addr;
 	char str_addr[40];
@@ -291,7 +303,7 @@ static void usbg_parse_function_attrs(struct function *f)
 
 static int usbg_parse_functions(char *path, usbg_gadget *g)
 {
-	struct function *f;
+	usbg_function *f;
 	int i, n;
 	struct dirent **dent;
 	char fpath[USBG_MAX_PATH_LENGTH];
@@ -302,7 +314,7 @@ static int usbg_parse_functions(char *path, usbg_gadget *g)
 
 	n = scandir(fpath, &dent, file_select, alphasort);
 	for (i=0; i < n; i++) {
-		f = malloc(sizeof(struct function));
+		f = malloc(sizeof(usbg_function));
 		f->parent = g;
 		strcpy(f->name, dent[i]->d_name);
 		strcpy(f->path, fpath);
@@ -341,7 +353,7 @@ static void usbg_parse_config_bindings(usbg_config *c)
 	char bpath[USBG_MAX_PATH_LENGTH];
 	usbg_gadget *g = c->parent;
 	struct binding *b;
-	struct function *f;
+	usbg_function *f;
 
 	sprintf(bpath, "%s/%s", c->path, c->name);
 
@@ -507,7 +519,7 @@ void usbg_cleanup(usbg_state *s)
 	usbg_gadget *g;
 	usbg_config *c;
 	struct binding *b;
-	struct function *f;
+	usbg_function *f;
 
 	while (!TAILQ_EMPTY(&s->gadgets)) {
 		g = TAILQ_FIRST(&s->gadgets);
@@ -554,9 +566,9 @@ usbg_gadget *usbg_get_gadget(usbg_state *s, const char *name)
 	return NULL;
 }
 
-struct function *usbg_get_function(usbg_gadget *g, const char *name)
+usbg_function *usbg_get_function(usbg_gadget *g, const char *name)
 {
-	struct function *f;
+	usbg_function *f;
 
 	TAILQ_FOREACH(f, &g->functions, fnode)
 		if (!strcmp(f->name, name))
@@ -587,7 +599,7 @@ struct binding *usbg_get_binding(usbg_config *c, const char *name)
 	return NULL;
 }
 
-struct binding *usbg_get_link_binding(usbg_config *c, struct function *f)
+struct binding *usbg_get_link_binding(usbg_config *c, usbg_function *f)
 {
 	struct binding *b;
 
@@ -866,12 +878,12 @@ void usbg_set_gadget_product(usbg_gadget *g, int lang, char *prd)
 	usbg_write_string(path, "", "product", prd);
 }
 
-struct function *usbg_create_function(usbg_gadget *g, enum function_type type,
+usbg_function *usbg_create_function(usbg_gadget *g, enum function_type type,
 		char *instance, union attrs *f_attrs)
 {
 	char fpath[USBG_MAX_PATH_LENGTH];
 	char name[USBG_MAX_STR_LENGTH];
-	struct function *f;
+	usbg_function *f;
 	int ret;
 
 	if (!g)
@@ -889,7 +901,7 @@ struct function *usbg_create_function(usbg_gadget *g, enum function_type type,
 
 	sprintf(fpath, "%s/%s/%s/%s", g->path, g->name, FUNCTIONS_DIR, name);
 
-	f = malloc(sizeof(struct function));
+	f = malloc(sizeof(usbg_function));
 	if (!f) {
 		ERRORNO("allocating function\n");
 		return NULL;
@@ -979,12 +991,12 @@ char *usbg_get_config_name(usbg_config *c, char *buf, size_t len)
 	return c ? strncpy(buf, c->name, len) : NULL;
 }
 
-size_t usbg_get_function_name_len(struct function *f)
+size_t usbg_get_function_name_len(usbg_function *f)
 {
 	return f ? strlen(f->name) : -1;
 }
 
-char *usbg_get_function_name(struct function *f, char *buf, size_t len)
+char *usbg_get_function_name(usbg_function *f, char *buf, size_t len)
 {
 	return f ? strncpy(buf, f->name, len) : NULL;
 }
@@ -1055,7 +1067,7 @@ void usbg_set_config_string(usbg_config *c, int lang, char *str)
 	usbg_write_string(path, "", "configuration", str);
 }
 
-int usbg_add_config_function(usbg_config *c, char *name, struct function *f)
+int usbg_add_config_function(usbg_config *c, char *name, usbg_function *f)
 {
 	char bpath[USBG_MAX_PATH_LENGTH];
 	char fpath[USBG_MAX_PATH_LENGTH];
@@ -1102,7 +1114,7 @@ int usbg_add_config_function(usbg_config *c, char *name, struct function *f)
 	return 0;
 }
 
-struct function *usbg_get_binding_target(struct binding *b)
+usbg_function *usbg_get_binding_target(struct binding *b)
 {
 	return b ? b->target : NULL;
 }
@@ -1153,12 +1165,12 @@ void usbg_disable_gadget(usbg_gadget *g)
  * USB function-specific attribute configuration
  */
 
-enum function_type usbg_get_function_type(struct function *f)
+enum function_type usbg_get_function_type(usbg_function *f)
 {
 	return f->type;
 }
 
-union attrs *usbg_get_function_attrs(struct function *f, union attrs *f_attrs)
+union attrs *usbg_get_function_attrs(usbg_function *f, union attrs *f_attrs)
 {
 	if (f && f_attrs)
 		*f_attrs = f->attr;
@@ -1168,7 +1180,7 @@ union attrs *usbg_get_function_attrs(struct function *f, union attrs *f_attrs)
 	return f_attrs;
 }
 
-void usbg_set_function_attrs(struct function *f, union attrs *f_attrs)
+void usbg_set_function_attrs(usbg_function *f, union attrs *f_attrs)
 {
 	char *addr;
 
@@ -1206,7 +1218,7 @@ void usbg_set_function_attrs(struct function *f, union attrs *f_attrs)
 	}
 }
 
-void usbg_set_net_dev_addr(struct function *f, struct ether_addr *dev_addr)
+void usbg_set_net_dev_addr(usbg_function *f, struct ether_addr *dev_addr)
 {
 	char *str_addr;
 
@@ -1216,7 +1228,7 @@ void usbg_set_net_dev_addr(struct function *f, struct ether_addr *dev_addr)
 	usbg_write_string(f->path, f->name, "dev_addr", str_addr);
 }
 
-void usbg_set_net_host_addr(struct function *f, struct ether_addr *host_addr)
+void usbg_set_net_host_addr(usbg_function *f, struct ether_addr *host_addr)
 {
 	char *str_addr;
 
@@ -1226,7 +1238,7 @@ void usbg_set_net_host_addr(struct function *f, struct ether_addr *host_addr)
 	usbg_write_string(f->path, f->name, "host_addr", str_addr);
 }
 
-void usbg_set_net_qmult(struct function *f, int qmult)
+void usbg_set_net_qmult(usbg_function *f, int qmult)
 {
 	f->attr.net.qmult = qmult;
 	usbg_write_dec(f->path, f->name, "qmult", qmult);
@@ -1237,7 +1249,7 @@ usbg_gadget *usbg_get_first_gadget(usbg_state *s)
 	return s ? TAILQ_FIRST(&s->gadgets) : NULL;
 }
 
-struct function *usbg_get_first_function(usbg_gadget *g)
+usbg_function *usbg_get_first_function(usbg_gadget *g)
 {
 	return g ? TAILQ_FIRST(&g->functions) : NULL;
 }
@@ -1257,7 +1269,7 @@ usbg_gadget *usbg_get_next_gadget(usbg_gadget *g)
 	return g ? TAILQ_NEXT(g, gnode) : NULL;
 }
 
-struct function *usbg_get_next_function(struct function *f)
+usbg_function *usbg_get_next_function(usbg_function *f)
 {
 	return f ? TAILQ_NEXT(f, fnode) : NULL;
 }

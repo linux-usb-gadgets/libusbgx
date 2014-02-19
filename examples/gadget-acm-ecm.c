@@ -31,9 +31,9 @@ int main(void)
 {
 	usbg_state *s;
 	usbg_gadget *g;
-	struct function *f;
+	usbg_function *f;
 	usbg_config *c;
-	struct function *f_acm0, *f_acm1, *f_ecm;
+	usbg_function *f_acm0, *f_acm1, *f_ecm;
 	int ret = -EINVAL;
 
 	s = usbg_init("/sys/kernel/config");

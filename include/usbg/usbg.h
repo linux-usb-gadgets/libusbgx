@@ -47,6 +47,7 @@
 struct usbg_state;
 struct usbg_gadget;
 struct usbg_config;
+struct usbg_function;
 
 /**
  * @brief State of the gadget devices in the system
@@ -62,6 +63,11 @@ typedef struct usbg_gadget usbg_gadget;
  * @brief USB configuration
  */
 typedef struct usbg_config usbg_config;
+
+/**
+ * @brief USB function
+ */
+typedef struct usbg_function usbg_function;
 
 /**
  * @struct gadget_attrs
@@ -164,23 +170,6 @@ union attrs {
 };
 
 /**
- * @struct function
- * @brief USB gadget function attributes
- */
-struct function
-{
-	TAILQ_ENTRY(function) fnode;
-	usbg_gadget *parent;
-
-	char name[USBG_MAX_NAME_LENGTH];
-	char path[USBG_MAX_PATH_LENGTH];
-
-	enum function_type type;
-	union attrs attr;
-};
-
-
-/**
  * @struct binding
  * @brief Describes a binding between a USB gadget configuration
  *	  and a USB gadget function
@@ -189,7 +178,7 @@ struct binding
 {
 	TAILQ_ENTRY(binding) bnode;
 	usbg_config *parent;
-	struct function *target;
+	usbg_function *target;
 
 	char name[USBG_MAX_NAME_LENGTH];
 	char path[USBG_MAX_PATH_LENGTH];
@@ -242,7 +231,7 @@ extern usbg_gadget *usbg_get_gadget(usbg_state *s, const char *name);
  * @param name Name of the function
  * @return Pointer to function or NULL if a matching function isn't found
  */
-extern struct function *usbg_get_function(usbg_gadget *g, const char *name);
+extern usbg_function *usbg_get_function(usbg_gadget *g, const char *name);
 
 /**
  * @brief Get a configuration by name
@@ -424,7 +413,7 @@ extern void usbg_set_gadget_product(usbg_gadget *g, int lang, char *prd);
  * @param f_attrs Function attributes to be set. If NULL setting is omitted.
  * @return Pointer to function or NULL if it cannot be created
  */
-extern struct function *usbg_create_function(usbg_gadget *g, enum function_type type,
+extern usbg_function *usbg_create_function(usbg_gadget *g, enum function_type type,
 		char *instance, union attrs *f_attrs);
 
 /**
@@ -432,7 +421,7 @@ extern struct function *usbg_create_function(usbg_gadget *g, enum function_type 
  * @param f Config which name length should be returned
  * @return Length of name string or -1 if error occurred.
  */
-extern size_t usbg_get_function_name_len(struct function *f);
+extern size_t usbg_get_function_name_len(usbg_function *f);
 
 /**
  * @brieg Get config name
@@ -441,7 +430,7 @@ extern size_t usbg_get_function_name_len(struct function *f);
  * @param len Length of given buffer
  * @return Pointer to destination or NULL if error occurred.
  */
-extern char *usbg_get_function_name(struct function *f, char *buf, size_t len);
+extern char *usbg_get_function_name(usbg_function *f, char *buf, size_t len);
 
 /* USB configurations allocation and configuration */
 
@@ -536,14 +525,14 @@ extern void usbg_set_config_string(usbg_config *c, int lang, char *string);
  * @param f Pointer to function
  * @return 0 on success, -1 on failure.
  */
-extern int usbg_add_config_function(usbg_config *c, char *name, struct function *f);
+extern int usbg_add_config_function(usbg_config *c, char *name, usbg_function *f);
 
 /**
  * @brief Get target function of given binding
  * @param b Binding between configuration and function
  * @return Pointer to USB function which is target for this binding
  */
-extern struct function *usbg_get_binding_target(struct binding *b);
+extern usbg_function *usbg_get_binding_target(struct binding *b);
 
 /**
  * @brief Get binding name length
@@ -611,7 +600,7 @@ extern char *usbg_get_gadget_udc(usbg_gadget *g, char *buf, size_t len);
  * @return Type of function
  * @warning Pointer to function has to be valid.
  */
-extern enum function_type usbg_get_function_type(struct function *f);
+extern enum function_type usbg_get_function_type(usbg_function *f);
 
 /**
  * @brief Get attributes of given function
@@ -619,7 +608,7 @@ extern enum function_type usbg_get_function_type(struct function *f);
  * @param f_attrs Union to be filled
  * @return Pointer to filled structure or NULL if error occurred.
  */
-extern union attrs *usbg_get_function_attrs(struct function *f,
+extern union attrs *usbg_get_function_attrs(usbg_function *f,
 		union attrs *f_attrs);
 
 /**
@@ -627,28 +616,28 @@ extern union attrs *usbg_get_function_attrs(struct function *f,
  * @param f Pointer to function
  * @param f_attrs Attributes to be set
  */
-extern void usbg_set_function_attrs(struct function *f, union attrs *f_attrs);
+extern void usbg_set_function_attrs(usbg_function *f, union attrs *f_attrs);
 
 /**
  * @brief Set USB function network device address
  * @param f Pointer to function
  * @param addr Pointer to Ethernet address
  */
-extern void usbg_set_net_dev_addr(struct function *f, struct ether_addr *addr);
+extern void usbg_set_net_dev_addr(usbg_function *f, struct ether_addr *addr);
 
 /**
  * @brief Set USB function network host address
  * @param f Pointer to function
  * @param addr Pointer to Ethernet address
  */
-extern void usbg_set_net_host_addr(struct function *f, struct ether_addr *addr);
+extern void usbg_set_net_host_addr(usbg_function *f, struct ether_addr *addr);
 
 /**
  * @brief Set USB function network qmult
  * @param f Pointer to function
  * @param qmult Queue length multiplier
  */
-extern void usbg_set_net_qmult(struct function *f, int qmult);
+extern void usbg_set_net_qmult(usbg_function *f, int qmult);
 
 /**
  * @def usbg_for_each_gadget(g, s)
@@ -700,7 +689,7 @@ extern usbg_gadget *usbg_get_first_gadget(usbg_state *s);
  * @return Pointer to function or NULL if list is empty.
  * @note Functions are sorted in strings (name) order
  */
-extern struct function *usbg_get_first_function(usbg_gadget *g);
+extern usbg_function *usbg_get_first_function(usbg_gadget *g);
 
 /**
  * @brief Get first config in config list
@@ -730,7 +719,7 @@ extern usbg_gadget *usbg_get_next_gadget(usbg_gadget *g);
  * @pram g Pointer to current function
  * @return Next function or NULL if end of list.
  */
-extern struct function *usbg_get_next_function(struct function *f);
+extern usbg_function *usbg_get_next_function(usbg_function *f);
 
 /**
  * @brief Get the next config on a list.

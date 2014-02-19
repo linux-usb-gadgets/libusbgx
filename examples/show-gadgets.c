@@ -57,15 +57,21 @@ void show_gadget(usbg_gadget *g)
 	fprintf(stdout, "  Product\t\t%s\n", g_strs.str_prd);
 }
 
-void show_function(struct function *f)
+void show_function(usbg_function *f)
 {
-	fprintf(stdout, "  Function '%s'\n", f->name);
-	switch (f->type) {
+	char buf[USBG_MAX_STR_LENGTH];
+	union attrs f_attrs;
+
+	usbg_get_function_name(f, buf, USBG_MAX_STR_LENGTH);
+	usbg_get_function_attrs(f, &f_attrs);
+
+	fprintf(stdout, "  Function '%s'\n", buf);
+	switch (usbg_get_function_type(f)) {
 	case F_SERIAL:
 	case F_ACM:
 	case F_OBEX:
 		fprintf(stdout, "    port_num\t\t%d\n",
-			f->attr.serial.port_num);
+				f_attrs.serial.port_num);
 		break;
 	case F_ECM:
 	case F_SUBSET:
@@ -73,14 +79,14 @@ void show_function(struct function *f)
 	case F_EEM:
 	case F_RNDIS:
 		fprintf(stdout, "    dev_addr\t\t%s\n",
-			ether_ntoa(&f->attr.net.dev_addr));
+				ether_ntoa(&f_attrs.net.dev_addr));
 		fprintf(stdout, "    host_addr\t\t%s\n",
-			ether_ntoa(&f->attr.net.host_addr));
-		fprintf(stdout, "    ifname\t\t%s\n", f->attr.net.ifname);
-		fprintf(stdout, "    qmult\t\t%d\n", f->attr.net.qmult);
+				ether_ntoa(&f_attrs.net.host_addr));
+		fprintf(stdout, "    ifname\t\t%s\n", f_attrs.net.ifname);
+		fprintf(stdout, "    qmult\t\t%d\n", f_attrs.net.qmult);
 		break;
 	case F_PHONET:
-		fprintf(stdout, "    ifname\t\t%s\n", f->attr.phonet.ifname);
+		fprintf(stdout, "    ifname\t\t%s\n", f_attrs.phonet.ifname);
 		break;
 	default:
 		fprintf(stdout, "    UNKNOWN\n");
@@ -90,7 +96,7 @@ void show_function(struct function *f)
 void show_config(usbg_config *c)
 {
 	struct binding *b;
-	struct function *f;
+	usbg_function *f;
 	char buf[USBG_MAX_STR_LENGTH], buf2[USBG_MAX_STR_LENGTH];
 	struct config_attrs c_attrs;
 	struct config_strs c_strs;
@@ -105,18 +111,20 @@ void show_config(usbg_config *c)
 	usbg_get_config_strs(c, &c_strs);
 	fprintf(stdout, "    configuration\t%s\n", c_strs.configuration);
 
-	usbg_for_each_binding(b, c)
-		fprintf(stdout, "    %s -> %s\n", b->name,b->target->name);
+	usbg_for_each_binding(b, c) {
+		f = b->target;
+		usbg_get_function_name(f, buf2, USBG_MAX_STR_LENGTH);
+		fprintf(stdout, "    %s -> %s\n", b->name, buf2);
+	}
 }
 
 int main(void)
 {
 	usbg_state *s;
 	usbg_gadget *g;
-	struct function *f;
+	usbg_function *f;
 	usbg_config *c;
 	struct binding *b;
-	struct function *f_acm0, *f_acm1, *f_ecm;
 
 	s = usbg_init("/sys/kernel/config");
 	if (!s) {
