@@ -50,6 +50,24 @@
                         fflush(stderr);\
                     } while (0)
 
+/* Insert in string order */
+#define INSERT_TAILQ_STRING_ORDER(HeadPtr, HeadType, NameField, ToInsert, NodeField) \
+	do { \
+		if (TAILQ_EMPTY(HeadPtr) || \
+			(strcmp(ToInsert->NameField, TAILQ_FIRST(HeadPtr)->NameField) < 0)) \
+			TAILQ_INSERT_HEAD(HeadPtr, ToInsert, NodeField); \
+		else if (strcmp(ToInsert->NameField, TAILQ_LAST(HeadPtr, HeadType)->NameField) > 0) \
+			TAILQ_INSERT_TAIL(HeadPtr, ToInsert, NodeField); \
+		else { \
+			typeof(ToInsert) _cur; \
+			TAILQ_FOREACH(_cur, HeadPtr, NodeField) { \
+				if (strcmp(ToInsert->NameField, _cur->NameField) > 0) \
+					continue; \
+				TAILQ_INSERT_BEFORE(_cur, ToInsert, NodeField); \
+			} \
+		} \
+	} while (0)
+
 static int usbg_lookup_function_type(char *name)
 {
 	int i = 0;
@@ -550,18 +568,7 @@ struct gadget *usbg_create_gadget(struct state *s, char *name,
 	usbg_parse_gadget_attrs(s->path, name, &g->attrs);
 	usbg_parse_strings(s->path, name, &g->strs);
 
-	/* Insert in string order */
-	if (TAILQ_EMPTY(&s->gadgets) ||
-	    (strcmp(name, TAILQ_FIRST(&s->gadgets)->name) < 0))
-		TAILQ_INSERT_HEAD(&s->gadgets, g, gnode);
-	else if (strcmp(name, TAILQ_LAST(&s->gadgets, ghead)->name) > 0)
-		TAILQ_INSERT_TAIL(&s->gadgets, g, gnode);
-	else
-		TAILQ_FOREACH(cur, &s->gadgets, gnode) {
-			if (strcmp(name, cur->name) > 0)
-				continue;
-			TAILQ_INSERT_BEFORE(cur, g, gnode);
-		}
+	INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name, g, gnode);
 
 	return g;
 }
@@ -645,7 +652,7 @@ struct function *usbg_create_function(struct gadget *g, enum function_type type,
 {
 	char fpath[USBG_MAX_PATH_LENGTH];
 	char name[USBG_MAX_STR_LENGTH];
-	struct function *f, *cur;
+	struct function *f;
 	int ret;
 
 	if (!g)
@@ -682,18 +689,7 @@ struct function *usbg_create_function(struct gadget *g, enum function_type type,
 
 	usbg_parse_function_attrs(f);
 
-	/* Insert in string order */
-	if (TAILQ_EMPTY(&g->functions) ||
-	    (strcmp(name, TAILQ_FIRST(&g->functions)->name) < 0))
-		TAILQ_INSERT_HEAD(&g->functions, f, fnode);
-	else if (strcmp(name, TAILQ_LAST(&g->functions, fhead)->name) > 0)
-		TAILQ_INSERT_TAIL(&g->functions, f, fnode);
-	else
-		TAILQ_FOREACH(cur, &g->functions, fnode) {
-			if (strcmp(name, cur->name) > 0)
-				continue;
-			TAILQ_INSERT_BEFORE(cur, f, fnode);
-		}
+	INSERT_TAILQ_STRING_ORDER(&g->functions, fhead, name, f, fnode);
 
 	return f;
 }
@@ -701,7 +697,7 @@ struct function *usbg_create_function(struct gadget *g, enum function_type type,
 struct config *usbg_create_config(struct gadget *g, char *name)
 {
 	char cpath[USBG_MAX_PATH_LENGTH];
-	struct config *c, *cur;
+	struct config *c;
 	int ret;
 
 	if (!g)
@@ -737,18 +733,7 @@ struct config *usbg_create_config(struct gadget *g, char *name)
 
 	usbg_parse_config_attrs(c);
 
-	/* Insert in string order */
-	if (TAILQ_EMPTY(&g->configs) ||
-	    (strcmp(name, TAILQ_FIRST(&g->configs)->name) < 0))
-		TAILQ_INSERT_HEAD(&g->configs, c, cnode);
-	else if (strcmp(name, TAILQ_LAST(&g->configs, chead)->name) > 0)
-		TAILQ_INSERT_TAIL(&g->configs, c, cnode);
-	else
-		TAILQ_FOREACH(cur, &g->configs, cnode) {
-			if (strcmp(name, cur->name) > 0)
-				continue;
-			TAILQ_INSERT_BEFORE(cur, c, cnode);
-		}
+	INSERT_TAILQ_STRING_ORDER(&g->configs, chead, name, c, cnode);
 
 	return c;
 }
@@ -783,7 +768,6 @@ int usbg_add_config_function(struct config *c, char *name, struct function *f)
 	char bpath[USBG_MAX_PATH_LENGTH];
 	char fpath[USBG_MAX_PATH_LENGTH];
 	struct binding *b;
-	struct binding *cur;
 	int ret = -1;
 
 	if (!c || !f)
@@ -821,18 +805,7 @@ int usbg_add_config_function(struct config *c, char *name, struct function *f)
 	b->target = f;
 	b->parent = c;
 
-	/* Insert in string order */
-	if (TAILQ_EMPTY(&c->bindings) ||
-	    (strcmp(name, TAILQ_FIRST(&c->bindings)->name) < 0))
-		TAILQ_INSERT_HEAD(&c->bindings, b, bnode);
-	else if (strcmp(name, TAILQ_LAST(&c->bindings, bhead)->name) > 0)
-		TAILQ_INSERT_TAIL(&c->bindings, b, bnode);
-	else
-		TAILQ_FOREACH(cur, &c->bindings, bnode) {
-			if (strcmp(name, cur->name) > 0)
-				continue;
-			TAILQ_INSERT_BEFORE(cur, b, bnode);
-		}
+	INSERT_TAILQ_STRING_ORDER(&c->bindings, bhead, name, b, bnode);
 
 	return 0;
 }
