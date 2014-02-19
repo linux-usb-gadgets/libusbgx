@@ -31,7 +31,6 @@ int main(void)
 {
 	usbg_state *s;
 	usbg_gadget *g;
-	usbg_function *f;
 	usbg_config *c;
 	usbg_function *f_acm0, *f_acm1, *f_ecm;
 	int ret = -EINVAL;

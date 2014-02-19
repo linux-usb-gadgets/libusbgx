@@ -110,14 +110,12 @@ const char *function_names[] =
 };
 
 #define ERROR(msg, ...) do {\
-                        char *str;\
                         fprintf(stderr, "%s()  "msg" \n", \
                                 __func__, ##__VA_ARGS__);\
                         fflush(stderr);\
                     } while (0)
 
 #define ERRORNO(msg, ...) do {\
-                        char *str;\
                         fprintf(stderr, "%s()  %s: "msg" \n", \
                                 __func__, strerror(errno), ##__VA_ARGS__);\
                         fflush(stderr);\

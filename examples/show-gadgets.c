@@ -125,7 +125,6 @@ int main(void)
 	usbg_gadget *g;
 	usbg_function *f;
 	usbg_config *c;
-	usbg_binding *b;
 
 	s = usbg_init("/sys/kernel/config");
 	if (!s) {
