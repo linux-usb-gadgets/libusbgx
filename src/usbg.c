@@ -265,11 +265,22 @@ static int usbg_parse_functions(char *path, struct gadget *g)
 	return 0;
 }
 
-static void usbg_parse_config_attrs(struct config *c)
+static void usbg_parse_config_attrs(char *path, char *name,
+		struct config_attrs *c_attrs)
 {
-	c->maxpower = usbg_read_dec(c->path, c->name, "MaxPower");
-	c->bmattrs = usbg_read_hex(c->path, c->name, "bmAttributes");
-	usbg_read_string(c->path, c->name, "strings/0x409/configuration", c->str_cfg);
+	c_attrs->bMaxPower = usbg_read_dec(path, name, "MaxPower");
+	c_attrs->bmAttributes = usbg_read_hex(path, name, "bmAttributes");
+}
+
+static void usbg_parse_config_strs(char *path, char *name,
+		struct config_strs *c_attrs)
+{
+	/* Hardcoded to US English right now*/
+	int lang = LANG_US_ENG;
+	char spath[USBG_MAX_PATH_LENGTH];
+
+	sprintf(spath, "%s/%s/%s/0x%x", path, name, STRINGS_DIR, lang);
+	usbg_read_string(spath, "", "configuration", c_attrs->configuration);
 }
 
 static void usbg_parse_config_bindings(struct config *c)
@@ -329,7 +340,8 @@ static int usbg_parse_configs(char *path, struct gadget *g)
 		c->parent = g;
 		strcpy(c->name, dent[i]->d_name);
 		strcpy(c->path, cpath);
-		usbg_parse_config_attrs(c);
+		usbg_parse_config_attrs(cpath, c->name, &c->attrs);
+		usbg_parse_config_strs(cpath, c->name, &c->strs);
 		usbg_parse_config_bindings(c);
 		TAILQ_INSERT_TAIL(&g->configs, c, cnode);
 		free(dent[i]);
@@ -886,23 +898,24 @@ struct config *usbg_create_config(struct gadget *g, char *name)
 		return NULL;
 	}
 
-	usbg_parse_config_attrs(c);
+	usbg_parse_config_attrs(c->path, c->name, &c->attrs);
+	usbg_parse_config_strs(c->path, c->name, &c->strs);
 
 	INSERT_TAILQ_STRING_ORDER(&g->configs, chead, name, c, cnode);
 
 	return c;
 }
 
-void usbg_set_config_max_power(struct config *c, int maxpower)
+void usbg_set_config_max_power(struct config *c, int bMaxPower)
 {
-	c->maxpower = maxpower;
-	usbg_write_dec(c->path, c->name, "MaxPower", maxpower);
+	c->attrs.bMaxPower = bMaxPower;
+	usbg_write_dec(c->path, c->name, "MaxPower", bMaxPower);
 }
 
-void usbg_set_config_bm_attrs(struct config *c, int bmattrs)
+void usbg_set_config_bm_attrs(struct config *c, int bmAttributes)
 {
-	c->bmattrs = bmattrs;
-	usbg_write_hex8(c->path, c->name, "bmAttributes", bmattrs);
+	c->attrs.bmAttributes = bmAttributes;
+	usbg_write_hex8(c->path, c->name, "bmAttributes", bmAttributes);
 }
 
 void usbg_set_config_string(struct config *c, int lang, char *str)
@@ -915,7 +928,7 @@ void usbg_set_config_string(struct config *c, int lang, char *str)
 
 	/* strings in library are hardcoded to US English for now */
 	if (lang == LANG_US_ENG)
-		strcpy(c->str_cfg, str);
+		strcpy(c->strs.configuration, str);
 
 	usbg_write_string(path, "", "configuration", str);
 }

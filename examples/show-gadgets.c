@@ -80,9 +80,9 @@ void show_config(struct config *c)
 	struct binding *b;
 
 	fprintf(stdout, "  Configuration '%s'\n", c->name);
-	fprintf(stdout, "    MaxPower\t\t%d\n", c->maxpower);
-	fprintf(stdout, "    bmAttributes\t0x%02x\n", c->bmattrs);
-	fprintf(stdout, "    configuration\t%s\n", c->str_cfg);
+	fprintf(stdout, "    MaxPower\t\t%d\n", c->attrs.bMaxPower);
+	fprintf(stdout, "    bmAttributes\t0x%02x\n", c->attrs.bmAttributes);
+	fprintf(stdout, "    configuration\t%s\n", c->strs.configuration);
 	usbg_for_each_binding(b, c)
 		fprintf(stdout, "    %s -> %s\n", b->name,b->target->name);
 }

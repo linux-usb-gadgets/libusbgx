@@ -99,6 +99,25 @@ struct gadget
 };
 
 /**
+ * @struct config_attrs
+ * @brief USB configuration attributes
+ */
+struct config_attrs
+{
+	uint8_t bmAttributes;
+	uint8_t bMaxPower;
+};
+
+/**
+ * @struct config_strs
+ * @brief USB configuration strings
+ */
+struct config_strs
+{
+	char configuration[USBG_MAX_STR_LENGTH];
+};
+
+/**
  * @struct config
  * @brief USB gadget configuration attributes
  */
@@ -110,9 +129,8 @@ struct config
 
 	char name[USBG_MAX_NAME_LENGTH];
 	char path[USBG_MAX_PATH_LENGTH];
-	int maxpower;
-	int bmattrs;
-	char str_cfg[USBG_MAX_STR_LENGTH];
+	struct config_attrs attrs;
+	struct config_strs strs;
 };
 
 /**
@@ -461,16 +479,16 @@ extern struct config *usbg_create_config(struct gadget *g, char *name);
 /**
  * @brief Set the configuration maximum power
  * @param c Pointer to config
- * @param maxpower Maximum power (in 2 mA units)
+ * @param bMaxPower Maximum power (in 2 mA units)
  */
-extern void usbg_set_config_max_power(struct config *c, int maxpower);
+extern void usbg_set_config_max_power(struct config *c, int bMaxPower);
 
 /**
  * @brief Set the configuration bitmap attributes
  * @param c Pointer to config
- * @param bmattrs Configuration characteristics
+ * @param bmAttributes Configuration characteristics
  */
-extern void usbg_set_config_bm_attrs(struct config *c, int bmattrs);
+extern void usbg_set_config_bm_attrs(struct config *c, int bmAttributes);
 
 /**
  * @brief Set the configuration string
