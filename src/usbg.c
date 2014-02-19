@@ -61,7 +61,7 @@ struct usbg_gadget
 struct usbg_config
 {
 	TAILQ_ENTRY(usbg_config) cnode;
-	TAILQ_HEAD(bhead, binding) bindings;
+	TAILQ_HEAD(bhead, usbg_binding) bindings;
 	usbg_gadget *parent;
 
 	char name[USBG_MAX_NAME_LENGTH];
@@ -80,6 +80,16 @@ struct usbg_function
 
 	enum function_type type;
 	union attrs attr;
+};
+
+struct usbg_binding
+{
+	TAILQ_ENTRY(usbg_binding) bnode;
+	usbg_config *parent;
+	usbg_function *target;
+
+	char name[USBG_MAX_NAME_LENGTH];
+	char path[USBG_MAX_PATH_LENGTH];
 };
 
 /**
@@ -352,7 +362,7 @@ static void usbg_parse_config_bindings(usbg_config *c)
 	struct dirent **dent;
 	char bpath[USBG_MAX_PATH_LENGTH];
 	usbg_gadget *g = c->parent;
-	struct binding *b;
+	usbg_binding *b;
 	usbg_function *f;
 
 	sprintf(bpath, "%s/%s", c->path, c->name);
@@ -373,7 +383,7 @@ static void usbg_parse_config_bindings(usbg_config *c)
 				ERRORNO("bytes %d contents %s\n", n, contents);
 			strcpy(fname, f->name);
 			if (strstr(contents, strtok(fname, "."))) {
-				b = malloc(sizeof(struct binding));
+				b = malloc(sizeof(usbg_binding));
 				strcpy(b->name, dent[i]->d_name);
 				strcpy(b->path, bpath);
 				b->target = f;
@@ -518,7 +528,7 @@ void usbg_cleanup(usbg_state *s)
 {
 	usbg_gadget *g;
 	usbg_config *c;
-	struct binding *b;
+	usbg_binding *b;
 	usbg_function *f;
 
 	while (!TAILQ_EMPTY(&s->gadgets)) {
@@ -588,9 +598,9 @@ usbg_config *usbg_get_config(usbg_gadget *g, const char *name)
 	return NULL;
 }
 
-struct binding *usbg_get_binding(usbg_config *c, const char *name)
+usbg_binding *usbg_get_binding(usbg_config *c, const char *name)
 {
-	struct binding *b;
+	usbg_binding *b;
 
 	TAILQ_FOREACH(b, &c->bindings, bnode)
 		if (!strcmp(b->name, name))
@@ -599,9 +609,9 @@ struct binding *usbg_get_binding(usbg_config *c, const char *name)
 	return NULL;
 }
 
-struct binding *usbg_get_link_binding(usbg_config *c, usbg_function *f)
+usbg_binding *usbg_get_link_binding(usbg_config *c, usbg_function *f)
 {
-	struct binding *b;
+	usbg_binding *b;
 
 	TAILQ_FOREACH(b, &c->bindings, bnode)
 		if (b->target == f)
@@ -1071,7 +1081,7 @@ int usbg_add_config_function(usbg_config *c, char *name, usbg_function *f)
 {
 	char bpath[USBG_MAX_PATH_LENGTH];
 	char fpath[USBG_MAX_PATH_LENGTH];
-	struct binding *b;
+	usbg_binding *b;
 	int ret = -1;
 
 	if (!c || !f)
@@ -1092,7 +1102,7 @@ int usbg_add_config_function(usbg_config *c, char *name, usbg_function *f)
 	sprintf(bpath, "%s/%s/%s", c->path, c->name, name);
 	sprintf(fpath, "%s/%s", f->path, f->name);
 
-	b = malloc(sizeof(struct binding));
+	b = malloc(sizeof(usbg_binding));
 	if (!b) {
 		ERRORNO("allocating binding\n");
 		return -1;
@@ -1114,17 +1124,17 @@ int usbg_add_config_function(usbg_config *c, char *name, usbg_function *f)
 	return 0;
 }
 
-usbg_function *usbg_get_binding_target(struct binding *b)
+usbg_function *usbg_get_binding_target(usbg_binding *b)
 {
 	return b ? b->target : NULL;
 }
 
-size_t usbg_get_binding_name_len(struct binding *b)
+size_t usbg_get_binding_name_len(usbg_binding *b)
 {
 	return b ? strlen(b->name) : -1;
 }
 
-char *usbg_get_binding_name(struct binding *b, char *buf, size_t len)
+char *usbg_get_binding_name(usbg_binding *b, char *buf, size_t len)
 {
 	return b ? strncpy(buf, b->name, len) : NULL;
 }
@@ -1259,7 +1269,7 @@ usbg_config *usbg_get_first_config(usbg_gadget *g)
 	return g ? TAILQ_FIRST(&g->configs) : NULL;
 }
 
-struct binding *usbg_get_first_binding(usbg_config *c)
+usbg_binding *usbg_get_first_binding(usbg_config *c)
 {
 	return c ? TAILQ_FIRST(&c->bindings) : NULL;
 }
@@ -1279,7 +1289,7 @@ usbg_config *usbg_get_next_config(usbg_config *c)
 	return c ? TAILQ_NEXT(c, cnode) : NULL;
 }
 
-struct binding *usbg_get_next_binding(struct binding *b)
+usbg_binding *usbg_get_next_binding(usbg_binding *b)
 {
 	return b ? TAILQ_NEXT(b, bnode) : NULL;
 }

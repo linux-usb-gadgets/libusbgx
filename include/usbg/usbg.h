@@ -48,6 +48,7 @@ struct usbg_state;
 struct usbg_gadget;
 struct usbg_config;
 struct usbg_function;
+struct usbg_binding;
 
 /**
  * @brief State of the gadget devices in the system
@@ -68,6 +69,11 @@ typedef struct usbg_config usbg_config;
  * @brief USB function
  */
 typedef struct usbg_function usbg_function;
+
+/**
+ * @brief USB function to config binding
+ */
+typedef struct usbg_binding usbg_binding;
 
 /**
  * @struct gadget_attrs
@@ -167,21 +173,6 @@ union attrs {
 	struct serial_attrs serial;
 	struct net_attrs net;
 	struct phonet_attrs phonet;
-};
-
-/**
- * @struct binding
- * @brief Describes a binding between a USB gadget configuration
- *	  and a USB gadget function
- */
-struct binding
-{
-	TAILQ_ENTRY(binding) bnode;
-	usbg_config *parent;
-	usbg_function *target;
-
-	char name[USBG_MAX_NAME_LENGTH];
-	char path[USBG_MAX_PATH_LENGTH];
 };
 
 /* Library init and cleanup */
@@ -532,14 +523,14 @@ extern int usbg_add_config_function(usbg_config *c, char *name, usbg_function *f
  * @param b Binding between configuration and function
  * @return Pointer to USB function which is target for this binding
  */
-extern usbg_function *usbg_get_binding_target(struct binding *b);
+extern usbg_function *usbg_get_binding_target(usbg_binding *b);
 
 /**
  * @brief Get binding name length
  * @param b Binding which name length should be returned
  * @return Length of name string or -1 if error occurred.
  */
-extern size_t usbg_get_binding_name_len(struct binding *b);
+extern size_t usbg_get_binding_name_len(usbg_binding *b);
 
 /**
  * @brief Get binding name
@@ -548,7 +539,7 @@ extern size_t usbg_get_binding_name_len(struct binding *b);
  * @param len Length of given buffer
  * @return Pointer to destination or NULL if error occurred.
  */
-extern char *usbg_get_binding_name(struct binding *b, char *buf, size_t len);
+extern char *usbg_get_binding_name(usbg_binding *b, char *buf, size_t len);
 
 /* USB gadget setup and teardown */
 
@@ -705,7 +696,7 @@ extern usbg_config *usbg_get_first_config(usbg_gadget *g);
  * @return Pointer to binding or NULL if list is empty.
  * @note Bindings are sorted in strings (name) order
  */
-extern struct binding *usbg_get_first_binding(usbg_config *c);
+extern usbg_binding *usbg_get_first_binding(usbg_config *c);
 
 /**
  * @brief Get the next gadget on a list.
@@ -733,7 +724,7 @@ extern usbg_config *usbg_get_next_config(usbg_config *c);
  * @pram g Pointer to current binding
  * @return Next binding or NULL if end of list.
  */
-extern struct binding *usbg_get_next_binding(struct binding *b);
+extern usbg_binding *usbg_get_next_binding(usbg_binding *b);
 
 /**
  * @}

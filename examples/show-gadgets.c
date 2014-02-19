@@ -95,7 +95,7 @@ void show_function(usbg_function *f)
 
 void show_config(usbg_config *c)
 {
-	struct binding *b;
+	usbg_binding *b;
 	usbg_function *f;
 	char buf[USBG_MAX_STR_LENGTH], buf2[USBG_MAX_STR_LENGTH];
 	struct config_attrs c_attrs;
@@ -112,9 +112,10 @@ void show_config(usbg_config *c)
 	fprintf(stdout, "    configuration\t%s\n", c_strs.configuration);
 
 	usbg_for_each_binding(b, c) {
-		f = b->target;
+		usbg_get_binding_name(b, buf, USBG_MAX_STR_LENGTH);
+		f = usbg_get_binding_target(b);
 		usbg_get_function_name(f, buf2, USBG_MAX_STR_LENGTH);
-		fprintf(stdout, "    %s -> %s\n", b->name, buf2);
+		fprintf(stdout, "    %s -> %s\n", buf, buf2);
 	}
 }
 
@@ -124,7 +125,7 @@ int main(void)
 	usbg_gadget *g;
 	usbg_function *f;
 	usbg_config *c;
-	struct binding *b;
+	usbg_binding *b;
 
 	s = usbg_init("/sys/kernel/config");
 	if (!s) {
