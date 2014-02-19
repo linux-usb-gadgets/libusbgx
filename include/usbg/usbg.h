@@ -472,9 +472,29 @@ extern struct function *usbg_create_function(struct gadget *g, enum function_typ
  * @brief Create a new USB gadget configuration
  * @param g Pointer to gadget
  * @param name Name of configuration
+ * @param c_attrs Configuration attributes to be set
+ * @param c_strs Configuration strings to be set
  * @return Pointer to configuration or NULL if it cannot be created
  */
-extern struct config *usbg_create_config(struct gadget *g, char *name);
+extern struct config *usbg_create_config(struct gadget *g, char *name,
+		struct config_attrs *c_attrs, struct config_strs *c_strs);
+
+/**
+ * @brief Set the USB configuration attributes
+ * @param c Pointer to configuration
+ * @param c_attrs Configuration attributes
+ */
+extern void usbg_set_config_attrs(struct config *c,
+		struct config_attrs *c_attrs);
+
+/**
+ * @brief Get the USB configuration strings
+ * @param c Pointer to configuration
+ * @param c_attrs Structure to be filled
+ * @retur Pointer to filled structure or NULL if error occurred.
+ */
+extern struct config_attrs *usbg_get_config_attrs(struct config *c,
+		struct config_attrs *c_attrs);
 
 /**
  * @brief Set the configuration maximum power
@@ -489,6 +509,24 @@ extern void usbg_set_config_max_power(struct config *c, int bMaxPower);
  * @param bmAttributes Configuration characteristics
  */
 extern void usbg_set_config_bm_attrs(struct config *c, int bmAttributes);
+
+/**
+ * @brief Get the USB configuration strings
+ * @param c Pointer to configuration
+ * @param c_sttrs Structure to be filled
+ * @retur Pointer to filled structure or NULL if error occurred.
+ */
+extern struct config_strs *usbg_get_config_strs(struct config *c,
+		struct config_strs *c_strs);
+
+/**
+ * @brief Set the USB configuration strings
+ * @param c Pointer to configuration
+ * @param lang USB language ID
+ * @param c_sttrs Configuration strings
+ */
+extern void usbg_set_config_strs(struct config *c, int lang,
+		struct config_strs *c_strs);
 
 /**
  * @brief Set the configuration string

@@ -69,7 +69,7 @@ int main(void)
 		goto out2;
 	}
 
-	c = usbg_create_config(g, "c.1");
+	c = usbg_create_config(g, "c.1", NULL, NULL);
 	if (!c) {
 		fprintf(stderr, "Error creating config\n");
 		goto out2;

@@ -861,7 +861,8 @@ struct function *usbg_create_function(struct gadget *g, enum function_type type,
 	return f;
 }
 
-struct config *usbg_create_config(struct gadget *g, char *name)
+struct config *usbg_create_config(struct gadget *g, char *name,
+		struct config_attrs *c_attrs, struct config_strs *c_strs)
 {
 	char cpath[USBG_MAX_PATH_LENGTH];
 	struct config *c;
@@ -898,12 +899,41 @@ struct config *usbg_create_config(struct gadget *g, char *name)
 		return NULL;
 	}
 
-	usbg_parse_config_attrs(c->path, c->name, &c->attrs);
-	usbg_parse_config_strs(c->path, c->name, &c->strs);
+	if (c_attrs)
+		usbg_set_config_attrs(c, c_attrs);
+	else
+		usbg_parse_config_attrs(c->path, c->name, &c->attrs);
+
+	if (c_strs)
+		usbg_set_config_string(c, LANG_US_ENG, c_strs->configuration);
+	else
+		usbg_parse_config_strs(c->path, c->name, &c->strs);
 
 	INSERT_TAILQ_STRING_ORDER(&g->configs, chead, name, c, cnode);
 
 	return c;
+}
+
+void usbg_set_config_attrs(struct config *c, struct config_attrs *c_attrs)
+{
+	if (!c || !c_attrs)
+		return;
+
+	c->attrs = *c_attrs;
+
+	usbg_write_dec(c->path, c->name, "MaxPower", c_attrs->bMaxPower);
+	usbg_write_hex8(c->path, c->name, "bmAttributes", c_attrs->bmAttributes);
+}
+
+struct config_attrs *usbg_get_config_attrs(struct config *c,
+		struct config_attrs *c_attrs)
+{
+	if (c && c_attrs)
+		*c_attrs = c->attrs;
+	else
+		c_attrs = NULL;
+
+	return c_attrs;
 }
 
 void usbg_set_config_max_power(struct config *c, int bMaxPower)
@@ -916,6 +946,23 @@ void usbg_set_config_bm_attrs(struct config *c, int bmAttributes)
 {
 	c->attrs.bmAttributes = bmAttributes;
 	usbg_write_hex8(c->path, c->name, "bmAttributes", bmAttributes);
+}
+
+struct config_strs *usbg_get_config_strs(struct config *c,
+		struct config_strs *c_strs)
+{
+	if (c && c_strs)
+		*c_strs = c->strs;
+	else
+		c_strs = NULL;
+
+	return c_strs;
+}
+
+void usbg_set_config_strs(struct config *c, int lang,
+		struct config_strs *c_strs)
+{
+	usbg_set_config_string(c, lang, c_strs->configuration);
 }
 
 void usbg_set_config_string(struct config *c, int lang, char *str)
