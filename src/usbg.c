@@ -53,9 +53,21 @@ struct usbg_gadget
 	struct gadget_strs strs;
 
 	TAILQ_ENTRY(usbg_gadget) gnode;
-	TAILQ_HEAD(chead, config) configs;
+	TAILQ_HEAD(chead, usbg_config) configs;
 	TAILQ_HEAD(fhead, function) functions;
 	usbg_state *parent;
+};
+
+struct usbg_config
+{
+	TAILQ_ENTRY(usbg_config) cnode;
+	TAILQ_HEAD(bhead, binding) bindings;
+	usbg_gadget *parent;
+
+	char name[USBG_MAX_NAME_LENGTH];
+	char path[USBG_MAX_PATH_LENGTH];
+	struct config_attrs attrs;
+	struct config_strs strs;
 };
 
 /**
@@ -322,7 +334,7 @@ static void usbg_parse_config_strs(char *path, char *name,
 	usbg_read_string(spath, "", "configuration", c_attrs->configuration);
 }
 
-static void usbg_parse_config_bindings(struct config *c)
+static void usbg_parse_config_bindings(usbg_config *c)
 {
 	int i, n;
 	struct dirent **dent;
@@ -364,7 +376,7 @@ static void usbg_parse_config_bindings(struct config *c)
 
 static int usbg_parse_configs(char *path, usbg_gadget *g)
 {
-	struct config *c;
+	usbg_config *c;
 	int i, n;
 	struct dirent **dent;
 	char cpath[USBG_MAX_PATH_LENGTH];
@@ -375,7 +387,7 @@ static int usbg_parse_configs(char *path, usbg_gadget *g)
 
 	n = scandir(cpath, &dent, file_select, alphasort);
 	for (i=0; i < n; i++) {
-		c = malloc(sizeof(struct config));
+		c = malloc(sizeof(usbg_config));
 		c->parent = g;
 		strcpy(c->name, dent[i]->d_name);
 		strcpy(c->path, cpath);
@@ -493,7 +505,7 @@ out:
 void usbg_cleanup(usbg_state *s)
 {
 	usbg_gadget *g;
-	struct config *c;
+	usbg_config *c;
 	struct binding *b;
 	struct function *f;
 
@@ -553,9 +565,9 @@ struct function *usbg_get_function(usbg_gadget *g, const char *name)
 	return NULL;
 }
 
-struct config *usbg_get_config(usbg_gadget *g, const char *name)
+usbg_config *usbg_get_config(usbg_gadget *g, const char *name)
 {
-	struct config *c;
+	usbg_config *c;
 
 	TAILQ_FOREACH(c, &g->configs, cnode)
 		if (!strcmp(c->name, name))
@@ -564,7 +576,7 @@ struct config *usbg_get_config(usbg_gadget *g, const char *name)
 	return NULL;
 }
 
-struct binding *usbg_get_binding(struct config *c, const char *name)
+struct binding *usbg_get_binding(usbg_config *c, const char *name)
 {
 	struct binding *b;
 
@@ -575,7 +587,7 @@ struct binding *usbg_get_binding(struct config *c, const char *name)
 	return NULL;
 }
 
-struct binding *usbg_get_link_binding(struct config *c, struct function *f)
+struct binding *usbg_get_link_binding(usbg_config *c, struct function *f)
 {
 	struct binding *b;
 
@@ -904,11 +916,11 @@ struct function *usbg_create_function(usbg_gadget *g, enum function_type type,
 	return f;
 }
 
-struct config *usbg_create_config(usbg_gadget *g, char *name,
+usbg_config *usbg_create_config(usbg_gadget *g, char *name,
 		struct config_attrs *c_attrs, struct config_strs *c_strs)
 {
 	char cpath[USBG_MAX_PATH_LENGTH];
-	struct config *c;
+	usbg_config *c;
 	int ret;
 
 	if (!g)
@@ -925,7 +937,7 @@ struct config *usbg_create_config(usbg_gadget *g, char *name,
 
 	sprintf(cpath, "%s/%s/%s/%s", g->path, g->name, CONFIGS_DIR, name);
 
-	c = malloc(sizeof(struct config));
+	c = malloc(sizeof(usbg_config));
 	if (!c) {
 		ERRORNO("allocating configuration\n");
 		return NULL;
@@ -957,12 +969,12 @@ struct config *usbg_create_config(usbg_gadget *g, char *name,
 	return c;
 }
 
-size_t usbg_get_config_name_len(struct config *c)
+size_t usbg_get_config_name_len(usbg_config *c)
 {
 	return c ? strlen(c->name) : -1;
 }
 
-char *usbg_get_config_name(struct config *c, char *buf, size_t len)
+char *usbg_get_config_name(usbg_config *c, char *buf, size_t len)
 {
 	return c ? strncpy(buf, c->name, len) : NULL;
 }
@@ -977,7 +989,7 @@ char *usbg_get_function_name(struct function *f, char *buf, size_t len)
 	return f ? strncpy(buf, f->name, len) : NULL;
 }
 
-void usbg_set_config_attrs(struct config *c, struct config_attrs *c_attrs)
+void usbg_set_config_attrs(usbg_config *c, struct config_attrs *c_attrs)
 {
 	if (!c || !c_attrs)
 		return;
@@ -988,7 +1000,7 @@ void usbg_set_config_attrs(struct config *c, struct config_attrs *c_attrs)
 	usbg_write_hex8(c->path, c->name, "bmAttributes", c_attrs->bmAttributes);
 }
 
-struct config_attrs *usbg_get_config_attrs(struct config *c,
+struct config_attrs *usbg_get_config_attrs(usbg_config *c,
 		struct config_attrs *c_attrs)
 {
 	if (c && c_attrs)
@@ -999,19 +1011,19 @@ struct config_attrs *usbg_get_config_attrs(struct config *c,
 	return c_attrs;
 }
 
-void usbg_set_config_max_power(struct config *c, int bMaxPower)
+void usbg_set_config_max_power(usbg_config *c, int bMaxPower)
 {
 	c->attrs.bMaxPower = bMaxPower;
 	usbg_write_dec(c->path, c->name, "MaxPower", bMaxPower);
 }
 
-void usbg_set_config_bm_attrs(struct config *c, int bmAttributes)
+void usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes)
 {
 	c->attrs.bmAttributes = bmAttributes;
 	usbg_write_hex8(c->path, c->name, "bmAttributes", bmAttributes);
 }
 
-struct config_strs *usbg_get_config_strs(struct config *c,
+struct config_strs *usbg_get_config_strs(usbg_config *c,
 		struct config_strs *c_strs)
 {
 	if (c && c_strs)
@@ -1022,13 +1034,13 @@ struct config_strs *usbg_get_config_strs(struct config *c,
 	return c_strs;
 }
 
-void usbg_set_config_strs(struct config *c, int lang,
+void usbg_set_config_strs(usbg_config *c, int lang,
 		struct config_strs *c_strs)
 {
 	usbg_set_config_string(c, lang, c_strs->configuration);
 }
 
-void usbg_set_config_string(struct config *c, int lang, char *str)
+void usbg_set_config_string(usbg_config *c, int lang, char *str)
 {
 	char path[USBG_MAX_PATH_LENGTH];
 
@@ -1043,7 +1055,7 @@ void usbg_set_config_string(struct config *c, int lang, char *str)
 	usbg_write_string(path, "", "configuration", str);
 }
 
-int usbg_add_config_function(struct config *c, char *name, struct function *f)
+int usbg_add_config_function(usbg_config *c, char *name, struct function *f)
 {
 	char bpath[USBG_MAX_PATH_LENGTH];
 	char fpath[USBG_MAX_PATH_LENGTH];
@@ -1230,12 +1242,12 @@ struct function *usbg_get_first_function(usbg_gadget *g)
 	return g ? TAILQ_FIRST(&g->functions) : NULL;
 }
 
-struct config *usbg_get_first_config(usbg_gadget *g)
+usbg_config *usbg_get_first_config(usbg_gadget *g)
 {
 	return g ? TAILQ_FIRST(&g->configs) : NULL;
 }
 
-struct binding *usbg_get_first_binding(struct config *c)
+struct binding *usbg_get_first_binding(usbg_config *c)
 {
 	return c ? TAILQ_FIRST(&c->bindings) : NULL;
 }
@@ -1250,7 +1262,7 @@ struct function *usbg_get_next_function(struct function *f)
 	return f ? TAILQ_NEXT(f, fnode) : NULL;
 }
 
-struct config *usbg_get_next_config(struct config *c)
+usbg_config *usbg_get_next_config(usbg_config *c)
 {
 	return c ? TAILQ_NEXT(c, cnode) : NULL;
 }

@@ -87,7 +87,7 @@ void show_function(struct function *f)
 	}
 }
 
-void show_config(struct config *c)
+void show_config(usbg_config *c)
 {
 	struct binding *b;
 	struct function *f;
@@ -114,7 +114,7 @@ int main(void)
 	usbg_state *s;
 	usbg_gadget *g;
 	struct function *f;
-	struct config *c;
+	usbg_config *c;
 	struct binding *b;
 	struct function *f_acm0, *f_acm1, *f_ecm;
 

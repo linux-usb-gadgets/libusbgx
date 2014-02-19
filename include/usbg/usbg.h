@@ -46,6 +46,7 @@
  */
 struct usbg_state;
 struct usbg_gadget;
+struct usbg_config;
 
 /**
  * @brief State of the gadget devices in the system
@@ -56,6 +57,11 @@ typedef struct usbg_state usbg_state;
  * @brief USB gadget device
  */
 typedef struct usbg_gadget usbg_gadget;
+
+/**
+ * @brief USB configuration
+ */
+typedef struct usbg_config usbg_config;
 
 /**
  * @struct gadget_attrs
@@ -101,22 +107,6 @@ struct config_attrs
 struct config_strs
 {
 	char configuration[USBG_MAX_STR_LENGTH];
-};
-
-/**
- * @struct config
- * @brief USB gadget configuration attributes
- */
-struct config
-{
-	TAILQ_ENTRY(config) cnode;
-	TAILQ_HEAD(bhead, binding) bindings;
-	usbg_gadget *parent;
-
-	char name[USBG_MAX_NAME_LENGTH];
-	char path[USBG_MAX_PATH_LENGTH];
-	struct config_attrs attrs;
-	struct config_strs strs;
 };
 
 /**
@@ -198,7 +188,7 @@ struct function
 struct binding
 {
 	TAILQ_ENTRY(binding) bnode;
-	struct config *parent;
+	usbg_config *parent;
 	struct function *target;
 
 	char name[USBG_MAX_NAME_LENGTH];
@@ -260,7 +250,7 @@ extern struct function *usbg_get_function(usbg_gadget *g, const char *name);
  * @param name Name of the configuration
  * @return Pointer to config or NULL if a matching config isn't found
  */
-extern struct config *usbg_get_config(usbg_gadget *g, const char *name);
+extern usbg_config *usbg_get_config(usbg_gadget *g, const char *name);
 
 /* USB gadget allocation and configuration */
 
@@ -463,7 +453,7 @@ extern char *usbg_get_function_name(struct function *f, char *buf, size_t len);
  * @param c_strs Configuration strings to be set
  * @return Pointer to configuration or NULL if it cannot be created
  */
-extern struct config *usbg_create_config(usbg_gadget *g, char *name,
+extern usbg_config *usbg_create_config(usbg_gadget *g, char *name,
 		struct config_attrs *c_attrs, struct config_strs *c_strs);
 
 /**
@@ -471,7 +461,7 @@ extern struct config *usbg_create_config(usbg_gadget *g, char *name,
  * @param c Config which name length should be returned
  * @return Length of name string or -1 if error occurred.
  */
-extern size_t usbg_get_config_name_len(struct config *c);
+extern size_t usbg_get_config_name_len(usbg_config *c);
 
 /**
  * @brieg Get config name
@@ -480,14 +470,14 @@ extern size_t usbg_get_config_name_len(struct config *c);
  * @param len Length of given buffer
  * @return Pointer to destination or NULL if error occurred.
  */
-extern char *usbg_get_config_name(struct config *c, char *buf, size_t len);
+extern char *usbg_get_config_name(usbg_config *c, char *buf, size_t len);
 
 /**
  * @brief Set the USB configuration attributes
  * @param c Pointer to configuration
  * @param c_attrs Configuration attributes
  */
-extern void usbg_set_config_attrs(struct config *c,
+extern void usbg_set_config_attrs(usbg_config *c,
 		struct config_attrs *c_attrs);
 
 /**
@@ -496,7 +486,7 @@ extern void usbg_set_config_attrs(struct config *c,
  * @param c_attrs Structure to be filled
  * @retur Pointer to filled structure or NULL if error occurred.
  */
-extern struct config_attrs *usbg_get_config_attrs(struct config *c,
+extern struct config_attrs *usbg_get_config_attrs(usbg_config *c,
 		struct config_attrs *c_attrs);
 
 /**
@@ -504,14 +494,14 @@ extern struct config_attrs *usbg_get_config_attrs(struct config *c,
  * @param c Pointer to config
  * @param bMaxPower Maximum power (in 2 mA units)
  */
-extern void usbg_set_config_max_power(struct config *c, int bMaxPower);
+extern void usbg_set_config_max_power(usbg_config *c, int bMaxPower);
 
 /**
  * @brief Set the configuration bitmap attributes
  * @param c Pointer to config
  * @param bmAttributes Configuration characteristics
  */
-extern void usbg_set_config_bm_attrs(struct config *c, int bmAttributes);
+extern void usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes);
 
 /**
  * @brief Get the USB configuration strings
@@ -519,7 +509,7 @@ extern void usbg_set_config_bm_attrs(struct config *c, int bmAttributes);
  * @param c_sttrs Structure to be filled
  * @retur Pointer to filled structure or NULL if error occurred.
  */
-extern struct config_strs *usbg_get_config_strs(struct config *c,
+extern struct config_strs *usbg_get_config_strs(usbg_config *c,
 		struct config_strs *c_strs);
 
 /**
@@ -528,7 +518,7 @@ extern struct config_strs *usbg_get_config_strs(struct config *c,
  * @param lang USB language ID
  * @param c_sttrs Configuration strings
  */
-extern void usbg_set_config_strs(struct config *c, int lang,
+extern void usbg_set_config_strs(usbg_config *c, int lang,
 		struct config_strs *c_strs);
 
 /**
@@ -537,7 +527,7 @@ extern void usbg_set_config_strs(struct config *c, int lang,
  * @param lang USB language ID
  * @param string Configuration description
  */
-extern void usbg_set_config_string(struct config *c, int lang, char *string);
+extern void usbg_set_config_string(usbg_config *c, int lang, char *string);
 
 /**
  * @brief Add a function to a configuration
@@ -546,7 +536,7 @@ extern void usbg_set_config_string(struct config *c, int lang, char *string);
  * @param f Pointer to function
  * @return 0 on success, -1 on failure.
  */
-extern int usbg_add_config_function(struct config *c, char *name, struct function *f);
+extern int usbg_add_config_function(usbg_config *c, char *name, struct function *f);
 
 /**
  * @brief Get target function of given binding
@@ -718,7 +708,7 @@ extern struct function *usbg_get_first_function(usbg_gadget *g);
  * @return Pointer to configuration or NULL if list is empty.
  * @note Configs are sorted in strings (name) order
  */
-extern struct config *usbg_get_first_config(usbg_gadget *g);
+extern usbg_config *usbg_get_first_config(usbg_gadget *g);
 
 /**
  * @brief Get first binding in binding list
@@ -726,7 +716,7 @@ extern struct config *usbg_get_first_config(usbg_gadget *g);
  * @return Pointer to binding or NULL if list is empty.
  * @note Bindings are sorted in strings (name) order
  */
-extern struct binding *usbg_get_first_binding(struct config *c);
+extern struct binding *usbg_get_first_binding(usbg_config *c);
 
 /**
  * @brief Get the next gadget on a list.
@@ -747,7 +737,7 @@ extern struct function *usbg_get_next_function(struct function *f);
  * @pram g Pointer to current config
  * @return Next config or NULL if end of list.
  */
-extern struct config *usbg_get_next_config(struct config *c);
+extern usbg_config *usbg_get_next_config(usbg_config *c);
 
 /**
  * @brief Get the next binding on a list.
