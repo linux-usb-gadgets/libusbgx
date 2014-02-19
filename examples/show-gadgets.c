@@ -27,22 +27,34 @@
  * in the system
  */
 
-void show_gadget(struct gadget *g)
+void show_gadget(usbg_gadget *g)
 {
+	char buf[USBG_MAX_STR_LENGTH];
+	struct gadget_attrs g_attrs;
+	struct gadget_strs g_strs;
+
+	usbg_get_gadget_name(g, buf, USBG_MAX_STR_LENGTH);
+	usbg_get_gadget_attrs(g, &g_attrs);
+
 	fprintf(stdout, "ID %04x:%04x '%s'\n",
-		g->attrs.idVendor, g->attrs.idProduct, g->name);
-	fprintf(stdout, "  UDC\t\t\t%s\n", g->udc);
-	fprintf(stdout, "  bDeviceClass\t\t0x%02x\n", g->attrs.bDeviceClass);
-	fprintf(stdout, "  bDeviceSubClass\t0x%02x\n", g->attrs.bDeviceSubClass);
-	fprintf(stdout, "  bDeviceProtocol\t0x%02x\n", g->attrs.bDeviceProtocol);
-	fprintf(stdout, "  bMaxPacketSize0\t0x%02x\n", g->attrs.bMaxPacketSize0);
-	fprintf(stdout, "  bcdDevice\t\t0x%04x\n", g->attrs.bcdDevice);
-	fprintf(stdout, "  bcdUSB\t\t0x%04x\n", g->attrs.bcdUSB);
-	fprintf(stdout, "  idVendor\t\t0x%04x\n", g->attrs.idVendor);
-	fprintf(stdout, "  idProduct\t\t0x%04x\n", g->attrs.idProduct);
-	fprintf(stdout, "  Serial Number\t\t%s\n", g->strs.str_ser);
-	fprintf(stdout, "  Manufacturer\t\t%s\n", g->strs.str_mnf);
-	fprintf(stdout, "  Product\t\t%s\n", g->strs.str_prd);
+			g_attrs.idVendor, g_attrs.idProduct, buf);
+
+	usbg_get_gadget_udc(g, buf, USBG_MAX_STR_LENGTH);
+	fprintf(stdout, "  UDC\t\t\t%s\n", buf);
+
+	fprintf(stdout, "  bDeviceClass\t\t0x%02x\n", g_attrs.bDeviceClass);
+	fprintf(stdout, "  bDeviceSubClass\t0x%02x\n", g_attrs.bDeviceSubClass);
+	fprintf(stdout, "  bDeviceProtocol\t0x%02x\n", g_attrs.bDeviceProtocol);
+	fprintf(stdout, "  bMaxPacketSize0\t0x%02x\n", g_attrs.bMaxPacketSize0);
+	fprintf(stdout, "  bcdDevice\t\t0x%04x\n", g_attrs.bcdDevice);
+	fprintf(stdout, "  bcdUSB\t\t0x%04x\n", g_attrs.bcdUSB);
+	fprintf(stdout, "  idVendor\t\t0x%04x\n", g_attrs.idVendor);
+	fprintf(stdout, "  idProduct\t\t0x%04x\n", g_attrs.idProduct);
+
+	usbg_get_gadget_strs(g, &g_strs);
+	fprintf(stdout, "  Serial Number\t\t%s\n", g_strs.str_ser);
+	fprintf(stdout, "  Manufacturer\t\t%s\n", g_strs.str_mnf);
+	fprintf(stdout, "  Product\t\t%s\n", g_strs.str_prd);
 }
 
 void show_function(struct function *f)
@@ -78,11 +90,21 @@ void show_function(struct function *f)
 void show_config(struct config *c)
 {
 	struct binding *b;
+	struct function *f;
+	char buf[USBG_MAX_STR_LENGTH], buf2[USBG_MAX_STR_LENGTH];
+	struct config_attrs c_attrs;
+	struct config_strs c_strs;
 
-	fprintf(stdout, "  Configuration '%s'\n", c->name);
-	fprintf(stdout, "    MaxPower\t\t%d\n", c->attrs.bMaxPower);
-	fprintf(stdout, "    bmAttributes\t0x%02x\n", c->attrs.bmAttributes);
-	fprintf(stdout, "    configuration\t%s\n", c->strs.configuration);
+	usbg_get_config_name(c, buf, USBG_MAX_STR_LENGTH);
+	fprintf(stdout, "  Configuration '%s'\n", buf);
+
+	usbg_get_config_attrs(c, &c_attrs);
+	fprintf(stdout, "    MaxPower\t\t%d\n", c_attrs.bMaxPower);
+	fprintf(stdout, "    bmAttributes\t0x%02x\n", c_attrs.bmAttributes);
+
+	usbg_get_config_strs(c, &c_strs);
+	fprintf(stdout, "    configuration\t%s\n", c_strs.configuration);
+
 	usbg_for_each_binding(b, c)
 		fprintf(stdout, "    %s -> %s\n", b->name,b->target->name);
 }
@@ -90,7 +112,7 @@ void show_config(struct config *c)
 int main(void)
 {
 	usbg_state *s;
-	struct gadget *g;
+	usbg_gadget *g;
 	struct function *f;
 	struct config *c;
 	struct binding *b;
