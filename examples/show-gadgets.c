@@ -51,7 +51,7 @@ void show_gadget(usbg_gadget *g)
 	fprintf(stdout, "  idVendor\t\t0x%04x\n", g_attrs.idVendor);
 	fprintf(stdout, "  idProduct\t\t0x%04x\n", g_attrs.idProduct);
 
-	usbg_get_gadget_strs(g, &g_strs);
+	usbg_get_gadget_strs(g, LANG_US_ENG, &g_strs);
 	fprintf(stdout, "  Serial Number\t\t%s\n", g_strs.str_ser);
 	fprintf(stdout, "  Manufacturer\t\t%s\n", g_strs.str_mnf);
 	fprintf(stdout, "  Product\t\t%s\n", g_strs.str_prd);

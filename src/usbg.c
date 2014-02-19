@@ -49,8 +49,6 @@ struct usbg_gadget
 	char path[USBG_MAX_PATH_LENGTH];
 	char udc[USBG_MAX_STR_LENGTH];
 
-	usbg_gadget_strs strs;
-
 	TAILQ_ENTRY(usbg_gadget) gnode;
 	TAILQ_HEAD(chead, usbg_config) configs;
 	TAILQ_HEAD(fhead, usbg_function) functions;
@@ -435,17 +433,26 @@ static void usbg_parse_gadget_attrs(char *path, char *name,
 	g_attrs->bcdDevice = (uint16_t)usbg_read_hex(path, name, "bcdDevice");
 }
 
-static void usbg_parse_strings(char *path, char *name, usbg_gadget_strs *g_strs)
+static usbg_gadget_strs *usbg_parse_strings(char *path, char *name, int lang,
+		usbg_gadget_strs *g_strs)
 {
-	/* Strings - hardcoded to U.S. English only for now */
-	int lang = LANG_US_ENG;
+	DIR *dir;
 	char spath[USBG_MAX_PATH_LENGTH];
 
 	sprintf(spath, "%s/%s/%s/0x%x", path, name, STRINGS_DIR, lang);
 
-	usbg_read_string(spath, "", "serialnumber", g_strs->str_ser);
-	usbg_read_string(spath, "", "manufacturer", g_strs->str_mnf);
-	usbg_read_string(spath, "", "product", g_strs->str_prd);
+	/* Check if directory exist */
+	dir = opendir(spath);
+	if (dir) {
+		closedir(dir);
+		usbg_read_string(spath, "", "serialnumber", g_strs->str_ser);
+		usbg_read_string(spath, "", "manufacturer", g_strs->str_mnf);
+		usbg_read_string(spath, "", "product", g_strs->str_prd);
+	} else {
+		g_strs = NULL;
+	}
+
+	return g_strs;
 }
 
 static int usbg_parse_gadgets(char *path, usbg_state *s)
@@ -464,7 +471,6 @@ static int usbg_parse_gadgets(char *path, usbg_state *s)
 		g->parent = s;
 		/* UDC bound to, if any */
 		usbg_read_string(path, g->name, "UDC", g->udc);
-		usbg_parse_strings(path, g->name, &g->strs);
 		usbg_parse_functions(path, g);
 		usbg_parse_configs(path, g);
 		TAILQ_INSERT_TAIL(&s->gadgets, g, gnode);
@@ -672,8 +678,6 @@ usbg_gadget *usbg_create_gadget_vid_pid(usbg_state *s, char *name,
 		usbg_write_hex16(s->path, name, "idVendor", idVendor);
 		usbg_write_hex16(s->path, name, "idProduct", idProduct);
 
-		usbg_parse_strings(s->path, name, &g->strs);
-
 		INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name, g, gnode);
 	}
 
@@ -703,8 +707,6 @@ usbg_gadget *usbg_create_gadget(usbg_state *s, char *name,
 
 		if (g_strs)
 			usbg_set_gadget_strs(g, LANG_US_ENG, g_strs);
-		else
-			usbg_parse_strings(s->path, name, &g->strs);
 
 		INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name, g, gnode);
 	}
@@ -798,11 +800,11 @@ void usbg_set_gadget_device_bcd_usb(usbg_gadget *g, uint16_t bcdUSB)
 	usbg_write_hex16(g->path, g->name, "bcdUSB", bcdUSB);
 }
 
-usbg_gadget_strs *usbg_get_gadget_strs(usbg_gadget *g,
+usbg_gadget_strs *usbg_get_gadget_strs(usbg_gadget *g, int lang,
 		usbg_gadget_strs *g_strs)
 {
 	if (g && g_strs)
-		*g_strs = g->strs;
+		g_strs = usbg_parse_strings(g->path, g->name, lang, g_strs);
 	else
 		g_strs = NULL;
 
@@ -818,10 +820,6 @@ void usbg_set_gadget_strs(usbg_gadget *g, int lang,
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
-	/* strings in library are hardcoded to US English for now */
-	if (lang == LANG_US_ENG)
-		g->strs = *g_strs;
-
 	usbg_write_string(path, "", "serialnumber", g_strs->str_ser);
 	usbg_write_string(path, "", "manufacturer", g_strs->str_mnf);
 	usbg_write_string(path, "", "product", g_strs->str_prd);
@@ -835,10 +833,6 @@ void usbg_set_gadget_serial_number(usbg_gadget *g, int lang, char *serno)
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
-	/* strings in library are hardcoded to US English for now */
-	if (lang == LANG_US_ENG)
-		strcpy(g->strs.str_ser, serno);
-
 	usbg_write_string(path, "", "serialnumber", serno);
 }
 
@@ -850,10 +844,6 @@ void usbg_set_gadget_manufacturer(usbg_gadget *g, int lang, char *mnf)
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
 
-	/* strings in library are hardcoded to US English for now */
-	if (lang == LANG_US_ENG)
-		strcpy(g->strs.str_mnf, mnf);
-
 	usbg_write_string(path, "", "manufacturer", mnf);
 }
 
@@ -864,10 +854,6 @@ void usbg_set_gadget_product(usbg_gadget *g, int lang, char *prd)
 	sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, STRINGS_DIR, lang);
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
-
-	/* strings in library are hardcoded to US English for now */
-	if (lang == LANG_US_ENG)
-		strcpy(g->strs.str_prd, prd);
 
 	usbg_write_string(path, "", "product", prd);
 }
