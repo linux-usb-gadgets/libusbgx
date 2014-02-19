@@ -49,7 +49,6 @@ struct usbg_gadget
 	char path[USBG_MAX_PATH_LENGTH];
 	char udc[USBG_MAX_STR_LENGTH];
 
-	usbg_gadget_attrs attrs;
 	usbg_gadget_strs strs;
 
 	TAILQ_ENTRY(usbg_gadget) gnode;
@@ -465,7 +464,6 @@ static int usbg_parse_gadgets(char *path, usbg_state *s)
 		g->parent = s;
 		/* UDC bound to, if any */
 		usbg_read_string(path, g->name, "UDC", g->udc);
-		usbg_parse_gadget_attrs(path, g->name, &g->attrs);
 		usbg_parse_strings(path, g->name, &g->strs);
 		usbg_parse_functions(path, g);
 		usbg_parse_configs(path, g);
@@ -674,7 +672,6 @@ usbg_gadget *usbg_create_gadget_vid_pid(usbg_state *s, char *name,
 		usbg_write_hex16(s->path, name, "idVendor", idVendor);
 		usbg_write_hex16(s->path, name, "idProduct", idProduct);
 
-		usbg_parse_gadget_attrs(s->path, name, &g->attrs);
 		usbg_parse_strings(s->path, name, &g->strs);
 
 		INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name, g, gnode);
@@ -703,8 +700,6 @@ usbg_gadget *usbg_create_gadget(usbg_state *s, char *name,
 	if (g) {
 		if (g_attrs)
 			usbg_set_gadget_attrs(g, g_attrs);
-		else
-			usbg_parse_gadget_attrs(s->path, name, &g->attrs);
 
 		if (g_strs)
 			usbg_set_gadget_strs(g, LANG_US_ENG, g_strs);
@@ -721,7 +716,7 @@ usbg_gadget_attrs *usbg_get_gadget_attrs(usbg_gadget *g,
 		usbg_gadget_attrs *g_attrs)
 {
 	if (g && g_attrs)
-		*g_attrs = g->attrs;
+		usbg_parse_gadget_attrs(g->path, g->name, g_attrs);
 	else
 		g_attrs = NULL;
 
@@ -753,7 +748,6 @@ void usbg_set_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs)
 	if (!g || !g_attrs)
 		return;
 
-	g->attrs = *g_attrs;
 	usbg_write_hex16(g->path, g->name, "bcdUSB", g_attrs->bcdUSB);
 	usbg_write_hex8(g->path, g->name, "bDeviceClass", g_attrs->bDeviceClass);
 	usbg_write_hex8(g->path, g->name, "bDeviceSubClass", g_attrs->bDeviceSubClass);
@@ -766,49 +760,41 @@ void usbg_set_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs)
 
 void usbg_set_gadget_vendor_id(usbg_gadget *g, uint16_t idVendor)
 {
-	g->attrs.idVendor = idVendor;
 	usbg_write_hex16(g->path, g->name, "idVendor", idVendor);
 }
 
 void usbg_set_gadget_product_id(usbg_gadget *g, uint16_t idProduct)
 {
-	g->attrs.idProduct = idProduct;
 	usbg_write_hex16(g->path, g->name, "idProduct", idProduct);
 }
 
 void usbg_set_gadget_device_class(usbg_gadget *g, uint8_t bDeviceClass)
 {
-	g->attrs.bDeviceClass = bDeviceClass;
 	usbg_write_hex8(g->path, g->name, "bDeviceClass", bDeviceClass);
 }
 
 void usbg_set_gadget_device_protocol(usbg_gadget *g, uint8_t bDeviceProtocol)
 {
-	g->attrs.bDeviceProtocol = bDeviceProtocol;
 	usbg_write_hex8(g->path, g->name, "bDeviceProtocol", bDeviceProtocol);
 }
 
 void usbg_set_gadget_device_subclass(usbg_gadget *g, uint8_t bDeviceSubClass)
 {
-	g->attrs.bDeviceSubClass = bDeviceSubClass;
 	usbg_write_hex8(g->path, g->name, "bDeviceSubClass", bDeviceSubClass);
 }
 
 void usbg_set_gadget_device_max_packet(usbg_gadget *g, uint8_t bMaxPacketSize0)
 {
-	g->attrs.bMaxPacketSize0 = bMaxPacketSize0;
 	usbg_write_hex8(g->path, g->name, "bMaxPacketSize0", bMaxPacketSize0);
 }
 
 void usbg_set_gadget_device_bcd_device(usbg_gadget *g, uint16_t bcdDevice)
 {
-	g->attrs.bcdDevice = bcdDevice;
 	usbg_write_hex16(g->path, g->name, "bcdDevice", bcdDevice);
 }
 
 void usbg_set_gadget_device_bcd_usb(usbg_gadget *g, uint16_t bcdUSB)
 {
-	g->attrs.bcdUSB = bcdUSB;
 	usbg_write_hex16(g->path, g->name, "bcdUSB", bcdUSB);
 }
 
