@@ -76,10 +76,10 @@ typedef struct usbg_function usbg_function;
 typedef struct usbg_binding usbg_binding;
 
 /**
- * @struct gadget_attrs
+ * @typedef usbg_gadget_attrs
  * @brief USB gadget device attributes
  */
-struct gadget_attrs
+typedef struct
 {
 	uint16_t bcdUSB;
 	uint8_t bDeviceClass;
@@ -89,43 +89,43 @@ struct gadget_attrs
 	uint16_t idVendor;
 	uint16_t idProduct;
 	uint16_t bcdDevice;
-};
+} usbg_gadget_attrs;
 
 /**
- * @struct gadget_strs
+ * @typedef usbg_gadget_strs
  * @brief USB gadget device strings
  */
-struct gadget_strs
+typedef struct
 {
 	char str_ser[USBG_MAX_STR_LENGTH];
 	char str_mnf[USBG_MAX_STR_LENGTH];
 	char str_prd[USBG_MAX_STR_LENGTH];
-};
+} usbg_gadget_strs;
 
 /**
- * @struct config_attrs
+ * @typedef usbg_config_attrs
  * @brief USB configuration attributes
  */
-struct config_attrs
+typedef struct
 {
 	uint8_t bmAttributes;
 	uint8_t bMaxPower;
-};
+} usbg_config_attrs;
 
 /**
- * @struct config_strs
+ * @typedef usbg_config_strs
  * @brief USB configuration strings
  */
-struct config_strs
+typedef struct
 {
 	char configuration[USBG_MAX_STR_LENGTH];
-};
+} usbg_config_strs;
 
 /**
- * @enum function_type
+ * @typedef usbg_function_type
  * @brief Supported USB function types
  */
-enum function_type
+typedef enum
 {
 	F_SERIAL,
 	F_ACM,
@@ -136,44 +136,44 @@ enum function_type
 	F_EEM,
 	F_RNDIS,
 	F_PHONET,
-};
+} usbg_function_type;
 
 /**
- * @struct serial_attrs
+ * @typedef usbg_f_serial_attrs
  * @brief Attributes for Serial, ACM, and OBEX USB functions
  */
-struct serial_attrs {
+typedef struct {
 	int port_num;
-};
+} usbg_f_serial_attrs;
 
 /**
- * @struct net_attrs
+ * @typedef net_attrs
  * @brief Attributes for ECM, ECM subset, NCM, EEM, and RNDIS USB functions
  */
-struct net_attrs {
+typedef struct {
 	struct ether_addr dev_addr;
 	struct ether_addr host_addr;
 	char ifname[USBG_MAX_STR_LENGTH];
 	int qmult;
-};
+} usbg_f_net_attrs;
 
 /**
- * @struct phonet_attrs
+ * @typedef usbg_f_phonet_attrs
  * @brief Attributes for the phonet USB function
  */
-struct phonet_attrs {
+typedef struct {
 	char ifname[USBG_MAX_STR_LENGTH];
-};
+} usbg_f_phonet_attrs;
 
 /**
- * @union attrs
+ * @typedef attrs
  * @brief Attributes for a given function type
  */
-union attrs {
-	struct serial_attrs serial;
-	struct net_attrs net;
-	struct phonet_attrs phonet;
-};
+typedef union {
+	usbg_f_serial_attrs serial;
+	usbg_f_net_attrs net;
+	usbg_f_phonet_attrs phonet;
+} usbg_function_attrs;
 
 /* Library init and cleanup */
 
@@ -256,7 +256,7 @@ extern usbg_gadget *usbg_create_gadget_vid_pid(usbg_state *s, char *name,
  * @return Pointer to gadget or NULL if the gadget cannot be created
  */
 extern usbg_gadget *usbg_create_gadget(usbg_state *s, char *name,
-		struct gadget_attrs *g_attrs, struct gadget_strs *g_strs);
+		usbg_gadget_attrs *g_attrs, usbg_gadget_strs *g_strs);
 
 /**
  * @brief Set the USB gadget attributes
@@ -264,7 +264,7 @@ extern usbg_gadget *usbg_create_gadget(usbg_state *s, char *name,
  * @param g_attrs Gadget attributes
  */
 extern void usbg_set_gadget_attrs(usbg_gadget *g,
-		struct gadget_attrs *g_attrs);
+		usbg_gadget_attrs *g_attrs);
 
 /**
  * @brief Get the USB gadget strings
@@ -272,8 +272,8 @@ extern void usbg_set_gadget_attrs(usbg_gadget *g,
  * @param g_attrs Structure to be filled
  * @retur Pointer to filled structure or NULL if error occurred.
  */
-extern struct gadget_attrs *usbg_get_gadget_attrs(usbg_gadget *g,
-		struct gadget_attrs *g_attrs);
+extern usbg_gadget_attrs *usbg_get_gadget_attrs(usbg_gadget *g,
+		usbg_gadget_attrs *g_attrs);
 
 /**
  * @brief Get gadget name length
@@ -358,8 +358,8 @@ extern void usbg_set_gadget_device_bcd_usb(usbg_gadget *g, uint16_t bcdUSB);
  * @param g_sttrs Structure to be filled
  * @retur Pointer to filled structure or NULL if error occurred.
  */
-extern struct gadget_strs *usbg_get_gadget_strs(usbg_gadget *g,
-		struct gadget_strs *g_strs);
+extern usbg_gadget_strs *usbg_get_gadget_strs(usbg_gadget *g,
+		usbg_gadget_strs *g_strs);
 
 /**
  * @brief Set the USB gadget strings
@@ -368,7 +368,7 @@ extern struct gadget_strs *usbg_get_gadget_strs(usbg_gadget *g,
  * @param g_sttrs Gadget attributes
  */
 extern void usbg_set_gadget_strs(usbg_gadget *g, int lang,
-		struct gadget_strs *g_strs);
+		usbg_gadget_strs *g_strs);
 
 /**
  * @brief Set the serial number for a gadget
@@ -404,8 +404,8 @@ extern void usbg_set_gadget_product(usbg_gadget *g, int lang, char *prd);
  * @param f_attrs Function attributes to be set. If NULL setting is omitted.
  * @return Pointer to function or NULL if it cannot be created
  */
-extern usbg_function *usbg_create_function(usbg_gadget *g, enum function_type type,
-		char *instance, union attrs *f_attrs);
+extern usbg_function *usbg_create_function(usbg_gadget *g, usbg_function_type type,
+		char *instance, usbg_function_attrs *f_attrs);
 
 /**
  * @brief Get function name length
@@ -434,7 +434,7 @@ extern char *usbg_get_function_name(usbg_function *f, char *buf, size_t len);
  * @return Pointer to configuration or NULL if it cannot be created
  */
 extern usbg_config *usbg_create_config(usbg_gadget *g, char *name,
-		struct config_attrs *c_attrs, struct config_strs *c_strs);
+		usbg_config_attrs *c_attrs, usbg_config_strs *c_strs);
 
 /**
  * @brief Get config name length
@@ -458,7 +458,7 @@ extern char *usbg_get_config_name(usbg_config *c, char *buf, size_t len);
  * @param c_attrs Configuration attributes
  */
 extern void usbg_set_config_attrs(usbg_config *c,
-		struct config_attrs *c_attrs);
+		usbg_config_attrs *c_attrs);
 
 /**
  * @brief Get the USB configuration strings
@@ -466,8 +466,8 @@ extern void usbg_set_config_attrs(usbg_config *c,
  * @param c_attrs Structure to be filled
  * @retur Pointer to filled structure or NULL if error occurred.
  */
-extern struct config_attrs *usbg_get_config_attrs(usbg_config *c,
-		struct config_attrs *c_attrs);
+extern usbg_config_attrs *usbg_get_config_attrs(usbg_config *c,
+		usbg_config_attrs *c_attrs);
 
 /**
  * @brief Set the configuration maximum power
@@ -489,8 +489,8 @@ extern void usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes);
  * @param c_sttrs Structure to be filled
  * @retur Pointer to filled structure or NULL if error occurred.
  */
-extern struct config_strs *usbg_get_config_strs(usbg_config *c,
-		struct config_strs *c_strs);
+extern usbg_config_strs *usbg_get_config_strs(usbg_config *c,
+		usbg_config_strs *c_strs);
 
 /**
  * @brief Set the USB configuration strings
@@ -499,7 +499,7 @@ extern struct config_strs *usbg_get_config_strs(usbg_config *c,
  * @param c_sttrs Configuration strings
  */
 extern void usbg_set_config_strs(usbg_config *c, int lang,
-		struct config_strs *c_strs);
+		usbg_config_strs *c_strs);
 
 /**
  * @brief Set the configuration string
@@ -591,7 +591,7 @@ extern char *usbg_get_gadget_udc(usbg_gadget *g, char *buf, size_t len);
  * @return Type of function
  * @warning Pointer to function has to be valid.
  */
-extern enum function_type usbg_get_function_type(usbg_function *f);
+extern usbg_function_type usbg_get_function_type(usbg_function *f);
 
 /**
  * @brief Get attributes of given function
@@ -599,15 +599,15 @@ extern enum function_type usbg_get_function_type(usbg_function *f);
  * @param f_attrs Union to be filled
  * @return Pointer to filled structure or NULL if error occurred.
  */
-extern union attrs *usbg_get_function_attrs(usbg_function *f,
-		union attrs *f_attrs);
+extern usbg_function_attrs *usbg_get_function_attrs(usbg_function *f,
+		usbg_function_attrs *f_attrs);
 
 /**
  * @brief Set attributes of given function
  * @param f Pointer to function
  * @param f_attrs Attributes to be set
  */
-extern void usbg_set_function_attrs(usbg_function *f, union attrs *f_attrs);
+extern void usbg_set_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs);
 
 /**
  * @brief Set USB function network device address

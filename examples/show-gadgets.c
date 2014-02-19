@@ -30,8 +30,8 @@
 void show_gadget(usbg_gadget *g)
 {
 	char buf[USBG_MAX_STR_LENGTH];
-	struct gadget_attrs g_attrs;
-	struct gadget_strs g_strs;
+	usbg_gadget_attrs g_attrs;
+	usbg_gadget_strs g_strs;
 
 	usbg_get_gadget_name(g, buf, USBG_MAX_STR_LENGTH);
 	usbg_get_gadget_attrs(g, &g_attrs);
@@ -60,7 +60,7 @@ void show_gadget(usbg_gadget *g)
 void show_function(usbg_function *f)
 {
 	char buf[USBG_MAX_STR_LENGTH];
-	union attrs f_attrs;
+	usbg_function_attrs f_attrs;
 
 	usbg_get_function_name(f, buf, USBG_MAX_STR_LENGTH);
 	usbg_get_function_attrs(f, &f_attrs);
@@ -98,8 +98,8 @@ void show_config(usbg_config *c)
 	usbg_binding *b;
 	usbg_function *f;
 	char buf[USBG_MAX_STR_LENGTH], buf2[USBG_MAX_STR_LENGTH];
-	struct config_attrs c_attrs;
-	struct config_strs c_strs;
+	usbg_config_attrs c_attrs;
+	usbg_config_strs c_strs;
 
 	usbg_get_config_name(c, buf, USBG_MAX_STR_LENGTH);
 	fprintf(stdout, "  Configuration '%s'\n", buf);
