@@ -63,7 +63,6 @@ struct usbg_config
 
 	char name[USBG_MAX_NAME_LENGTH];
 	char path[USBG_MAX_PATH_LENGTH];
-	usbg_config_attrs attrs;
 	usbg_config_strs strs;
 };
 
@@ -408,7 +407,6 @@ static int usbg_parse_configs(char *path, usbg_gadget *g)
 		c->parent = g;
 		strcpy(c->name, dent[i]->d_name);
 		strcpy(c->path, cpath);
-		usbg_parse_config_attrs(cpath, c->name, &c->attrs);
 		usbg_parse_config_strs(cpath, c->name, &c->strs);
 		usbg_parse_config_bindings(c);
 		TAILQ_INSERT_TAIL(&g->configs, c, cnode);
@@ -948,8 +946,6 @@ usbg_config *usbg_create_config(usbg_gadget *g, char *name,
 
 	if (c_attrs)
 		usbg_set_config_attrs(c, c_attrs);
-	else
-		usbg_parse_config_attrs(c->path, c->name, &c->attrs);
 
 	if (c_strs)
 		usbg_set_config_string(c, LANG_US_ENG, c_strs->configuration);
@@ -986,8 +982,6 @@ void usbg_set_config_attrs(usbg_config *c, usbg_config_attrs *c_attrs)
 	if (!c || !c_attrs)
 		return;
 
-	c->attrs = *c_attrs;
-
 	usbg_write_dec(c->path, c->name, "MaxPower", c_attrs->bMaxPower);
 	usbg_write_hex8(c->path, c->name, "bmAttributes", c_attrs->bmAttributes);
 }
@@ -996,7 +990,7 @@ usbg_config_attrs *usbg_get_config_attrs(usbg_config *c,
 		usbg_config_attrs *c_attrs)
 {
 	if (c && c_attrs)
-		*c_attrs = c->attrs;
+		usbg_parse_config_attrs(c->path, c->name, c_attrs);
 	else
 		c_attrs = NULL;
 
@@ -1005,13 +999,11 @@ usbg_config_attrs *usbg_get_config_attrs(usbg_config *c,
 
 void usbg_set_config_max_power(usbg_config *c, int bMaxPower)
 {
-	c->attrs.bMaxPower = bMaxPower;
 	usbg_write_dec(c->path, c->name, "MaxPower", bMaxPower);
 }
 
 void usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes)
 {
-	c->attrs.bmAttributes = bmAttributes;
 	usbg_write_hex8(c->path, c->name, "bmAttributes", bmAttributes);
 }
 
