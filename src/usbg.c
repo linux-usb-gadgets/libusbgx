@@ -63,7 +63,6 @@ struct usbg_config
 
 	char name[USBG_MAX_NAME_LENGTH];
 	char path[USBG_MAX_PATH_LENGTH];
-	usbg_config_strs strs;
 };
 
 struct usbg_function
@@ -339,15 +338,24 @@ static void usbg_parse_config_attrs(char *path, char *name,
 	c_attrs->bmAttributes = usbg_read_hex(path, name, "bmAttributes");
 }
 
-static void usbg_parse_config_strs(char *path, char *name,
-		usbg_config_strs *c_attrs)
+static usbg_config_strs *usbg_parse_config_strs(char *path, char *name,
+		int lang, usbg_config_strs *c_strs)
 {
-	/* Hardcoded to US English right now*/
-	int lang = LANG_US_ENG;
+	DIR *dir;
 	char spath[USBG_MAX_PATH_LENGTH];
 
 	sprintf(spath, "%s/%s/%s/0x%x", path, name, STRINGS_DIR, lang);
-	usbg_read_string(spath, "", "configuration", c_attrs->configuration);
+
+	/* Check if directory exist */
+	dir = opendir(spath);
+	if (dir) {
+		closedir(dir);
+		usbg_read_string(spath, "", "configuration", c_strs->configuration);
+	} else {
+		c_strs = NULL;
+	}
+
+	return c_strs;
 }
 
 static void usbg_parse_config_bindings(usbg_config *c)
@@ -407,7 +415,6 @@ static int usbg_parse_configs(char *path, usbg_gadget *g)
 		c->parent = g;
 		strcpy(c->name, dent[i]->d_name);
 		strcpy(c->path, cpath);
-		usbg_parse_config_strs(cpath, c->name, &c->strs);
 		usbg_parse_config_bindings(c);
 		TAILQ_INSERT_TAIL(&g->configs, c, cnode);
 		free(dent[i]);
@@ -949,8 +956,6 @@ usbg_config *usbg_create_config(usbg_gadget *g, char *name,
 
 	if (c_strs)
 		usbg_set_config_string(c, LANG_US_ENG, c_strs->configuration);
-	else
-		usbg_parse_config_strs(c->path, c->name, &c->strs);
 
 	INSERT_TAILQ_STRING_ORDER(&g->configs, chead, name, c, cnode);
 
@@ -1007,11 +1012,11 @@ void usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes)
 	usbg_write_hex8(c->path, c->name, "bmAttributes", bmAttributes);
 }
 
-usbg_config_strs *usbg_get_config_strs(usbg_config *c,
+usbg_config_strs *usbg_get_config_strs(usbg_config *c, int lang,
 		usbg_config_strs *c_strs)
 {
 	if (c && c_strs)
-		*c_strs = c->strs;
+		c_strs = usbg_parse_config_strs(c->path, c->name, lang, c_strs);
 	else
 		c_strs = NULL;
 
@@ -1031,10 +1036,6 @@ void usbg_set_config_string(usbg_config *c, int lang, char *str)
 	sprintf(path, "%s/%s/%s/0x%x", c->path, c->name, STRINGS_DIR, lang);
 
 	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
-
-	/* strings in library are hardcoded to US English for now */
-	if (lang == LANG_US_ENG)
-		strcpy(c->strs.configuration, str);
 
 	usbg_write_string(path, "", "configuration", str);
 }

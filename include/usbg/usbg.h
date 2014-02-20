@@ -488,10 +488,11 @@ extern void usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes);
 /**
  * @brief Get the USB configuration strings
  * @param c Pointer to configuration
+ * @param lang Language of strings
  * @param c_sttrs Structure to be filled
  * @retur Pointer to filled structure or NULL if error occurred.
  */
-extern usbg_config_strs *usbg_get_config_strs(usbg_config *c,
+extern usbg_config_strs *usbg_get_config_strs(usbg_config *c, int lang,
 		usbg_config_strs *c_strs);
 
 /**

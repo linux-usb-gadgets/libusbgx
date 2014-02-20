@@ -108,7 +108,7 @@ void show_config(usbg_config *c)
 	fprintf(stdout, "    MaxPower\t\t%d\n", c_attrs.bMaxPower);
 	fprintf(stdout, "    bmAttributes\t0x%02x\n", c_attrs.bmAttributes);
 
-	usbg_get_config_strs(c, &c_strs);
+	usbg_get_config_strs(c, LANG_US_ENG, &c_strs);
 	fprintf(stdout, "    configuration\t%s\n", c_strs.configuration);
 
 	usbg_for_each_binding(b, c) {
