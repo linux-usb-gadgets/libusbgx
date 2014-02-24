@@ -266,6 +266,55 @@ static inline void usbg_write_string(char *path, char *name, char *file, char *b
 	usbg_write_buf(path, name, file, buf);
 }
 
+static inline void usbg_free_binding(usbg_binding *b)
+{
+	free(b);
+}
+
+static inline void usbg_free_function(usbg_function *f)
+{
+	free(f);
+}
+
+static void usbg_free_config(usbg_config *c)
+{
+	usbg_binding *b;
+	while (!TAILQ_EMPTY(&c->bindings)) {
+		b = TAILQ_FIRST(&c->bindings);
+		TAILQ_REMOVE(&c->bindings, b, bnode);
+		usbg_free_binding(b);
+	}
+	free(c);
+}
+
+static void usbg_free_gadget(usbg_gadget *g)
+{
+	usbg_config *c;
+	usbg_function *f;
+	while (!TAILQ_EMPTY(&g->configs)) {
+		c = TAILQ_FIRST(&g->configs);
+		TAILQ_REMOVE(&g->configs, c, cnode);
+		usbg_free_config(c);
+	}
+	while (!TAILQ_EMPTY(&g->functions)) {
+		f = TAILQ_FIRST(&g->functions);
+		TAILQ_REMOVE(&g->functions, f, fnode);
+		usbg_free_function(f);
+	}
+	free(g);
+}
+
+static void usbg_free_state(usbg_state *s)
+{
+	usbg_gadget *g;
+	while (!TAILQ_EMPTY(&s->gadgets)) {
+		g = TAILQ_FIRST(&s->gadgets);
+		TAILQ_REMOVE(&s->gadgets, g, gnode);
+		usbg_free_gadget(g);
+	}
+	free(s);
+}
+
 static void usbg_parse_function_attrs(usbg_function *f,
 		usbg_function_attrs *f_attrs)
 {
@@ -532,33 +581,7 @@ out:
 
 void usbg_cleanup(usbg_state *s)
 {
-	usbg_gadget *g;
-	usbg_config *c;
-	usbg_binding *b;
-	usbg_function *f;
-
-	while (!TAILQ_EMPTY(&s->gadgets)) {
-		g = TAILQ_FIRST(&s->gadgets);
-		while (!TAILQ_EMPTY(&g->configs)) {
-			c = TAILQ_FIRST(&g->configs);
-			while(!TAILQ_EMPTY(&c->bindings)) {
-				b = TAILQ_FIRST(&c->bindings);
-				TAILQ_REMOVE(&c->bindings, b, bnode);
-				free(b);
-			}
-			TAILQ_REMOVE(&g->configs, c, cnode);
-			free(c);
-		}
-		while (!TAILQ_EMPTY(&g->functions)) {
-			f = TAILQ_FIRST(&g->functions);
-			TAILQ_REMOVE(&g->functions, f, fnode);
-			free(f);
-		}
-		TAILQ_REMOVE(&s->gadgets, g, gnode);
-		free(g);
-	}
-
-	free(s);
+	usbg_free_state(s);
 }
 
 size_t usbg_get_configfs_path_len(usbg_state *s)
