@@ -74,7 +74,6 @@ struct usbg_function
 	char path[USBG_MAX_PATH_LENGTH];
 
 	usbg_function_type type;
-	usbg_function_attrs attr;
 };
 
 struct usbg_binding
@@ -267,7 +266,8 @@ static inline void usbg_write_string(char *path, char *name, char *file, char *b
 	usbg_write_buf(path, name, file, buf);
 }
 
-static void usbg_parse_function_attrs(usbg_function *f)
+static void usbg_parse_function_attrs(usbg_function *f,
+		usbg_function_attrs *f_attrs)
 {
 	struct ether_addr *addr;
 	char str_addr[40];
@@ -276,7 +276,7 @@ static void usbg_parse_function_attrs(usbg_function *f)
 	case F_SERIAL:
 	case F_ACM:
 	case F_OBEX:
-		f->attr.serial.port_num = usbg_read_dec(f->path, f->name, "port_num");
+		f_attrs->serial.port_num = usbg_read_dec(f->path, f->name, "port_num");
 		break;
 	case F_ECM:
 	case F_SUBSET:
@@ -286,18 +286,18 @@ static void usbg_parse_function_attrs(usbg_function *f)
 		usbg_read_string(f->path, f->name, "dev_addr", str_addr);
 		addr = ether_aton(str_addr);
 		if (addr)
-			f->attr.net.dev_addr = *addr;
+			f_attrs->net.dev_addr = *addr;
 
 		usbg_read_string(f->path, f->name, "host_addr", str_addr);
 		addr = ether_aton(str_addr);
 		if(addr)
-			f->attr.net.host_addr = *addr;
+			f_attrs->net.host_addr = *addr;
 
-		usbg_read_string(f->path, f->name, "ifname", f->attr.net.ifname);
-		f->attr.net.qmult = usbg_read_dec(f->path, f->name, "qmult");
+		usbg_read_string(f->path, f->name, "ifname", f_attrs->net.ifname);
+		f_attrs->net.qmult = usbg_read_dec(f->path, f->name, "qmult");
 		break;
 	case F_PHONET:
-		usbg_read_string(f->path, f->name, "ifname", f->attr.phonet.ifname);
+		usbg_read_string(f->path, f->name, "ifname", f_attrs->phonet.ifname);
 		break;
 	default:
 		ERROR("Unsupported function type\n");
@@ -322,7 +322,6 @@ static int usbg_parse_functions(char *path, usbg_gadget *g)
 		strcpy(f->name, dent[i]->d_name);
 		strcpy(f->path, fpath);
 		f->type = usbg_lookup_function_type(strtok(dent[i]->d_name, "."));
-		usbg_parse_function_attrs(f);
 		TAILQ_INSERT_TAIL(&g->functions, f, fnode);
 		free(dent[i]);
 	}
@@ -905,8 +904,6 @@ usbg_function *usbg_create_function(usbg_gadget *g, usbg_function_type type,
 
 	if (f_attrs)
 		usbg_set_function_attrs(f, f_attrs);
-	else
-		usbg_parse_function_attrs(f);
 
 	INSERT_TAILQ_STRING_ORDER(&g->functions, fhead, name, f, fnode);
 
@@ -1143,10 +1140,11 @@ usbg_function_type usbg_get_function_type(usbg_function *f)
 	return f->type;
 }
 
-usbg_function_attrs *usbg_get_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
+usbg_function_attrs *usbg_get_function_attrs(usbg_function *f,
+		usbg_function_attrs *f_attrs)
 {
 	if (f && f_attrs)
-		*f_attrs = f->attr;
+		usbg_parse_function_attrs(f, f_attrs);
 	else
 		f_attrs = NULL;
 
@@ -1159,8 +1157,6 @@ void usbg_set_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
 
 	if (!f || !f_attrs)
 		return;
-
-	f->attr = *f_attrs;
 
 	switch (f->type) {
 	case F_SERIAL:
@@ -1195,8 +1191,6 @@ void usbg_set_net_dev_addr(usbg_function *f, struct ether_addr *dev_addr)
 {
 	char *str_addr;
 
-	f->attr.net.dev_addr = *dev_addr;
-
 	str_addr = ether_ntoa(dev_addr);
 	usbg_write_string(f->path, f->name, "dev_addr", str_addr);
 }
@@ -1205,15 +1199,12 @@ void usbg_set_net_host_addr(usbg_function *f, struct ether_addr *host_addr)
 {
 	char *str_addr;
 
-	f->attr.net.host_addr = *host_addr;
-
 	str_addr = ether_ntoa(host_addr);
 	usbg_write_string(f->path, f->name, "host_addr", str_addr);
 }
 
 void usbg_set_net_qmult(usbg_function *f, int qmult)
 {
-	f->attr.net.qmult = qmult;
 	usbg_write_dec(f->path, f->name, "qmult", qmult);
 }
 
