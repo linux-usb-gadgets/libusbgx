@@ -208,7 +208,7 @@ extern void usbg_cleanup(usbg_state *s);
 /**
  * @brief Get ConfigFS path length
  * @param s Pointer to state
- * @return Length of path or -1 if error occurred.
+ * @return Length of path or usbg_error if error occurred.
  */
 extern size_t usbg_get_configfs_path_len(usbg_state *s);
 
@@ -293,7 +293,7 @@ extern usbg_gadget_attrs *usbg_get_gadget_attrs(usbg_gadget *g,
 /**
  * @brief Get gadget name length
  * @param g Gadget which name length should be returned
- * @return Length of name string or -1 if error occurred.
+ * @return Length of name string or usbg_error if error occurred.
  */
 extern size_t usbg_get_gadget_name_len(usbg_gadget *g);
 
@@ -427,7 +427,7 @@ extern usbg_function *usbg_create_function(usbg_gadget *g, usbg_function_type ty
 /**
  * @brief Get function name length
  * @param f Config which name length should be returned
- * @return Length of name string or -1 if error occurred.
+ * @return Length of name string or usbg_error if error occurred.
  */
 extern size_t usbg_get_function_name_len(usbg_function *f);
 
@@ -456,7 +456,7 @@ extern usbg_config *usbg_create_config(usbg_gadget *g, char *name,
 /**
  * @brief Get config name length
  * @param c Config which name length should be returned
- * @return Length of name string or -1 if error occurred.
+ * @return Length of name string or usbg_error if error occurred.
  */
 extern size_t usbg_get_config_name_len(usbg_config *c);
 
@@ -546,7 +546,7 @@ extern usbg_function *usbg_get_binding_target(usbg_binding *b);
 /**
  * @brief Get binding name length
  * @param b Binding which name length should be returned
- * @return Length of name string or -1 if error occurred.
+ * @return Length of name string or usbg_error if error occurred.
  */
 extern size_t usbg_get_binding_name_len(usbg_binding *b);
 
@@ -584,7 +584,7 @@ extern void usbg_disable_gadget(usbg_gadget *g);
 /**
  * @brief Get gadget name length
  * @param g Gadget which name length should be returned
- * @return Length of name string or -1 if error occurred.
+ * @return Length of name string or usbg_error if error occurred.
  * @note If gadget isn't enabled on any udc returned size is 0.
  */
 extern size_t usbg_get_gadget_udc_len(usbg_gadget *g);
