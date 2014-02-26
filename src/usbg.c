@@ -741,9 +741,15 @@ size_t usbg_get_configfs_path_len(usbg_state *s)
 	return s ? strlen(s->path) : USBG_ERROR_INVALID_PARAM;
 }
 
-char *usbg_get_configfs_path(usbg_state *s, char *buf, size_t len)
+int usbg_get_configfs_path(usbg_state *s, char *buf, size_t len)
 {
-	return s ? strncpy(buf, s->path, len) : NULL;
+	int ret = USBG_SUCCESS;
+	if (s && buf)
+		strncpy(buf, s->path, len);
+	else
+		ret = USBG_ERROR_INVALID_PARAM;
+
+	return ret;
 }
 
 usbg_gadget *usbg_get_gadget(usbg_state *s, const char *name)
@@ -909,9 +915,15 @@ size_t usbg_get_gadget_name_len(usbg_gadget *g)
 	return g ? strlen(g->name) : USBG_ERROR_INVALID_PARAM;
 }
 
-char *usbg_get_gadget_name(usbg_gadget *g, char *buf, size_t len)
+int usbg_get_gadget_name(usbg_gadget *g, char *buf, size_t len)
 {
-	return g ? strncpy(buf, g->name, len) : NULL;
+	int ret = USBG_SUCCESS;
+	if (g && buf)
+		strncpy(buf, g->name, len);
+	else
+		ret = USBG_ERROR_INVALID_PARAM;
+
+	return ret;
 }
 
 size_t usbg_get_gadget_udc_len(usbg_gadget *g)
@@ -919,9 +931,15 @@ size_t usbg_get_gadget_udc_len(usbg_gadget *g)
 	return g ? strlen(g->udc) : USBG_ERROR_INVALID_PARAM;
 }
 
-char *usbg_get_gadget_udc(usbg_gadget *g, char *buf, size_t len)
+int usbg_get_gadget_udc(usbg_gadget *g, char *buf, size_t len)
 {
-	return g ? strncpy(buf, g->udc, len) : NULL;
+	int ret = USBG_SUCCESS;
+	if (g && buf)
+		strncpy(buf, g->udc, len);
+	else
+		ret = USBG_ERROR_INVALID_PARAM;
+
+	return ret;
 }
 
 void usbg_set_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs)
@@ -1139,9 +1157,15 @@ size_t usbg_get_config_name_len(usbg_config *c)
 	return c ? strlen(c->name) : USBG_ERROR_INVALID_PARAM;
 }
 
-char *usbg_get_config_name(usbg_config *c, char *buf, size_t len)
+int usbg_get_config_name(usbg_config *c, char *buf, size_t len)
 {
-	return c ? strncpy(buf, c->name, len) : NULL;
+	int ret = USBG_SUCCESS;
+	if (c && buf)
+		strncpy(buf, c->name, len);
+	else
+		ret = USBG_ERROR_INVALID_PARAM;
+
+	return ret;
 }
 
 size_t usbg_get_function_name_len(usbg_function *f)
@@ -1149,9 +1173,15 @@ size_t usbg_get_function_name_len(usbg_function *f)
 	return f ? strlen(f->name) : USBG_ERROR_INVALID_PARAM;
 }
 
-char *usbg_get_function_name(usbg_function *f, char *buf, size_t len)
+int usbg_get_function_name(usbg_function *f, char *buf, size_t len)
 {
-	return f ? strncpy(buf, f->name, len) : NULL;
+	int ret = USBG_SUCCESS;
+	if (f && buf)
+		strncpy(buf, f->name, len);
+	else
+		ret = USBG_ERROR_INVALID_PARAM;
+
+	return ret;
 }
 
 void usbg_set_config_attrs(usbg_config *c, usbg_config_attrs *c_attrs)
@@ -1269,9 +1299,15 @@ size_t usbg_get_binding_name_len(usbg_binding *b)
 	return b ? strlen(b->name) : USBG_ERROR_INVALID_PARAM;
 }
 
-char *usbg_get_binding_name(usbg_binding *b, char *buf, size_t len)
+int usbg_get_binding_name(usbg_binding *b, char *buf, size_t len)
 {
-	return b ? strncpy(buf, b->name, len) : NULL;
+	int ret = USBG_SUCCESS;
+	if (b && buf)
+		strncpy(buf, b->name, len);
+	else
+		ret = USBG_ERROR_INVALID_PARAM;
+
+	return ret;
 }
 
 int usbg_get_udcs(struct dirent ***udc_list)

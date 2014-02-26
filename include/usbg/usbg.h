@@ -217,9 +217,9 @@ extern size_t usbg_get_configfs_path_len(usbg_state *s);
  * @param s Pointer to state
  * @param buf Buffer where path should be copied
  * @param len Length of given buffer
- * @return Pointer to destination or NULL if error occurred.
+ * @return 0 on success or usbg_error if error occurred.
  */
-extern char *usbg_get_configfs_path(usbg_state *s, char *buf, size_t len);
+extern int usbg_get_configfs_path(usbg_state *s, char *buf, size_t len);
 
 /* USB gadget queries */
 
@@ -302,9 +302,9 @@ extern size_t usbg_get_gadget_name_len(usbg_gadget *g);
  * @param b Pointer to gadget
  * @param buf Buffer where name should be copied
  * @param len Length of given buffer
- * @return Pointer to destination or NULL if error occurred.
+ * @return 0 on success or usbg_error if error occurred.
  */
-extern char *usbg_get_gadget_name(usbg_gadget *g, char *buf, size_t len);
+extern int usbg_get_gadget_name(usbg_gadget *g, char *buf, size_t len);
 
 /**
  * @brief Set the USB gadget vendor id
@@ -436,9 +436,9 @@ extern size_t usbg_get_function_name_len(usbg_function *f);
  * @param f Pointer to function
  * @param buf Buffer where name should be copied
  * @param len Length of given buffer
- * @return Pointer to destination or NULL if error occurred.
+ * @return 0 on success or usbg_error if error occurred.
  */
-extern char *usbg_get_function_name(usbg_function *f, char *buf, size_t len);
+extern int usbg_get_function_name(usbg_function *f, char *buf, size_t len);
 
 /* USB configurations allocation and configuration */
 
@@ -465,9 +465,9 @@ extern size_t usbg_get_config_name_len(usbg_config *c);
  * @param c Pointer to config
  * @param buf Buffer where name should be copied
  * @param len Length of given buffer
- * @return Pointer to destination or NULL if error occurred.
+ * @return 0 on success or usbg_error if error occurred.
  */
-extern char *usbg_get_config_name(usbg_config *c, char *buf, size_t len);
+extern int usbg_get_config_name(usbg_config *c, char *buf, size_t len);
 
 /**
  * @brief Set the USB configuration attributes
@@ -555,9 +555,9 @@ extern size_t usbg_get_binding_name_len(usbg_binding *b);
  * @param b Pointer to binding
  * @param buf Buffer where name should be copied
  * @param len Length of given buffer
- * @return Pointer to destination or NULL if error occurred.
+ * @return 0 on success or usbg_error if error occurred.
  */
-extern char *usbg_get_binding_name(usbg_binding *b, char *buf, size_t len);
+extern int usbg_get_binding_name(usbg_binding *b, char *buf, size_t len);
 
 /* USB gadget setup and teardown */
 
@@ -594,10 +594,10 @@ extern size_t usbg_get_gadget_udc_len(usbg_gadget *g);
  * @param b Pointer to gadget
  * @param buf Buffer where udc name should be copied
  * @param len Length of given buffer
- * @return Pointer to destination or NULL if error occurred.
+ * @return 0 on success or usbg_error if error occurred.
  * @note If gadget isn't enabled on any udc returned string is empty.
  */
-extern char *usbg_get_gadget_udc(usbg_gadget *g, char *buf, size_t len);
+extern int usbg_get_gadget_udc(usbg_gadget *g, char *buf, size_t len);
 
 /*
  * USB function-specific attribute configuration
