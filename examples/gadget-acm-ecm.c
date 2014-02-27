@@ -63,8 +63,8 @@ int main(void)
 		goto out1;
 	}
 
-	g = usbg_create_gadget(s, "g1", &g_attrs, &g_strs);
-	if (!g) {
+	usbg_ret = usbg_create_gadget(s, "g1", &g_attrs, &g_strs, &g);
+	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error on create gadget\n");
 		goto out2;
 	}

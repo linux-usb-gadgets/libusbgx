@@ -142,6 +142,7 @@ static int usbg_translate_error(int error)
 		ret = USBG_ERROR_NO_MEM;
 		break;
 	case EACCES:
+	case EROFS:
 		ret = USBG_ERROR_NO_ACCESS;
 		break;
 	case ENOENT:
@@ -154,6 +155,9 @@ static int usbg_translate_error(int error)
 		break;
 	case EIO:
 		ret = USBG_ERROR_IO;
+		break;
+	case EEXIST:
+		ret = USBG_ERROR_EXIST;
 		break;
 	default:
 		ret = USBG_ERROR_OTHER_ERROR;
@@ -261,46 +265,49 @@ static int usbg_read_string(char *path, char *name, char *file, char *buf)
 	return ret;
 }
 
-static void usbg_write_buf(char *path, char *name, char *file, char *buf)
+static int usbg_write_buf(char *path, char *name, char *file, char *buf)
 {
 	char p[USBG_MAX_STR_LENGTH];
 	FILE *fp;
-	int err;
+	int ret = USBG_SUCCESS;
 
 	sprintf(p, "%s/%s/%s", path, name, file);
 
 	fp = fopen(p, "w");
-	if (!fp) {
-		ERRORNO("%s\n", p);
-		return;
+	if (fp) {
+		fputs(buf, fp);
+		fflush(fp);
+
+		ret = ferror(fp);
+		if (ret)
+			ret = usbg_translate_error(errno);
+
+		fclose(fp);
+	} else {
+		/* Set error correctly */
+		ret = usbg_translate_error(errno);
 	}
 
-	fputs(buf, fp);
-	fflush(fp);
-	err = ferror(fp);
-	fclose(fp);
-	
-	if (err){
-		ERROR("write error");
-		return;
-	}
+	return ret;
 }
 
-static void usbg_write_int(char *path, char *name, char *file, int value, char *str)
+static int usbg_write_int(char *path, char *name, char *file, int value,
+		char *str)
 {
 	char buf[USBG_MAX_STR_LENGTH];
 
 	sprintf(buf, str, value);
-	usbg_write_buf(path, name, file, buf);
+	return usbg_write_buf(path, name, file, buf);
 }
 
 #define usbg_write_dec(p, n, f, v)	usbg_write_int(p, n, f, v, "%d\n")
 #define usbg_write_hex16(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%04x\n")
 #define usbg_write_hex8(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%02x\n")
 
-static inline void usbg_write_string(char *path, char *name, char *file, char *buf)
+static inline int usbg_write_string(char *path, char *name, char *file,
+		char *buf)
 {
-	usbg_write_buf(path, name, file, buf);
+	return usbg_write_buf(path, name, file, buf);
 }
 
 static inline void usbg_free_binding(usbg_binding *b)
@@ -807,96 +814,112 @@ usbg_binding *usbg_get_link_binding(usbg_config *c, usbg_function *f)
 	return NULL;
 }
 
-static usbg_gadget *usbg_create_empty_gadget(usbg_state *s, char *name)
+static int usbg_create_empty_gadget(usbg_state *s, char *name, usbg_gadget **g)
 {
 	char gpath[USBG_MAX_PATH_LENGTH];
-	usbg_gadget *g;
-	int ret;
+	int ret = USBG_SUCCESS;
 
 	sprintf(gpath, "%s/%s", s->path, name);
 
-	g = malloc(sizeof(usbg_gadget));
-	if (!g) {
-		ERRORNO("allocating gadget\n");
-		return NULL;
+	*g = malloc(sizeof(usbg_gadget));
+	if (*g) {
+		usbg_gadget *gad = *g; /* alias only */
+
+		TAILQ_INIT(&gad->configs);
+		TAILQ_INIT(&gad->functions);
+		strcpy(gad->name, name);
+		strcpy(gad->path, s->path);
+		gad->parent = s;
+
+		ret = mkdir(gpath, S_IRWXU|S_IRWXG|S_IRWXO);
+		if (ret == 0) {
+			/* Should be empty but read the default */
+			ret = usbg_read_string(gad->path, gad->name, "UDC",
+				 gad->udc);
+			if (ret != USBG_SUCCESS)
+				rmdir(gpath);
+		} else {
+			ret = usbg_translate_error(errno);
+		}
+
+		if (ret != USBG_SUCCESS) {
+			free(gad);
+			*g = NULL;
+		}
+	} else {
+		ret = USBG_ERROR_NO_MEM;
 	}
 
-	TAILQ_INIT(&g->configs);
-	TAILQ_INIT(&g->functions);
-	strcpy(g->name, name);
-	strcpy(g->path, s->path);
-	g->parent = s;
-
-	ret = mkdir(gpath, S_IRWXU|S_IRWXG|S_IRWXO);
-	if (ret < 0) {
-		ERRORNO("%s\n", gpath);
-		free(g);
-		return NULL;
-	}
-
-	/* Should be empty but read the default */
-	usbg_read_string(g->path, g->name, "UDC", g->udc);
-
-	return g;
+	return ret;
 }
 
-
-
-usbg_gadget *usbg_create_gadget_vid_pid(usbg_state *s, char *name,
-		uint16_t idVendor, uint16_t idProduct)
+int usbg_create_gadget_vid_pid(usbg_state *s, char *name,
+		uint16_t idVendor, uint16_t idProduct, usbg_gadget **g)
 {
-	usbg_gadget *g;
+	int ret;
+	usbg_gadget *gad;
 
-	if (!s)
-		return NULL;
+	if (!s || !g)
+		return USBG_ERROR_INVALID_PARAM;
 
-	g = usbg_get_gadget(s, name);
-	if (g) {
+	gad = usbg_get_gadget(s, name);
+	if (gad) {
 		ERROR("duplicate gadget name\n");
-		return NULL;
+		return USBG_ERROR_EXIST;
 	}
 
-	g = usbg_create_empty_gadget(s, name);
+	ret = usbg_create_empty_gadget(s, name, g);
+	gad = *g;
 
 	/* Check if gadget creation was successful and set attributes */
-	if (g) {
-		usbg_write_hex16(s->path, name, "idVendor", idVendor);
-		usbg_write_hex16(s->path, name, "idProduct", idProduct);
-
-		INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name, g, gnode);
+	if (ret == USBG_SUCCESS) {
+		ret = usbg_write_hex16(s->path, name, "idVendor", idVendor);
+		if (ret == USBG_SUCCESS) {
+			ret = usbg_write_hex16(s->path, name, "idProduct", idProduct);
+			if (ret == USBG_SUCCESS)
+				INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name,
+						gad, gnode);
+			else
+				usbg_free_gadget(gad);
+		}
 	}
 
-	return g;
+	return ret;
 }
 
-usbg_gadget *usbg_create_gadget(usbg_state *s, char *name,
-		usbg_gadget_attrs *g_attrs, usbg_gadget_strs *g_strs)
+int usbg_create_gadget(usbg_state *s, char *name,
+		usbg_gadget_attrs *g_attrs, usbg_gadget_strs *g_strs, usbg_gadget **g)
 {
-	usbg_gadget *g;
+	usbg_gadget *gad;
+	int ret;
 
-	if (!s)
-		return NULL;
+	if (!s || !g)
+			return USBG_ERROR_INVALID_PARAM;
 
-	g = usbg_get_gadget(s, name);
-	if (g) {
+	gad = usbg_get_gadget(s, name);
+	if (gad) {
 		ERROR("duplicate gadget name\n");
-		return NULL;
+		return USBG_ERROR_EXIST;
 	}
 
-	g = usbg_create_empty_gadget(s, name);
+	ret = usbg_create_empty_gadget(s, name, g);
+	gad = *g;
 
 	/* Check if gadget creation was successful and set attrs and strings */
-	if (g) {
+	if (ret == USBG_SUCCESS) {
 		if (g_attrs)
-			usbg_set_gadget_attrs(g, g_attrs);
+			ret = usbg_set_gadget_attrs(gad, g_attrs);
 
 		if (g_strs)
-			usbg_set_gadget_strs(g, LANG_US_ENG, g_strs);
+			ret = usbg_set_gadget_strs(gad, LANG_US_ENG, g_strs);
 
-		INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name, g, gnode);
+		if (ret == USBG_SUCCESS)
+			INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name,
+				gad, gnode);
+		else
+			usbg_free_gadget(gad);
 	}
-
-	return g;
+	return ret;
 }
 
 usbg_gadget_attrs *usbg_get_gadget_attrs(usbg_gadget *g,
@@ -942,19 +965,51 @@ int usbg_get_gadget_udc(usbg_gadget *g, char *buf, size_t len)
 	return ret;
 }
 
-void usbg_set_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs)
+int usbg_set_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs)
 {
+	int ret;
 	if (!g || !g_attrs)
-		return;
+		return USBG_ERROR_INVALID_PARAM;
 
-	usbg_write_hex16(g->path, g->name, "bcdUSB", g_attrs->bcdUSB);
-	usbg_write_hex8(g->path, g->name, "bDeviceClass", g_attrs->bDeviceClass);
-	usbg_write_hex8(g->path, g->name, "bDeviceSubClass", g_attrs->bDeviceSubClass);
-	usbg_write_hex8(g->path, g->name, "bDeviceProtocol", g_attrs->bDeviceProtocol);
-	usbg_write_hex8(g->path, g->name, "bMaxPacketSize0", g_attrs->bMaxPacketSize0);
-	usbg_write_hex16(g->path, g->name, "idVendor", g_attrs->idVendor);
-	usbg_write_hex16(g->path, g->name, "idProduct", g_attrs->idProduct);
-	usbg_write_hex16(g->path, g->name, "bcdDevice", g_attrs->bcdDevice);
+	ret = usbg_write_hex16(g->path, g->name, "bcdUSB", g_attrs->bcdUSB);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_hex8(g->path, g->name, "bDeviceClass",
+		g_attrs->bDeviceClass);
+	if (ret != USBG_SUCCESS)
+			goto out;
+
+	ret = usbg_write_hex8(g->path, g->name, "bDeviceSubClass",
+		g_attrs->bDeviceSubClass);
+	if (ret != USBG_SUCCESS)
+			goto out;
+
+	ret = usbg_write_hex8(g->path, g->name, "bDeviceProtocol",
+		g_attrs->bDeviceProtocol);
+	if (ret != USBG_SUCCESS)
+			goto out;
+
+	ret = usbg_write_hex8(g->path, g->name, "bMaxPacketSize0",
+		g_attrs->bMaxPacketSize0);
+	if (ret != USBG_SUCCESS)
+			goto out;
+
+	ret = usbg_write_hex16(g->path, g->name, "idVendor",
+		g_attrs->idVendor);
+	if (ret != USBG_SUCCESS)
+			goto out;
+
+	ret = usbg_write_hex16(g->path, g->name, "idProduct",
+		 g_attrs->idProduct);
+	if (ret != USBG_SUCCESS)
+			goto out;
+
+	ret = usbg_write_hex16(g->path, g->name, "bcdDevice",
+		g_attrs->bcdDevice);
+
+out:
+	return ret;
 }
 
 void usbg_set_gadget_vendor_id(usbg_gadget *g, uint16_t idVendor)
@@ -1008,18 +1063,45 @@ usbg_gadget_strs *usbg_get_gadget_strs(usbg_gadget *g, int lang,
 	return g_strs;
 }
 
-void usbg_set_gadget_strs(usbg_gadget *g, int lang,
+static int usbg_check_dir(char *path)
+{
+	int ret = USBG_SUCCESS;
+	DIR *dir;
+
+	/* Assume that user will always have read access to this directory */
+	dir = opendir(path);
+	if (dir)
+		closedir(dir);
+	else if (errno != ENOENT || mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO) != 0)
+		ret = usbg_translate_error(errno);
+
+	return ret;
+}
+
+int usbg_set_gadget_strs(usbg_gadget *g, int lang,
 		usbg_gadget_strs *g_strs)
 {
 	char path[USBG_MAX_PATH_LENGTH];
+	DIR *dir;
+	int ret = USBG_SUCCESS;
 
 	sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, STRINGS_DIR, lang);
 
-	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
+	ret = usbg_check_dir(path);
+	if (ret == USBG_SUCCESS) {
+		ret = usbg_write_string(path, "", "serialnumber", g_strs->str_ser);
+		if (ret != USBG_SUCCESS)
+			goto out;
 
-	usbg_write_string(path, "", "serialnumber", g_strs->str_ser);
-	usbg_write_string(path, "", "manufacturer", g_strs->str_mnf);
-	usbg_write_string(path, "", "product", g_strs->str_prd);
+		ret = usbg_write_string(path, "", "manufacturer", g_strs->str_mnf);
+		if (ret != USBG_SUCCESS)
+			goto out;
+
+		ret = usbg_write_string(path, "", "product", g_strs->str_prd);
+	}
+
+out:
+	return ret;
 }
 
 void usbg_set_gadget_serial_number(usbg_gadget *g, int lang, char *serno)

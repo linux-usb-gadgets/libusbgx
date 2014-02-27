@@ -186,6 +186,7 @@ typedef enum  {
 	USBG_ERROR_INVALID_PARAM = -3,
 	USBG_ERROR_NOT_FOUND = -4,
 	USBG_ERROR_IO = -5,
+	USBG_ERROR_EXIST = -6,
 	USBG_ERROR_OTHER_ERROR = -99
 } usbg_error;
 
@@ -255,10 +256,11 @@ extern usbg_config *usbg_get_config(usbg_gadget *g, const char *name);
  * @param name Name of the gadget
  * @param idVendor Gadget vendor ID
  * @param idProduct Gadget product ID
- * @return Pointer to gadget or NULL if the gadget cannot be created
+ * @param g Pointer to be filled with pointer to gadget
+ * @return 0 on success usbg_error if error occurred
  */
-extern usbg_gadget *usbg_create_gadget_vid_pid(usbg_state *s, char *name,
-		uint16_t idVendor, uint16_t idProduct);
+extern int usbg_create_gadget_vid_pid(usbg_state *s, char *name,
+		uint16_t idVendor, uint16_t idProduct, usbg_gadget **g);
 
 /**
  * @brief Create a new USB gadget device and set given attributes
@@ -267,18 +269,20 @@ extern usbg_gadget *usbg_create_gadget_vid_pid(usbg_state *s, char *name,
  * @param name Name of the gadget
  * @param g_attrs Gadget attributes to be set. If NULL setting is omitted.
  * @param g_strs Gadget strings to be set. If NULL setting is omitted.
+ * @param g Pointer to be filled with pointer to gadget
  * @note Given strings are assumed to be in US English
- * @return Pointer to gadget or NULL if the gadget cannot be created
+ * @return 0 on success usbg_error if error occurred
  */
-extern usbg_gadget *usbg_create_gadget(usbg_state *s, char *name,
-		usbg_gadget_attrs *g_attrs, usbg_gadget_strs *g_strs);
+extern int usbg_create_gadget(usbg_state *s, char *name,
+		usbg_gadget_attrs *g_attrs, usbg_gadget_strs *g_strs, usbg_gadget **g);
 
 /**
  * @brief Set the USB gadget attributes
  * @param g Pointer to gadget
  * @param g_attrs Gadget attributes
+ * @return 0 on success usbg_error if error occurred
  */
-extern void usbg_set_gadget_attrs(usbg_gadget *g,
+extern int usbg_set_gadget_attrs(usbg_gadget *g,
 		usbg_gadget_attrs *g_attrs);
 
 /**
@@ -383,8 +387,9 @@ extern usbg_gadget_strs *usbg_get_gadget_strs(usbg_gadget *g, int lang,
  * @param g Pointer to gadget
  * @param lang USB language ID
  * @param g_sttrs Gadget attributes
+ * @return 0 on success usbg_error if error occurred
  */
-extern void usbg_set_gadget_strs(usbg_gadget *g, int lang,
+extern int usbg_set_gadget_strs(usbg_gadget *g, int lang,
 		usbg_gadget_strs *g_strs);
 
 /**
