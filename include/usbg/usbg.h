@@ -314,62 +314,70 @@ extern int usbg_get_gadget_name(usbg_gadget *g, char *buf, size_t len);
  * @brief Set the USB gadget vendor id
  * @param g Pointer to gadget
  * @param idVendor USB device vendor id
+ * @return 0 on success usbg_error if error occurred
  */
-extern void usbg_set_gadget_vendor_id(usbg_gadget *g, uint16_t idVendor);
+extern int usbg_set_gadget_vendor_id(usbg_gadget *g, uint16_t idVendor);
 
 /**
  * @brief Set the USB gadget product id
  * @param g Pointer to gadget
  * @param idProduct USB device product id
+ * @return 0 on success usbg_error if error occurred
  */
-extern void usbg_set_gadget_product_id(usbg_gadget *g, uint16_t idProduct);
+extern int usbg_set_gadget_product_id(usbg_gadget *g, uint16_t idProduct);
 
 /**
  * @brief Set the USB gadget device class code
  * @param g Pointer to gadget
  * @param bDeviceClass USB device class code
+ * @return 0 on success usbg_error if error occurred
  */
-extern void usbg_set_gadget_device_class(usbg_gadget *g,
+extern int usbg_set_gadget_device_class(usbg_gadget *g,
 		uint8_t bDeviceClass);
 
 /**
  * @brief Set the USB gadget protocol code
  * @param g Pointer to gadget
  * @param bDeviceProtocol USB protocol code
+ * @return 0 on success usbg_error if error occurred
  */
-extern void usbg_set_gadget_device_protocol(usbg_gadget *g,
+extern int usbg_set_gadget_device_protocol(usbg_gadget *g,
 		uint8_t bDeviceProtocol);
 
 /**
  * @brief Set the USB gadget device subclass code
  * @param g Pointer to gadget
  * @param bDeviceSubClass USB device subclass code
+ * @return 0 on success usbg_error if error occurred
  */
-extern void usbg_set_gadget_device_subclass(usbg_gadget *g,
+extern int usbg_set_gadget_device_subclass(usbg_gadget *g,
 		uint8_t bDeviceSubClass);
 
 /**
  * @brief Set the maximum packet size for a gadget
  * @param g Pointer to gadget
  * @param bMaxPacketSize0 Maximum packet size
+ * @return 0 on success usbg_error if error occurred
  */
-extern void usbg_set_gadget_device_max_packet(usbg_gadget *g,
+extern int usbg_set_gadget_device_max_packet(usbg_gadget *g,
 		uint8_t bMaxPacketSize0);
 
 /**
  * @brief Set the gadget device BCD release number
  * @param g Pointer to gadget
  * @param bcdDevice BCD release number
+ * @return 0 on success usbg_error if error occurred
  */
-extern void usbg_set_gadget_device_bcd_device(usbg_gadget *g,
+extern int usbg_set_gadget_device_bcd_device(usbg_gadget *g,
 		uint16_t bcdDevice);
 
 /**
  * @brief Set the gadget device BCD USB version
  * @param g Pointer to gadget
  * @param bcdUSB BCD USB version
+ * @return 0 on success usbg_error if error occurred
  */
-extern void usbg_set_gadget_device_bcd_usb(usbg_gadget *g, uint16_t bcdUSB);
+extern int usbg_set_gadget_device_bcd_usb(usbg_gadget *g, uint16_t bcdUSB);
 
 /**
  * @brief Get the USB gadget strings
@@ -397,24 +405,27 @@ extern int usbg_set_gadget_strs(usbg_gadget *g, int lang,
  * @param g Pointer to gadget
  * @param lang USB language ID
  * @param ser Serial number
+ * @return 0 on success usbg_error if error occurred
  */
-extern void usbg_set_gadget_serial_number(usbg_gadget *g, int lang, char *ser);
+extern int usbg_set_gadget_serial_number(usbg_gadget *g, int lang, char *ser);
 
 /**
  * @brief Set the manufacturer name for a gadget
  * @param g Pointer to gadget
  * @param lang USB language ID
  * @param mnf Manufacturer
+ * @return 0 on success usbg_error if error occurred
  */
-extern void usbg_set_gadget_manufacturer(usbg_gadget *g, int lang, char *mnf);
+extern int usbg_set_gadget_manufacturer(usbg_gadget *g, int lang, char *mnf);
 
 /**
  * @brief Set the product name for a gadget
  * @param g Pointer to gadget
  * @param lang USB language ID
  * @param prd Product
+ * @return 0 on success usbg_error if error occurred
  */
-extern void usbg_set_gadget_product(usbg_gadget *g, int lang, char *prd);
+extern int usbg_set_gadget_product(usbg_gadget *g, int lang, char *prd);
 
 /* USB function allocation and configuration */
 
