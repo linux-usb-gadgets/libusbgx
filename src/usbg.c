@@ -118,17 +118,17 @@ const char *function_names[] =
 /* Insert in string order */
 #define INSERT_TAILQ_STRING_ORDER(HeadPtr, HeadType, NameField, ToInsert, NodeField) \
 	do { \
-		if (TAILQ_EMPTY(HeadPtr) || \
-			(strcmp(ToInsert->NameField, TAILQ_FIRST(HeadPtr)->NameField) < 0)) \
-			TAILQ_INSERT_HEAD(HeadPtr, ToInsert, NodeField); \
-		else if (strcmp(ToInsert->NameField, TAILQ_LAST(HeadPtr, HeadType)->NameField) > 0) \
-			TAILQ_INSERT_TAIL(HeadPtr, ToInsert, NodeField); \
+		if (TAILQ_EMPTY((HeadPtr)) || \
+			(strcmp((ToInsert)->NameField, TAILQ_FIRST((HeadPtr))->NameField) < 0)) \
+			TAILQ_INSERT_HEAD((HeadPtr), (ToInsert), NodeField); \
+		else if (strcmp((ToInsert)->NameField, TAILQ_LAST((HeadPtr), HeadType)->NameField) > 0) \
+			TAILQ_INSERT_TAIL((HeadPtr), (ToInsert), NodeField); \
 		else { \
 			typeof(ToInsert) _cur; \
-			TAILQ_FOREACH(_cur, HeadPtr, NodeField) { \
-				if (strcmp(ToInsert->NameField, _cur->NameField) > 0) \
+			TAILQ_FOREACH(_cur, (HeadPtr), NodeField) { \
+				if (strcmp((ToInsert)->NameField, _cur->NameField) > 0) \
 					continue; \
-				TAILQ_INSERT_BEFORE(_cur, ToInsert, NodeField); \
+				TAILQ_INSERT_BEFORE(_cur, (ToInsert), NodeField); \
 			} \
 		} \
 	} while (0)
