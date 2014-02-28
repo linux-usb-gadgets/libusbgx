@@ -69,20 +69,20 @@ int main(void)
 		goto out2;
 	}
 
-	f_acm0 = usbg_create_function(g, F_ACM, "usb0", NULL);
-	if (!f_acm0) {
+	usbg_ret = usbg_create_function(g, F_ACM, "usb0", NULL, &f_acm0);
+	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating acm0 function\n");
 		goto out2;
 	}
 
-	f_acm1 = usbg_create_function(g, F_ACM, "usb1", NULL);
-	if (!f_acm1) {
+	usbg_ret = usbg_create_function(g, F_ACM, "usb1", NULL, &f_acm1);
+	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating acm1 function\n");
 		goto out2;
 	}
 
-	f_ecm = usbg_create_function(g, F_ECM, "usb0", NULL);
-	if (!f_ecm) {
+	usbg_ret = usbg_create_function(g, F_ECM, "usb0", NULL, &f_acm1);
+	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating ecm function\n");
 		goto out2;
 	}

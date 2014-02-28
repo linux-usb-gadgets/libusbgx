@@ -1162,52 +1162,58 @@ int usbg_set_gadget_product(usbg_gadget *g, int lang, char *prd)
 	return ret;
 }
 
-usbg_function *usbg_create_function(usbg_gadget *g, usbg_function_type type,
-		char *instance, usbg_function_attrs *f_attrs)
+int usbg_create_function(usbg_gadget *g, usbg_function_type type,
+		char *instance, usbg_function_attrs *f_attrs, usbg_function **f)
 {
 	char fpath[USBG_MAX_PATH_LENGTH];
 	char name[USBG_MAX_STR_LENGTH];
-	usbg_function *f;
-	int ret;
+	usbg_function *func;
+	int ret = USBG_ERROR_INVALID_PARAM;
 
-	if (!g)
-		return NULL;
+	if (!g || !f)
+		return ret;
 
 	/**
 	 * @todo Check for legal function type
 	 */
 	sprintf(name, "%s.%s", function_names[type], instance);
-	f = usbg_get_function(g, name);
-	if (f) {
+	func = usbg_get_function(g, name);
+	if (func) {
 		ERROR("duplicate function name\n");
-		return NULL;
+		return USBG_ERROR_EXIST;
 	}
 
 	sprintf(fpath, "%s/%s/%s/%s", g->path, g->name, FUNCTIONS_DIR, name);
 
-	f = malloc(sizeof(usbg_function));
-	if (!f) {
+	*f = malloc(sizeof(usbg_function));
+	func = *f;
+	if (func) {
+		strcpy(func->name, name);
+		sprintf(func->path, "%s/%s/%s", g->path, g->name, FUNCTIONS_DIR);
+		func->type = type;
+
+		ret = mkdir(fpath, S_IRWXU | S_IRWXG | S_IRWXO);
+
+		if (!ret) {
+			/* Success */
+			ret = USBG_SUCCESS;
+			if (f_attrs)
+				ret = usbg_set_function_attrs(func, f_attrs);
+		} else {
+			ret = usbg_translate_error(errno);
+		}
+
+		if (ret == USBG_SUCCESS)
+			INSERT_TAILQ_STRING_ORDER(&g->functions, fhead, name,
+				func, fnode);
+		else
+			usbg_free_function(func);
+	} else {
 		ERRORNO("allocating function\n");
-		return NULL;
+		ret = USBG_ERROR_NO_MEM;
 	}
 
-	strcpy(f->name, name);
-	sprintf(f->path, "%s/%s/%s", g->path, g->name, FUNCTIONS_DIR);
-	f->type = type;
-
-	ret = mkdir(fpath, S_IRWXU|S_IRWXG|S_IRWXO);
-	if (ret < 0) {
-		ERRORNO("%s\n", fpath);
-		free(f);
-		return NULL;
-	}
-
-	if (f_attrs)
-		usbg_set_function_attrs(f, f_attrs);
-
-	INSERT_TAILQ_STRING_ORDER(&g->functions, fhead, name, f, fnode);
-
-	return f;
+	return ret;
 }
 
 usbg_config *usbg_create_config(usbg_gadget *g, char *name,
@@ -1469,61 +1475,93 @@ usbg_function_attrs *usbg_get_function_attrs(usbg_function *f,
 	return f_attrs;
 }
 
-void usbg_set_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
+int usbg_set_function_net_attrs(usbg_function *f, usbg_f_net_attrs *attrs)
 {
+	int ret = USBG_SUCCESS;
 	char *addr;
 
+	addr = ether_ntoa(&attrs->dev_addr);
+	ret = usbg_write_string(f->path, f->name, "dev_addr", addr);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	addr = ether_ntoa(&attrs->host_addr);
+	ret = usbg_write_string(f->path, f->name, "host_addr", addr);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_string(f->path, f->name, "ifname", attrs->ifname);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_dec(f->path, f->name, "qmult", attrs->qmult);
+
+out:
+	return ret;
+}
+
+int  usbg_set_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
+{
+	int ret = USBG_ERROR_INVALID_PARAM;
+
 	if (!f || !f_attrs)
-		return;
+		return USBG_ERROR_INVALID_PARAM;
 
 	switch (f->type) {
 	case F_SERIAL:
 	case F_ACM:
 	case F_OBEX:
-		usbg_write_dec(f->path, f->name, "port_num", f_attrs->serial.port_num);
+		ret = usbg_write_dec(f->path, f->name, "port_num", f_attrs->serial.port_num);
 		break;
 	case F_ECM:
 	case F_SUBSET:
 	case F_NCM:
 	case F_EEM:
 	case F_RNDIS:
-		addr = ether_ntoa(&f_attrs->net.dev_addr);
-		usbg_write_string(f->path, f->name, "dev_addr", addr);
-
-		addr = ether_ntoa(&f_attrs->net.host_addr);
-		usbg_write_string(f->path, f->name, "host_addr", addr);
-
-		usbg_write_string(f->path, f->name, "ifname", f_attrs->net.ifname);
-
-		usbg_write_dec(f->path, f->name, "qmult", f_attrs->net.qmult);
+		ret = usbg_set_function_net_attrs(f, &f_attrs->net);
 		break;
 	case F_PHONET:
-		usbg_write_string(f->path, f->name, "ifname", f_attrs->phonet.ifname);
+		ret = usbg_write_string(f->path, f->name, "ifname", f_attrs->phonet.ifname);
 		break;
 	default:
 		ERROR("Unsupported function type\n");
 	}
+
+	return ret;
 }
 
-void usbg_set_net_dev_addr(usbg_function *f, struct ether_addr *dev_addr)
+int usbg_set_net_dev_addr(usbg_function *f, struct ether_addr *dev_addr)
 {
-	char *str_addr;
+	int ret = USBG_SUCCESS;
 
-	str_addr = ether_ntoa(dev_addr);
-	usbg_write_string(f->path, f->name, "dev_addr", str_addr);
+	if (f && dev_addr) {
+		char *str_addr = ether_ntoa(dev_addr);
+		ret = usbg_write_string(f->path, f->name, "dev_addr", str_addr);
+	} else {
+		ret = USBG_ERROR_INVALID_PARAM;
+	}
+
+	return ret;
 }
 
-void usbg_set_net_host_addr(usbg_function *f, struct ether_addr *host_addr)
+int usbg_set_net_host_addr(usbg_function *f, struct ether_addr *host_addr)
 {
-	char *str_addr;
+	int ret = USBG_SUCCESS;
 
-	str_addr = ether_ntoa(host_addr);
-	usbg_write_string(f->path, f->name, "host_addr", str_addr);
+	if (f && host_addr) {
+		char *str_addr = ether_ntoa(host_addr);
+		ret = usbg_write_string(f->path, f->name, "host_addr", str_addr);
+	} else {
+		ret = USBG_ERROR_INVALID_PARAM;
+	}
+
+	return ret;
 }
 
-void usbg_set_net_qmult(usbg_function *f, int qmult)
+int usbg_set_net_qmult(usbg_function *f, int qmult)
 {
-	usbg_write_dec(f->path, f->name, "qmult", qmult);
+	return f ? usbg_write_dec(f->path, f->name, "qmult", qmult)
+			: USBG_ERROR_INVALID_PARAM;
 }
 
 usbg_gadget *usbg_get_first_gadget(usbg_state *s)

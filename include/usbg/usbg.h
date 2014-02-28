@@ -435,10 +435,12 @@ extern int usbg_set_gadget_product(usbg_gadget *g, int lang, char *prd);
  * @param type Type of function
  * @param instance Function instance name
  * @param f_attrs Function attributes to be set. If NULL setting is omitted.
- * @return Pointer to function or NULL if it cannot be created
+ * @param f Pointer to be filled with pointer to function
+ * @note Given strings are assumed to be in US English
+ * @return 0 on success usbg_error if error occurred
  */
-extern usbg_function *usbg_create_function(usbg_gadget *g, usbg_function_type type,
-		char *instance, usbg_function_attrs *f_attrs);
+extern int usbg_create_function(usbg_gadget *g, usbg_function_type type,
+		char *instance, usbg_function_attrs *f_attrs, usbg_function **f);
 
 /**
  * @brief Get function name length
@@ -640,29 +642,33 @@ extern usbg_function_attrs *usbg_get_function_attrs(usbg_function *f,
  * @brief Set attributes of given function
  * @param f Pointer to function
  * @param f_attrs Attributes to be set
+ * @return 0 on success, usbg_error if error occurred
  */
-extern void usbg_set_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs);
+extern int usbg_set_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs);
 
 /**
  * @brief Set USB function network device address
  * @param f Pointer to function
  * @param addr Pointer to Ethernet address
+ * @return 0 on success, usbg_error if error occurred
  */
-extern void usbg_set_net_dev_addr(usbg_function *f, struct ether_addr *addr);
+extern int usbg_set_net_dev_addr(usbg_function *f, struct ether_addr *addr);
 
 /**
  * @brief Set USB function network host address
  * @param f Pointer to function
  * @param addr Pointer to Ethernet address
+ * @return 0 on success, usbg_error if error occurred
  */
-extern void usbg_set_net_host_addr(usbg_function *f, struct ether_addr *addr);
+extern int usbg_set_net_host_addr(usbg_function *f, struct ether_addr *addr);
 
 /**
  * @brief Set USB function network qmult
  * @param f Pointer to function
  * @param qmult Queue length multiplier
+ * @return 0 on success, usbg_error if error occurred
  */
-extern void usbg_set_net_qmult(usbg_function *f, int qmult);
+extern int usbg_set_net_qmult(usbg_function *f, int qmult);
 
 /**
  * @def usbg_for_each_gadget(g, s)
