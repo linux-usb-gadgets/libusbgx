@@ -1216,53 +1216,58 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 	return ret;
 }
 
-usbg_config *usbg_create_config(usbg_gadget *g, char *name,
-		usbg_config_attrs *c_attrs, usbg_config_strs *c_strs)
+int usbg_create_config(usbg_gadget *g, char *name,
+		usbg_config_attrs *c_attrs, usbg_config_strs *c_strs, usbg_config **c)
 {
 	char cpath[USBG_MAX_PATH_LENGTH];
-	usbg_config *c;
-	int ret;
+	usbg_config *conf;
+	int ret = USBG_ERROR_INVALID_PARAM;
 
-	if (!g)
-		return NULL;
+	if (!g || !c)
+		return ret;
 
 	/**
 	 * @todo Check for legal configuration name
 	 */
-	c = usbg_get_config(g, name);
-	if (c) {
+	conf = usbg_get_config(g, name);
+	if (conf) {
 		ERROR("duplicate configuration name\n");
-		return NULL;
+		return USBG_ERROR_EXIST;
 	}
 
 	sprintf(cpath, "%s/%s/%s/%s", g->path, g->name, CONFIGS_DIR, name);
 
-	c = malloc(sizeof(usbg_config));
-	if (!c) {
+	*c = malloc(sizeof(usbg_config));
+	conf = *c;
+	if (conf) {
+		TAILQ_INIT(&conf->bindings);
+		strcpy(conf->name, name);
+		sprintf(conf->path, "%s/%s/%s", g->path, g->name, CONFIGS_DIR);
+
+		ret = mkdir(cpath, S_IRWXU|S_IRWXG|S_IRWXO);
+		if (!ret) {
+			ret = USBG_SUCCESS;
+			if (c_attrs)
+				ret = usbg_set_config_attrs(conf, c_attrs);
+
+			if (ret == USBG_SUCCESS && c_strs)
+				ret = usbg_set_config_string(conf, LANG_US_ENG,
+						c_strs->configuration);
+
+		} else {
+			ret = usbg_translate_error(errno);
+		}
+
+		if (ret == USBG_SUCCESS)
+			INSERT_TAILQ_STRING_ORDER(&g->configs, chead, name, conf, cnode);
+		else
+			usbg_free_config(conf);
+	} else {
 		ERRORNO("allocating configuration\n");
-		return NULL;
+		ret = USBG_ERROR_NO_MEM;
 	}
 
-	TAILQ_INIT(&c->bindings);
-	strcpy(c->name, name);
-	sprintf(c->path, "%s/%s/%s", g->path, g->name, CONFIGS_DIR);
-
-	ret = mkdir(cpath, S_IRWXU|S_IRWXG|S_IRWXO);
-	if (ret < 0) {
-		ERRORNO("%s\n", cpath);
-		free(c);
-		return NULL;
-	}
-
-	if (c_attrs)
-		usbg_set_config_attrs(c, c_attrs);
-
-	if (c_strs)
-		usbg_set_config_string(c, LANG_US_ENG, c_strs->configuration);
-
-	INSERT_TAILQ_STRING_ORDER(&g->configs, chead, name, c, cnode);
-
-	return c;
+	return ret;
 }
 
 size_t usbg_get_config_name_len(usbg_config *c)
@@ -1297,13 +1302,18 @@ int usbg_get_function_name(usbg_function *f, char *buf, size_t len)
 	return ret;
 }
 
-void usbg_set_config_attrs(usbg_config *c, usbg_config_attrs *c_attrs)
+int usbg_set_config_attrs(usbg_config *c, usbg_config_attrs *c_attrs)
 {
-	if (!c || !c_attrs)
-		return;
+	int ret = USBG_ERROR_INVALID_PARAM;
 
-	usbg_write_dec(c->path, c->name, "MaxPower", c_attrs->bMaxPower);
-	usbg_write_hex8(c->path, c->name, "bmAttributes", c_attrs->bmAttributes);
+	if (c && !c_attrs) {
+		ret = usbg_write_dec(c->path, c->name, "MaxPower", c_attrs->bMaxPower);
+		if (ret == USBG_SUCCESS)
+			ret = usbg_write_hex8(c->path, c->name, "bmAttributes",
+					c_attrs->bmAttributes);
+	}
+
+	return ret;
 }
 
 usbg_config_attrs *usbg_get_config_attrs(usbg_config *c,
@@ -1317,14 +1327,16 @@ usbg_config_attrs *usbg_get_config_attrs(usbg_config *c,
 	return c_attrs;
 }
 
-void usbg_set_config_max_power(usbg_config *c, int bMaxPower)
+int usbg_set_config_max_power(usbg_config *c, int bMaxPower)
 {
-	usbg_write_dec(c->path, c->name, "MaxPower", bMaxPower);
+	return c ? usbg_write_dec(c->path, c->name, "MaxPower", bMaxPower)
+			: USBG_ERROR_INVALID_PARAM;
 }
 
-void usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes)
+int usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes)
 {
-	usbg_write_hex8(c->path, c->name, "bmAttributes", bmAttributes);
+	return c ? usbg_write_hex8(c->path, c->name, "bmAttributes", bmAttributes)
+			: USBG_ERROR_INVALID_PARAM;
 }
 
 usbg_config_strs *usbg_get_config_strs(usbg_config *c, int lang,
@@ -1338,21 +1350,27 @@ usbg_config_strs *usbg_get_config_strs(usbg_config *c, int lang,
 	return c_strs;
 }
 
-void usbg_set_config_strs(usbg_config *c, int lang,
+int usbg_set_config_strs(usbg_config *c, int lang,
 		usbg_config_strs *c_strs)
 {
-	usbg_set_config_string(c, lang, c_strs->configuration);
+	return usbg_set_config_string(c, lang, c_strs->configuration);
 }
 
-void usbg_set_config_string(usbg_config *c, int lang, char *str)
+int usbg_set_config_string(usbg_config *c, int lang, char *str)
 {
-	char path[USBG_MAX_PATH_LENGTH];
+	int ret = USBG_ERROR_INVALID_PARAM;
 
-	sprintf(path, "%s/%s/%s/0x%x", c->path, c->name, STRINGS_DIR, lang);
+	if (c && str) {
+		char path[USBG_MAX_PATH_LENGTH];
 
-	mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
+		sprintf(path, "%s/%s/%s/0x%x", c->path, c->name, STRINGS_DIR, lang);
 
-	usbg_write_string(path, "", "configuration", str);
+		ret = usbg_check_dir(path);
+		if (ret == USBG_SUCCESS)
+			ret = usbg_write_string(path, "", "configuration", str);
+	}
+
+	return ret;
 }
 
 int usbg_add_config_function(usbg_config *c, char *name, usbg_function *f)

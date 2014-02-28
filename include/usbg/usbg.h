@@ -466,10 +466,12 @@ extern int usbg_get_function_name(usbg_function *f, char *buf, size_t len);
  * @param name Name of configuration
  * @param c_attrs Configuration attributes to be set
  * @param c_strs Configuration strings to be set
- * @return Pointer to configuration or NULL if it cannot be created
+ * @param c Pointer to be filled with pointer to configuration
+ * @note Given strings are assumed to be in US English
+ * @return 0 on success usbg_error if error occurred
  */
-extern usbg_config *usbg_create_config(usbg_gadget *g, char *name,
-		usbg_config_attrs *c_attrs, usbg_config_strs *c_strs);
+extern int usbg_create_config(usbg_gadget *g, char *name,
+		usbg_config_attrs *c_attrs, usbg_config_strs *c_strs, usbg_config **c);
 
 /**
  * @brief Get config name length
@@ -491,8 +493,9 @@ extern int usbg_get_config_name(usbg_config *c, char *buf, size_t len);
  * @brief Set the USB configuration attributes
  * @param c Pointer to configuration
  * @param c_attrs Configuration attributes
+ * @return 0 on success or usbg_error if error occurred.
  */
-extern void usbg_set_config_attrs(usbg_config *c,
+extern int usbg_set_config_attrs(usbg_config *c,
 		usbg_config_attrs *c_attrs);
 
 /**
@@ -508,15 +511,17 @@ extern usbg_config_attrs *usbg_get_config_attrs(usbg_config *c,
  * @brief Set the configuration maximum power
  * @param c Pointer to config
  * @param bMaxPower Maximum power (in 2 mA units)
+ * @return 0 on success or usbg_error if error occurred.
  */
-extern void usbg_set_config_max_power(usbg_config *c, int bMaxPower);
+extern int usbg_set_config_max_power(usbg_config *c, int bMaxPower);
 
 /**
  * @brief Set the configuration bitmap attributes
  * @param c Pointer to config
  * @param bmAttributes Configuration characteristics
+ * @return 0 on success or usbg_error if error occurred.
  */
-extern void usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes);
+extern int usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes);
 
 /**
  * @brief Get the USB configuration strings
@@ -533,8 +538,9 @@ extern usbg_config_strs *usbg_get_config_strs(usbg_config *c, int lang,
  * @param c Pointer to configuration
  * @param lang USB language ID
  * @param c_sttrs Configuration strings
+ * @return 0 on success, usbg_error on failure.
  */
-extern void usbg_set_config_strs(usbg_config *c, int lang,
+extern int usbg_set_config_strs(usbg_config *c, int lang,
 		usbg_config_strs *c_strs);
 
 /**
@@ -542,8 +548,9 @@ extern void usbg_set_config_strs(usbg_config *c, int lang,
  * @param c Pointer to config
  * @param lang USB language ID
  * @param string Configuration description
+ * @return 0 on success, usbg_error on failure.
  */
-extern void usbg_set_config_string(usbg_config *c, int lang, char *string);
+extern int usbg_set_config_string(usbg_config *c, int lang, char *string);
 
 /**
  * @brief Add a function to a configuration

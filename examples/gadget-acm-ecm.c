@@ -87,8 +87,8 @@ int main(void)
 		goto out2;
 	}
 
-	c = usbg_create_config(g, "c.1", NULL /* use defaults */, &c_strs);
-	if (!c) {
+	usbg_ret = usbg_create_config(g, "c.1", NULL /* use defaults */, &c_strs, &c);
+	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating config\n");
 		goto out2;
 	}
