@@ -1418,21 +1418,21 @@ int usbg_add_config_function(usbg_config *c, char *name, usbg_function *f)
 	char bpath[USBG_MAX_PATH_LENGTH];
 	char fpath[USBG_MAX_PATH_LENGTH];
 	usbg_binding *b;
-	int ret = -1;
+	int ret = USBG_SUCCESS;
 
 	if (!c || !f)
-		return ret;
+		return USBG_ERROR_INVALID_PARAM;
 
 	b = usbg_get_binding(c, name);
 	if (b) {
 		ERROR("duplicate binding name\n");
-		return ret;
+		return USBG_ERROR_EXIST;
 	}
 
 	b = usbg_get_link_binding(c, f);
 	if (b) {
 		ERROR("duplicate binding link\n");
-		return ret;
+		return USBG_ERROR_EXIST;
 	}
 
 	sprintf(bpath, "%s/%s/%s", c->path, c->name, name);
@@ -1441,13 +1441,15 @@ int usbg_add_config_function(usbg_config *c, char *name, usbg_function *f)
 	b = malloc(sizeof(usbg_binding));
 	if (!b) {
 		ERRORNO("allocating binding\n");
-		return -1;
+		return USBG_ERROR_NO_MEM;
 	}
 
 	ret = symlink(fpath, bpath);
 	if (ret < 0) {
 		ERRORNO("%s -> %s\n", bpath, fpath);
 		return ret;
+	} else {
+		ret = USBG_SUCCESS;
 	}
 
 	strcpy(b->name, name);
@@ -1457,7 +1459,7 @@ int usbg_add_config_function(usbg_config *c, char *name, usbg_function *f)
 
 	INSERT_TAILQ_STRING_ORDER(&c->bindings, bhead, name, b, bnode);
 
-	return 0;
+	return ret;
 }
 
 usbg_function *usbg_get_binding_target(usbg_binding *b)

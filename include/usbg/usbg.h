@@ -557,7 +557,7 @@ extern int usbg_set_config_string(usbg_config *c, int lang, char *string);
  * @param c Pointer to config
  * @param name Name of configuration function binding
  * @param f Pointer to function
- * @return 0 on success, -1 on failure.
+ * @return 0 on success, usbg_error on failure.
  */
 extern int usbg_add_config_function(usbg_config *c, char *name, usbg_function *f);
 
