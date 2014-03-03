@@ -33,7 +33,6 @@
 /**
  * @file usbg.c
  * @todo Handle buffer overflows
- * @todo Error checking and return code propagation
  */
 
 struct usbg_state

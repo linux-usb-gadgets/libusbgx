@@ -60,44 +60,83 @@ int main(void)
 	usbg_ret = usbg_init("/sys/kernel/config", &s);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error on USB gadget init\n");
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
 		goto out1;
 	}
 
 	usbg_ret = usbg_create_gadget(s, "g1", &g_attrs, &g_strs, &g);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error on create gadget\n");
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
 		goto out2;
 	}
 
 	usbg_ret = usbg_create_function(g, F_ACM, "usb0", NULL, &f_acm0);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating acm0 function\n");
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
 		goto out2;
 	}
 
 	usbg_ret = usbg_create_function(g, F_ACM, "usb1", NULL, &f_acm1);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating acm1 function\n");
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
 		goto out2;
 	}
 
-	usbg_ret = usbg_create_function(g, F_ECM, "usb0", NULL, &f_acm1);
+	usbg_ret = usbg_create_function(g, F_ECM, "usb0", NULL, &f_ecm);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating ecm function\n");
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
 		goto out2;
 	}
 
-	usbg_ret = usbg_create_config(g, "c.1", NULL /* use defaults */, &c_strs, &c);
+	usbg_ret = usbg_create_config(g, "c.1", NULL /* use defaults */, &c_strs,
+			&c);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating config\n");
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
 		goto out2;
 	}
 
-	usbg_add_config_function(c, "acm.GS0", f_acm0);
-	usbg_add_config_function(c, "acm.GS1", f_acm1);
-	usbg_add_config_function(c, "ecm.usb0", f_ecm);
+	usbg_ret = usbg_add_config_function(c, "acm.GS0", f_acm0);
+	if (usbg_ret != USBG_SUCCESS) {
+		fprintf(stderr, "Error adding acm.GS0\n");
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
+		goto out2;
+	}
 
-	usbg_enable_gadget(g, DEFAULT_UDC);
+	usbg_ret = usbg_add_config_function(c, "acm.GS1", f_acm1);
+	if (usbg_ret != USBG_SUCCESS) {
+		fprintf(stderr, "Error adding acm.GS1\n");
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
+		goto out2;
+	}
+
+	usbg_ret = usbg_add_config_function(c, "ecm.usb0", f_ecm);
+	if (usbg_ret != USBG_SUCCESS) {
+		fprintf(stderr, "Error adding ecm.usb0\n");
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
+		goto out2;
+	}
+
+	usbg_ret = usbg_enable_gadget(g, DEFAULT_UDC);
+	if (usbg_ret != USBG_SUCCESS) {
+		fprintf(stderr, "Error enabling gadget\n");
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
+		goto out2;
+	}
 
 	ret = 0;
 

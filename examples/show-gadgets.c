@@ -30,11 +30,17 @@
 void show_gadget(usbg_gadget *g)
 {
 	char buf[USBG_MAX_STR_LENGTH];
+	int usbg_ret;
 	usbg_gadget_attrs g_attrs;
 	usbg_gadget_strs g_strs;
 
 	usbg_get_gadget_name(g, buf, USBG_MAX_STR_LENGTH);
-	usbg_get_gadget_attrs(g, &g_attrs);
+	usbg_ret = usbg_get_gadget_attrs(g, &g_attrs);
+	if (usbg_ret != USBG_SUCCESS) {
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
+		return;
+	}
 
 	fprintf(stdout, "ID %04x:%04x '%s'\n",
 			g_attrs.idVendor, g_attrs.idProduct, buf);
@@ -52,6 +58,11 @@ void show_gadget(usbg_gadget *g)
 	fprintf(stdout, "  idProduct\t\t0x%04x\n", g_attrs.idProduct);
 
 	usbg_get_gadget_strs(g, LANG_US_ENG, &g_strs);
+	if (usbg_ret != USBG_SUCCESS) {
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
+		return;
+	}
 	fprintf(stdout, "  Serial Number\t\t%s\n", g_strs.str_ser);
 	fprintf(stdout, "  Manufacturer\t\t%s\n", g_strs.str_mnf);
 	fprintf(stdout, "  Product\t\t%s\n", g_strs.str_prd);
@@ -60,10 +71,16 @@ void show_gadget(usbg_gadget *g)
 void show_function(usbg_function *f)
 {
 	char buf[USBG_MAX_STR_LENGTH];
+	int usbg_ret;
 	usbg_function_attrs f_attrs;
 
 	usbg_get_function_name(f, buf, USBG_MAX_STR_LENGTH);
-	usbg_get_function_attrs(f, &f_attrs);
+	usbg_ret = usbg_get_function_attrs(f, &f_attrs);
+	if (usbg_ret != USBG_SUCCESS) {
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
+		return;
+	}
 
 	fprintf(stdout, "  Function '%s'\n", buf);
 	switch (usbg_get_function_type(f)) {
@@ -100,15 +117,28 @@ void show_config(usbg_config *c)
 	char buf[USBG_MAX_STR_LENGTH], buf2[USBG_MAX_STR_LENGTH];
 	usbg_config_attrs c_attrs;
 	usbg_config_strs c_strs;
+	int usbg_ret;
 
 	usbg_get_config_name(c, buf, USBG_MAX_STR_LENGTH);
 	fprintf(stdout, "  Configuration '%s'\n", buf);
 
-	usbg_get_config_attrs(c, &c_attrs);
+	usbg_ret = usbg_get_config_attrs(c, &c_attrs);
+	if (usbg_ret != USBG_SUCCESS) {
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
+		return;
+	}
+
 	fprintf(stdout, "    MaxPower\t\t%d\n", c_attrs.bMaxPower);
 	fprintf(stdout, "    bmAttributes\t0x%02x\n", c_attrs.bmAttributes);
 
-	usbg_get_config_strs(c, LANG_US_ENG, &c_strs);
+	usbg_ret = usbg_get_config_strs(c, LANG_US_ENG, &c_strs);
+	if (usbg_ret != USBG_SUCCESS) {
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
+		return;
+	}
+
 	fprintf(stdout, "    configuration\t%s\n", c_strs.configuration);
 
 	usbg_for_each_binding(b, c) {
@@ -130,6 +160,8 @@ int main(void)
 	usbg_ret = usbg_init("/sys/kernel/config", &s);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error on USB gadget init\n");
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
 		return -EINVAL;
 	}
 
