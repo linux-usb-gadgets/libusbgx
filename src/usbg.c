@@ -441,20 +441,28 @@ static int usbg_parse_functions(char *path, usbg_gadget *g)
 	return ret;
 }
 
-static void usbg_parse_config_attrs(char *path, char *name,
+static int usbg_parse_config_attrs(char *path, char *name,
 		usbg_config_attrs *c_attrs)
 {
-	int buf;
-	usbg_read_dec(path, name, "MaxPower", &buf);
-	c_attrs->bMaxPower = (uint8_t)buf;
-	usbg_read_hex(path, name, "bmAttributes", &buf);
-	c_attrs->bmAttributes = (uint8_t)buf;
+	int buf, ret;
+
+	ret = usbg_read_dec(path, name, "MaxPower", &buf);
+	if (ret == USBG_SUCCESS) {
+		c_attrs->bMaxPower = (uint8_t)buf;
+
+		ret = usbg_read_hex(path, name, "bmAttributes", &buf);
+		if (ret == USBG_SUCCESS)
+			c_attrs->bmAttributes = (uint8_t)buf;
+	}
+
+	return ret;
 }
 
-static usbg_config_strs *usbg_parse_config_strs(char *path, char *name,
+static int usbg_parse_config_strs(char *path, char *name,
 		int lang, usbg_config_strs *c_strs)
 {
 	DIR *dir;
+	int ret;
 	char spath[USBG_MAX_PATH_LENGTH];
 
 	sprintf(spath, "%s/%s/%s/0x%x", path, name, STRINGS_DIR, lang);
@@ -463,12 +471,13 @@ static usbg_config_strs *usbg_parse_config_strs(char *path, char *name,
 	dir = opendir(spath);
 	if (dir) {
 		closedir(dir);
-		usbg_read_string(spath, "", "configuration", c_strs->configuration);
+		ret = usbg_read_string(spath, "", "configuration",
+				c_strs->configuration);
 	} else {
-		c_strs = NULL;
+		ret = usbg_translate_error(errno);
 	}
 
-	return c_strs;
+	return ret;
 }
 
 static int usbg_parse_config_bindings(usbg_config *c)
@@ -1323,15 +1332,11 @@ int usbg_set_config_attrs(usbg_config *c, usbg_config_attrs *c_attrs)
 	return ret;
 }
 
-usbg_config_attrs *usbg_get_config_attrs(usbg_config *c,
+int usbg_get_config_attrs(usbg_config *c,
 		usbg_config_attrs *c_attrs)
 {
-	if (c && c_attrs)
-		usbg_parse_config_attrs(c->path, c->name, c_attrs);
-	else
-		c_attrs = NULL;
-
-	return c_attrs;
+	return c && c_attrs ? usbg_parse_config_attrs(c->path, c->name, c_attrs)
+			: USBG_ERROR_INVALID_PARAM;
 }
 
 int usbg_set_config_max_power(usbg_config *c, int bMaxPower)
@@ -1346,15 +1351,10 @@ int usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes)
 			: USBG_ERROR_INVALID_PARAM;
 }
 
-usbg_config_strs *usbg_get_config_strs(usbg_config *c, int lang,
-		usbg_config_strs *c_strs)
+int usbg_get_config_strs(usbg_config *c, int lang, usbg_config_strs *c_strs)
 {
-	if (c && c_strs)
-		c_strs = usbg_parse_config_strs(c->path, c->name, lang, c_strs);
-	else
-		c_strs = NULL;
-
-	return c_strs;
+	return c && c_strs ? usbg_parse_config_strs(c->path, c->name, lang, c_strs)
+			: USBG_ERROR_INVALID_PARAM;
 }
 
 int usbg_set_config_strs(usbg_config *c, int lang,

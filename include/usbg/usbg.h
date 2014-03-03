@@ -502,10 +502,9 @@ extern int usbg_set_config_attrs(usbg_config *c,
  * @brief Get the USB configuration strings
  * @param c Pointer to configuration
  * @param c_attrs Structure to be filled
- * @retur Pointer to filled structure or NULL if error occurred.
+ * @return 0 on success or usbg_error if error occurred.
  */
-extern usbg_config_attrs *usbg_get_config_attrs(usbg_config *c,
-		usbg_config_attrs *c_attrs);
+extern int usbg_get_config_attrs(usbg_config *c, usbg_config_attrs *c_attrs);
 
 /**
  * @brief Set the configuration maximum power
@@ -528,9 +527,9 @@ extern int usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes);
  * @param c Pointer to configuration
  * @param lang Language of strings
  * @param c_sttrs Structure to be filled
- * @retur Pointer to filled structure or NULL if error occurred.
+ * @return 0 on success or usbg_error if error occurred.
  */
-extern usbg_config_strs *usbg_get_config_strs(usbg_config *c, int lang,
+extern int usbg_get_config_strs(usbg_config *c, int lang,
 		usbg_config_strs *c_strs);
 
 /**
