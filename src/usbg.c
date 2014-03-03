@@ -159,6 +159,12 @@ static int usbg_translate_error(int error)
 	case EEXIST:
 		ret = USBG_ERROR_EXIST;
 		break;
+	case ENODEV:
+		ret = USBG_ERROR_NO_DEV;
+		break;
+	case EBUSY:
+		ret = USBG_ERROR_BUSY;
+		break;
 	default:
 		ret = USBG_ERROR_OTHER_ERROR;
 	}
@@ -1443,34 +1449,61 @@ int usbg_get_binding_name(usbg_binding *b, char *buf, size_t len)
 
 int usbg_get_udcs(struct dirent ***udc_list)
 {
-	return scandir("/sys/class/udc", udc_list, file_select, alphasort);
+	int ret = USBG_ERROR_INVALID_PARAM;
+
+	if (udc_list) {
+		ret = scandir("/sys/class/udc", udc_list, file_select, alphasort);
+		if (ret < 0)
+			ret = usbg_translate_error(errno);
+	}
+
+	return ret;
 }
 
-void usbg_enable_gadget(usbg_gadget *g, char *udc)
+int usbg_enable_gadget(usbg_gadget *g, char *udc)
 {
 	char gudc[USBG_MAX_STR_LENGTH];
 	struct dirent **udc_list;
-	int n;
+	int i;
+	int ret = USBG_ERROR_INVALID_PARAM;
+
+	if (!g)
+		return ret;
 
 	if (!udc) {
-		n = usbg_get_udcs(&udc_list);
-		if (!n)
-			return;
-		strcpy(gudc, udc_list[0]->d_name);
-		while (n--)
-			free(udc_list[n]);
-		free(udc_list);
-	} else
-		strcpy (gudc, udc);
+		ret = usbg_get_udcs(&udc_list);
+		if (ret >= 0) {
+			/* Look for default one - first in string order */
+			strcpy(gudc, udc_list[0]->d_name);
+			udc = gudc;
 
-	strcpy(g->udc, gudc);
-	usbg_write_string(g->path, g->name, "UDC", gudc);
+			/** Free the memory */
+			for (i = 0; i < ret; ++i)
+				free(udc_list[i]);
+			free(udc_list);
+		} else {
+			return ret;
+		}
+	}
+
+	ret = usbg_write_string(g->path, g->name, "UDC", udc);
+
+	if (ret == USBG_SUCCESS)
+		strcpy(g->udc, udc);
+
+	return ret;
 }
 
-void usbg_disable_gadget(usbg_gadget *g)
+int usbg_disable_gadget(usbg_gadget *g)
 {
-	strcpy(g->udc, "");
-	usbg_write_string(g->path, g->name, "UDC", "");
+	int ret = USBG_ERROR_INVALID_PARAM;
+
+	if (g) {
+		strcpy(g->udc, "");
+		ret = usbg_write_string(g->path, g->name, "UDC", "");
+	}
+
+	return ret;
 }
 
 /*

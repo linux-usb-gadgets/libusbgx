@@ -187,6 +187,8 @@ typedef enum  {
 	USBG_ERROR_NOT_FOUND = -4,
 	USBG_ERROR_IO = -5,
 	USBG_ERROR_EXIST = -6,
+	USBG_ERROR_NO_DEV = -7,
+	USBG_ERROR_BUSY = -8,
 	USBG_ERROR_OTHER_ERROR = -99
 } usbg_error;
 
@@ -589,7 +591,7 @@ extern int usbg_get_binding_name(usbg_binding *b, char *buf, size_t len);
 /**
  * @brief Get a list of UDC devices on the system
  * @param udc_list Pointer to pointer to dirent pointer
- * @return Number of UDC devices on success, -1 on failure
+ * @return Number of UDC devices on success, usbg_error on failure
  */
 extern int usbg_get_udcs(struct dirent ***udc_list);
 
@@ -597,14 +599,16 @@ extern int usbg_get_udcs(struct dirent ***udc_list);
  * @brief Enable a USB gadget device
  * @param g Pointer to gadget
  * @param udc Name of UDC to enable gadget
+ * @return 0 on success or usbg_error if error occurred.
  */
-extern void usbg_enable_gadget(usbg_gadget *g, char *udc);
+extern int usbg_enable_gadget(usbg_gadget *g, char *udc);
 
 /**
  * @brief Disable a USB gadget device
  * @param g Pointer to gadget
+ * @return 0 on success or usbg_error if error occurred.
  */
-extern void usbg_disable_gadget(usbg_gadget *g);
+extern int usbg_disable_gadget(usbg_gadget *g);
 
 /**
  * @brief Get gadget name length
