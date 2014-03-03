@@ -175,6 +175,8 @@ typedef union {
 	usbg_f_phonet_attrs phonet;
 } usbg_function_attrs;
 
+/* Error codes */
+
 /**
  * @typedef usbg_error
  * @brief Errors which could be returned by library functions
@@ -192,6 +194,20 @@ typedef enum  {
 	USBG_ERROR_NOT_SUPPORTED = -9,
 	USBG_ERROR_OTHER_ERROR = -99
 } usbg_error;
+
+/*
+ * @brief Get the error name as a constant string
+ * @param e error code
+ * @return Constant string with error name
+ */
+extern const char *usbg_error_name(usbg_error e);
+
+/*
+ * @brief Get the short description of error
+ * @param e error code
+ * @return Constant string with error description
+ */
+extern const char *usbg_strerror(usbg_error e);
 
 /* Library init and cleanup */
 

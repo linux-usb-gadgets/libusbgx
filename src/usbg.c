@@ -172,6 +172,92 @@ static int usbg_translate_error(int error)
 	return ret;
 }
 
+const char *usbg_error_name(usbg_error e)
+{
+	char *ret = "UNKNOWN";
+
+	switch (e) {
+	case USBG_SUCCESS:
+		ret = "USBG_SUCCESS";
+		break;
+	case USBG_ERROR_NO_MEM:
+		ret = "USBG_ERROR_NO_MEM";
+		break;
+	case USBG_ERROR_NO_ACCESS:
+		ret = "USBG_ERROR_NO_ACCESS";
+		break;
+	case USBG_ERROR_INVALID_PARAM:
+		ret = "USBG_ERROR_INVALID_PARAM";
+		break;
+	case USBG_ERROR_NOT_FOUND:
+		ret = "USBG_ERROR_NOT_FOUND";
+		break;
+	case USBG_ERROR_IO:
+		ret = "USBG_ERROR_IO";
+		break;
+	case USBG_ERROR_EXIST:
+		ret = "USBG_ERROR_EXIST";
+		break;
+	case USBG_ERROR_NO_DEV:
+		ret = "USBG_ERROR_NO_DEV";
+		break;
+	case USBG_ERROR_BUSY:
+		ret = "USBG_ERROR_BUSY";
+		break;
+	case USBG_ERROR_NOT_SUPPORTED:
+		ret = "USBG_ERROR_NOT_SUPPORTED";
+		break;
+	case USBG_ERROR_OTHER_ERROR:
+		ret = "USBG_ERROR_OTHER_ERROR";
+		break;
+	}
+
+	return ret;
+}
+
+const char *usbg_strerror(usbg_error e)
+{
+	char *ret = "Unknown error";
+
+	switch (e) {
+	case USBG_SUCCESS:
+		ret = "Success";
+		break;
+	case USBG_ERROR_NO_MEM:
+		ret = "Insufficient memory";
+		break;
+	case USBG_ERROR_NO_ACCESS:
+		ret = "Access denied (insufficient permissions)";
+		break;
+	case USBG_ERROR_INVALID_PARAM:
+		ret = "Invalid parameter";
+		break;
+	case USBG_ERROR_NOT_FOUND:
+		ret = "Not found (file or directory removed)";
+		break;
+	case USBG_ERROR_IO:
+		ret = "Input/output error";
+		break;
+	case USBG_ERROR_EXIST:
+		ret = "Already exist";
+		break;
+	case USBG_ERROR_NO_DEV:
+		ret = "No such device (illegal device name)";
+		break;
+	case USBG_ERROR_BUSY:
+		ret = "Busy (gadget enabled)";
+		break;
+	case USBG_ERROR_NOT_SUPPORTED:
+		ret = "Function not supported";
+		break;
+	case USBG_ERROR_OTHER_ERROR:
+		ret = "Other error";
+		break;
+	}
+
+	return ret;
+}
+
 static int usbg_lookup_function_type(char *name)
 {
 	int i = 0;
