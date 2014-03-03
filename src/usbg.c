@@ -365,43 +365,76 @@ static void usbg_free_state(usbg_state *s)
 	free(s);
 }
 
-
-static void usbg_parse_function_attrs(usbg_function *f,
+static int usbg_parse_function_net_attrs(usbg_function *f,
 		usbg_function_attrs *f_attrs)
 {
 	struct ether_addr *addr;
 	char str_addr[40];
+	int ret;
+
+	ret = usbg_read_string(f->path, f->name, "dev_addr", str_addr);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	addr = ether_aton(str_addr);
+	if (addr) {
+		f_attrs->net.dev_addr = *addr;
+	} else {
+		ret = USBG_ERROR_IO;
+		goto out;
+	}
+
+	ret = usbg_read_string(f->path, f->name, "host_addr", str_addr);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	addr = ether_aton(str_addr);
+	if (addr) {
+		f_attrs->net.host_addr = *addr;
+	} else {
+		ret = USBG_ERROR_IO;
+		goto out;
+	}
+
+	ret = usbg_read_string(f->path, f->name, "ifname", f_attrs->net.ifname);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_read_dec(f->path, f->name, "qmult", &(f_attrs->net.qmult));
+
+out:
+	return ret;
+}
+
+static int usbg_parse_function_attrs(usbg_function *f,
+		usbg_function_attrs *f_attrs)
+{
+	int ret;
 
 	switch (f->type) {
 	case F_SERIAL:
 	case F_ACM:
 	case F_OBEX:
-		usbg_read_dec(f->path, f->name, "port_num", &(f_attrs->serial.port_num));
+		ret = usbg_read_dec(f->path, f->name, "port_num",
+				&(f_attrs->serial.port_num));
 		break;
 	case F_ECM:
 	case F_SUBSET:
 	case F_NCM:
 	case F_EEM:
 	case F_RNDIS:
-		usbg_read_string(f->path, f->name, "dev_addr", str_addr);
-		addr = ether_aton(str_addr);
-		if (addr)
-			f_attrs->net.dev_addr = *addr;
-
-		usbg_read_string(f->path, f->name, "host_addr", str_addr);
-		addr = ether_aton(str_addr);
-		if(addr)
-			f_attrs->net.host_addr = *addr;
-
-		usbg_read_string(f->path, f->name, "ifname", f_attrs->net.ifname);
-		usbg_read_dec(f->path, f->name, "qmult", &(f_attrs->net.qmult));
+		ret = usbg_parse_function_net_attrs(f, f_attrs);
 		break;
 	case F_PHONET:
-		usbg_read_string(f->path, f->name, "ifname", f_attrs->phonet.ifname);
+		ret = usbg_read_string(f->path, f->name, "ifname",
+				f_attrs->phonet.ifname);
 		break;
 	default:
 		ERROR("Unsupported function type\n");
+		ret = USBG_ERROR_NOT_SUPPORTED;
 	}
+
+	return ret;
 }
 
 static int usbg_parse_functions(char *path, usbg_gadget *g)
@@ -1516,15 +1549,10 @@ usbg_function_type usbg_get_function_type(usbg_function *f)
 	return f->type;
 }
 
-usbg_function_attrs *usbg_get_function_attrs(usbg_function *f,
-		usbg_function_attrs *f_attrs)
+int usbg_get_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
 {
-	if (f && f_attrs)
-		usbg_parse_function_attrs(f, f_attrs);
-	else
-		f_attrs = NULL;
-
-	return f_attrs;
+	return f && f_attrs ? usbg_parse_function_attrs(f, f_attrs)
+			: USBG_ERROR_INVALID_PARAM;
 }
 
 int usbg_set_function_net_attrs(usbg_function *f, usbg_f_net_attrs *attrs)
@@ -1577,6 +1605,7 @@ int  usbg_set_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
 		break;
 	default:
 		ERROR("Unsupported function type\n");
+		ret = USBG_ERROR_NOT_SUPPORTED;
 	}
 
 	return ret;

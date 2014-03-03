@@ -189,6 +189,7 @@ typedef enum  {
 	USBG_ERROR_EXIST = -6,
 	USBG_ERROR_NO_DEV = -7,
 	USBG_ERROR_BUSY = -8,
+	USBG_ERROR_NOT_SUPPORTED = -9,
 	USBG_ERROR_OTHER_ERROR = -99
 } usbg_error;
 
@@ -641,9 +642,9 @@ extern usbg_function_type usbg_get_function_type(usbg_function *f);
  * @brief Get attributes of given function
  * @param f Pointer to function
  * @param f_attrs Union to be filled
- * @return Pointer to filled structure or NULL if error occurred.
+ * @return 0 on success usbg_error if error occurred.
  */
-extern usbg_function_attrs *usbg_get_function_attrs(usbg_function *f,
+extern int usbg_get_function_attrs(usbg_function *f,
 		usbg_function_attrs *f_attrs);
 
 /**
