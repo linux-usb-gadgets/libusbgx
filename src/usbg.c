@@ -408,9 +408,12 @@ static usbg_config_strs *usbg_parse_config_strs(char *path, char *name,
 
 static void usbg_parse_config_bindings(usbg_config *c)
 {
-	int i, n;
+	int i, n, nmb;
 	struct dirent **dent;
 	char bpath[USBG_MAX_PATH_LENGTH];
+	char file_name[USBG_MAX_PATH_LENGTH];
+	char target[USBG_MAX_STR_LENGTH];
+	char *target_name;
 	usbg_gadget *g = c->parent;
 	usbg_binding *b;
 	usbg_function *f;
@@ -420,23 +423,27 @@ static void usbg_parse_config_bindings(usbg_config *c)
 	TAILQ_INIT(&c->bindings);
 
 	n = scandir(bpath, &dent, bindings_select, alphasort);
-	for (i=0; i < n; i++) {
-		TAILQ_FOREACH(f, &g->functions, fnode) {
-			int n;
-			char contents[USBG_MAX_STR_LENGTH];
-			char cpath[USBG_MAX_PATH_LENGTH];
-			char fname[40];
+	for (i = 0; i < n; i++) {
+		sprintf(file_name, "%s/%s", bpath, dent[i]->d_name);
+		nmb = readlink(file_name, target, USBG_MAX_PATH_LENGTH);
+		if (nmb < 0)
+			ERRORNO("bytes %d contents %s\n", n, target);
 
-			sprintf(cpath, "%s/%s", bpath, dent[i]->d_name);
-			n = readlink(cpath, contents, USBG_MAX_PATH_LENGTH);
-			if (n<0)
-				ERRORNO("bytes %d contents %s\n", n, contents);
-			strcpy(fname, f->name);
-			if (strstr(contents, strtok(fname, "."))) {
+		/* readlink() don't add this, so we have to do it manually */
+		target[nmb] = '\0';
+		/* Target contains a full path
+		 *  but we need only function dir name */
+		target_name = strrchr(target, '/') + 1;
+
+		TAILQ_FOREACH(f, &g->functions, fnode)
+		{
+			/* Check if this is our target function */
+			if (strcmp(f->name, target_name) == 0) {
 				b = malloc(sizeof(usbg_binding));
 				strcpy(b->name, dent[i]->d_name);
 				strcpy(b->path, bpath);
 				b->target = f;
+				b->parent = c;
 				TAILQ_INSERT_TAIL(&c->bindings, b, bnode);
 				break;
 			}
