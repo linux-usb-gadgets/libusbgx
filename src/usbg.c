@@ -617,9 +617,10 @@ out:
 	return ret;
 }
 
-static usbg_gadget_strs *usbg_parse_strings(char *path, char *name, int lang,
+static int usbg_parse_gadget_strs(char *path, char *name, int lang,
 		usbg_gadget_strs *g_strs)
 {
+	int ret;
 	DIR *dir;
 	char spath[USBG_MAX_PATH_LENGTH];
 
@@ -629,14 +630,23 @@ static usbg_gadget_strs *usbg_parse_strings(char *path, char *name, int lang,
 	dir = opendir(spath);
 	if (dir) {
 		closedir(dir);
-		usbg_read_string(spath, "", "serialnumber", g_strs->str_ser);
-		usbg_read_string(spath, "", "manufacturer", g_strs->str_mnf);
-		usbg_read_string(spath, "", "product", g_strs->str_prd);
+		ret = usbg_read_string(spath, "", "serialnumber", g_strs->str_ser);
+		if (ret != USBG_SUCCESS)
+			goto out;
+
+		ret = usbg_read_string(spath, "", "manufacturer", g_strs->str_mnf);
+		if (ret != USBG_SUCCESS)
+			goto out;
+
+		ret = usbg_read_string(spath, "", "product", g_strs->str_prd);
+		if (ret != USBG_SUCCESS)
+			goto out;
 	} else {
-		g_strs = NULL;
+		ret = usbg_translate_error(errno);
 	}
 
-	return g_strs;
+out:
+	return ret;
 }
 
 static inline int usbg_parse_gadget(char *path, char *name, usbg_state *parent,
@@ -928,15 +938,10 @@ int usbg_create_gadget(usbg_state *s, char *name,
 	return ret;
 }
 
-usbg_gadget_attrs *usbg_get_gadget_attrs(usbg_gadget *g,
-		usbg_gadget_attrs *g_attrs)
+int usbg_get_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs)
 {
-	if (g && g_attrs)
-		usbg_parse_gadget_attrs(g->path, g->name, g_attrs);
-	else
-		g_attrs = NULL;
-
-	return g_attrs;
+	return g && g_attrs ? usbg_parse_gadget_attrs(g->path, g->name, g_attrs)
+			: USBG_ERROR_INVALID_PARAM;
 }
 
 size_t usbg_get_gadget_name_len(usbg_gadget *g)
@@ -1066,15 +1071,11 @@ int usbg_set_gadget_device_bcd_usb(usbg_gadget *g, uint16_t bcdUSB)
 			: USBG_ERROR_INVALID_PARAM;
 }
 
-usbg_gadget_strs *usbg_get_gadget_strs(usbg_gadget *g, int lang,
+int usbg_get_gadget_strs(usbg_gadget *g, int lang,
 		usbg_gadget_strs *g_strs)
 {
-	if (g && g_strs)
-		g_strs = usbg_parse_strings(g->path, g->name, lang, g_strs);
-	else
-		g_strs = NULL;
-
-	return g_strs;
+	return g && g_strs ? usbg_parse_gadget_strs(g->path, g->name, lang,
+			g_strs)	: USBG_ERROR_INVALID_PARAM;
 }
 
 static int usbg_check_dir(char *path)

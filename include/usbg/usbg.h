@@ -291,10 +291,9 @@ extern int usbg_set_gadget_attrs(usbg_gadget *g,
  * @brief Get the USB gadget strings
  * @param g Pointer to gadget
  * @param g_attrs Structure to be filled
- * @retur Pointer to filled structure or NULL if error occurred.
+ * @return 0 on success usbg_error if error occurred
  */
-extern usbg_gadget_attrs *usbg_get_gadget_attrs(usbg_gadget *g,
-		usbg_gadget_attrs *g_attrs);
+extern int usbg_get_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs);
 
 /**
  * @brief Get gadget name length
@@ -386,10 +385,9 @@ extern int usbg_set_gadget_device_bcd_usb(usbg_gadget *g, uint16_t bcdUSB);
  * @param g Pointer to gadget
  * @param lang Language of strings
  * @param g_sttrs Structure to be filled
- * @retur Pointer to filled structure or NULL if error occurred or
- * if no strings for given language.
+ * @return 0 on success usbg_error if error occurred
  */
-extern usbg_gadget_strs *usbg_get_gadget_strs(usbg_gadget *g, int lang,
+extern int usbg_get_gadget_strs(usbg_gadget *g, int lang,
 		usbg_gadget_strs *g_strs);
 
 /**
