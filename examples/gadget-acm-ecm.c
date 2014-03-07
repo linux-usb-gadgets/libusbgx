@@ -34,6 +34,7 @@ int main(void)
 	usbg_config *c;
 	usbg_function *f_acm0, *f_acm1, *f_ecm;
 	int ret = -EINVAL;
+	int usbg_ret;
 
 	usbg_gadget_attrs g_attrs = {
 			0x0200, /* bcdUSB */
@@ -56,8 +57,8 @@ int main(void)
 			"CDC 2xACM+ECM"
 	};
 
-	s = usbg_init("/sys/kernel/config");
-	if (!s) {
+	usbg_ret = usbg_init("/sys/kernel/config", &s);
+	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error on USB gadget init\n");
 		goto out1;
 	}

@@ -175,14 +175,29 @@ typedef union {
 	usbg_f_phonet_attrs phonet;
 } usbg_function_attrs;
 
+/**
+ * @typedef usbg_error
+ * @brief Errors which could be returned by library functions
+ */
+typedef enum  {
+	USBG_SUCCESS = 0,
+	USBG_ERROR_NO_MEM = -1,
+	USBG_ERROR_NO_ACCESS = -2,
+	USBG_ERROR_INVALID_PARAM = -3,
+	USBG_ERROR_NOT_FOUND = -4,
+	USBG_ERROR_IO = -5,
+	USBG_ERROR_OTHER_ERROR = -99
+} usbg_error;
+
 /* Library init and cleanup */
 
 /**
  * @brief Initialize the libusbgx library state
  * @param configfs_path Path to the mounted configfs filesystem
- * @return Pointer to a state structure
+ * @param Pointer to be filled with pointer to usbg_state
+ * @return 0 on success, usbg_error on error
  */
-extern usbg_state *usbg_init(char *configfs_path);
+extern int usbg_init(char *configfs_path, usbg_state **state);
 
 /**
  * @brief Clean up the libusbgx library state

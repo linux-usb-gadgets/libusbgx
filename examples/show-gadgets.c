@@ -125,9 +125,10 @@ int main(void)
 	usbg_gadget *g;
 	usbg_function *f;
 	usbg_config *c;
+	int usbg_ret;
 
-	s = usbg_init("/sys/kernel/config");
-	if (!s) {
+	usbg_ret = usbg_init("/sys/kernel/config", &s);
+	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error on USB gadget init\n");
 		return -EINVAL;
 	}

@@ -133,6 +133,35 @@ const char *function_names[] =
 		} \
 	} while (0)
 
+static int usbg_translate_error(int error)
+{
+	int ret;
+
+	switch (error) {
+	case ENOMEM:
+		ret = USBG_ERROR_NO_MEM;
+		break;
+	case EACCES:
+		ret = USBG_ERROR_NO_ACCESS;
+		break;
+	case ENOENT:
+	case ENOTDIR:
+		ret = USBG_ERROR_NOT_FOUND;
+		break;
+	case EINVAL:
+	case USBG_ERROR_INVALID_PARAM:
+		ret = USBG_ERROR_INVALID_PARAM;
+		break;
+	case EIO:
+		ret = USBG_ERROR_IO;
+		break;
+	default:
+		ret = USBG_ERROR_OTHER_ERROR;
+	}
+
+	return ret;
+}
+
 static int usbg_lookup_function_type(char *name)
 {
 	int i = 0;
@@ -169,52 +198,59 @@ static int file_select(const struct dirent *dent)
 		return 1;
 }
 
-static char *usbg_read_buf(char *path, char *name, char *file, char *buf)
+static int usbg_read_buf(char *path, char *name, char *file, char *buf)
 {
 	char p[USBG_MAX_STR_LENGTH];
 	FILE *fp;
-	char *ret = NULL;
+	int ret = USBG_SUCCESS;
 
 	sprintf(p, "%s/%s/%s", path, name, file);
 
 	fp = fopen(p, "r");
-	if (!fp)
-		goto out;
+	if (fp) {
+		/* Successfully opened */
+		if (!fgets(buf, USBG_MAX_STR_LENGTH, fp)) {
+			ERROR("read error");
+			ret = USBG_ERROR_IO;
+		}
 
-	ret = fgets(buf, USBG_MAX_STR_LENGTH, fp);
-	if (ret == NULL) {
-		ERROR("read error");
 		fclose(fp);
-		return ret;
+	} else {
+		/* Set error correctly */
+		ret = usbg_translate_error(errno);
 	}
 
-	fclose(fp);
-
-out:
 	return ret;
 }
 
-static int usbg_read_int(char *path, char *name, char *file, int base)
+static int usbg_read_int(char *path, char *name, char *file, int base,
+		int *dest)
 {
 	char buf[USBG_MAX_STR_LENGTH];
+	char *pos;
+	int ret;
 
-	if (usbg_read_buf(path, name, file, buf))
-		return strtol(buf, NULL, base);
-	else
-		return 0;
+	ret = usbg_read_buf(path, name, file, buf);
+	if (ret == USBG_SUCCESS) {
+		*dest = strtol(buf, &pos, base);
+		if (!pos)
+			ret = USBG_ERROR_OTHER_ERROR;
+	}
 
+	return ret;
 }
 
-#define usbg_read_dec(p, n, f)	usbg_read_int(p, n, f, 10)
-#define usbg_read_hex(p, n, f)	usbg_read_int(p, n, f, 16)
+#define usbg_read_dec(p, n, f, d)	usbg_read_int(p, n, f, 10, d)
+#define usbg_read_hex(p, n, f, d)	usbg_read_int(p, n, f, 16, d)
 
-static void usbg_read_string(char *path, char *name, char *file, char *buf)
+static int usbg_read_string(char *path, char *name, char *file, char *buf)
 {
 	char *p = NULL;
+	int ret;
 
-	p = usbg_read_buf(path, name, file, buf);
+	ret = usbg_read_buf(path, name, file, buf);
 	/* Check whether read was successful */
-	if (p != NULL) {
+	if (ret == USBG_SUCCESS) {
 		if ((p = strchr(buf, '\n')) != NULL)
 				*p = '\0';
 	} else {
@@ -222,6 +258,7 @@ static void usbg_read_string(char *path, char *name, char *file, char *buf)
 		*buf = '\0';
 	}
 
+	return ret;
 }
 
 static void usbg_write_buf(char *path, char *name, char *file, char *buf)
@@ -315,6 +352,7 @@ static void usbg_free_state(usbg_state *s)
 	free(s);
 }
 
+
 static void usbg_parse_function_attrs(usbg_function *f,
 		usbg_function_attrs *f_attrs)
 {
@@ -325,7 +363,7 @@ static void usbg_parse_function_attrs(usbg_function *f,
 	case F_SERIAL:
 	case F_ACM:
 	case F_OBEX:
-		f_attrs->serial.port_num = usbg_read_dec(f->path, f->name, "port_num");
+		usbg_read_dec(f->path, f->name, "port_num", &(f_attrs->serial.port_num));
 		break;
 	case F_ECM:
 	case F_SUBSET:
@@ -343,7 +381,7 @@ static void usbg_parse_function_attrs(usbg_function *f,
 			f_attrs->net.host_addr = *addr;
 
 		usbg_read_string(f->path, f->name, "ifname", f_attrs->net.ifname);
-		f_attrs->net.qmult = usbg_read_dec(f->path, f->name, "qmult");
+		usbg_read_dec(f->path, f->name, "qmult", &(f_attrs->net.qmult));
 		break;
 	case F_PHONET:
 		usbg_read_string(f->path, f->name, "ifname", f_attrs->phonet.ifname);
@@ -357,33 +395,47 @@ static int usbg_parse_functions(char *path, usbg_gadget *g)
 {
 	usbg_function *f;
 	int i, n;
+	int ret = USBG_SUCCESS;
+
 	struct dirent **dent;
 	char fpath[USBG_MAX_PATH_LENGTH];
 
 	sprintf(fpath, "%s/%s/%s", path, g->name, FUNCTIONS_DIR);
 
-	TAILQ_INIT(&g->functions);
-
 	n = scandir(fpath, &dent, file_select, alphasort);
-	for (i=0; i < n; i++) {
-		f = malloc(sizeof(usbg_function));
-		f->parent = g;
-		strcpy(f->name, dent[i]->d_name);
-		strcpy(f->path, fpath);
-		f->type = usbg_lookup_function_type(strtok(dent[i]->d_name, "."));
-		TAILQ_INSERT_TAIL(&g->functions, f, fnode);
-		free(dent[i]);
+	if (n >= 0) {
+		for (i = 0; i < n; i++) {
+			if (ret == USBG_SUCCESS) {
+				f = malloc(sizeof(usbg_function));
+				if (f) {
+					f->parent = g;
+					strcpy(f->name, dent[i]->d_name);
+					strcpy(f->path, fpath);
+					f->type = usbg_lookup_function_type(
+							strtok(dent[i]->d_name, "."));
+					TAILQ_INSERT_TAIL(&g->functions, f, fnode);
+				} else {
+					ret = USBG_ERROR_NO_MEM;
+				}
+			}
+			free(dent[i]);
+		}
+		free(dent);
+	} else {
+		ret = usbg_translate_error(errno);
 	}
-	free(dent);
 
-	return 0;
+	return ret;
 }
 
 static void usbg_parse_config_attrs(char *path, char *name,
 		usbg_config_attrs *c_attrs)
 {
-	c_attrs->bMaxPower = usbg_read_dec(path, name, "MaxPower");
-	c_attrs->bmAttributes = usbg_read_hex(path, name, "bmAttributes");
+	int buf;
+	usbg_read_dec(path, name, "MaxPower", &buf);
+	c_attrs->bMaxPower = (uint8_t)buf;
+	usbg_read_hex(path, name, "bmAttributes", &buf);
+	c_attrs->bmAttributes = (uint8_t)buf;
 }
 
 static usbg_config_strs *usbg_parse_config_strs(char *path, char *name,
@@ -406,9 +458,10 @@ static usbg_config_strs *usbg_parse_config_strs(char *path, char *name,
 	return c_strs;
 }
 
-static void usbg_parse_config_bindings(usbg_config *c)
+static int usbg_parse_config_bindings(usbg_config *c)
 {
 	int i, n, nmb;
+	int ret = USBG_SUCCESS;
 	struct dirent **dent;
 	char bpath[USBG_MAX_PATH_LENGTH];
 	char file_name[USBG_MAX_PATH_LENGTH];
@@ -420,77 +473,135 @@ static void usbg_parse_config_bindings(usbg_config *c)
 
 	sprintf(bpath, "%s/%s", c->path, c->name);
 
-	TAILQ_INIT(&c->bindings);
-
 	n = scandir(bpath, &dent, bindings_select, alphasort);
-	for (i = 0; i < n; i++) {
-		sprintf(file_name, "%s/%s", bpath, dent[i]->d_name);
-		nmb = readlink(file_name, target, USBG_MAX_PATH_LENGTH);
-		if (nmb < 0)
-			ERRORNO("bytes %d contents %s\n", n, target);
+	if (n >= 0) {
+		for (i = 0; i < n; i++) {
+			sprintf(file_name, "%s/%s", bpath, dent[i]->d_name);
+			nmb = readlink(file_name, target, USBG_MAX_PATH_LENGTH);
+			if (nmb >= 0) {
+				/* readlink() don't add this,
+				 * so we have to do it manually */
+				target[nmb] = '\0';
+				/* Target contains a full path
+				 * but we need only function dir name */
+				target_name = strrchr(target, '/') + 1;
 
-		/* readlink() don't add this, so we have to do it manually */
-		target[nmb] = '\0';
-		/* Target contains a full path
-		 *  but we need only function dir name */
-		target_name = strrchr(target, '/') + 1;
+				f = usbg_get_function(g, target_name);
 
-		TAILQ_FOREACH(f, &g->functions, fnode)
-		{
-			/* Check if this is our target function */
-			if (strcmp(f->name, target_name) == 0) {
 				b = malloc(sizeof(usbg_binding));
-				strcpy(b->name, dent[i]->d_name);
-				strcpy(b->path, bpath);
-				b->target = f;
+				if (b) {
+					strcpy(b->name, dent[i]->d_name);
+					strcpy(b->path, bpath);
+					b->target = f;
 				b->parent = c;
-				TAILQ_INSERT_TAIL(&c->bindings, b, bnode);
-				break;
+					TAILQ_INSERT_TAIL(&c->bindings, b, bnode);
+				} else {
+					ret = USBG_ERROR_NO_MEM;
+				}
+			} else {
+				ret = usbg_translate_error(errno);
 			}
+
+			free(dent[i]);
 		}
-		free(dent[i]);
+		free(dent);
+	} else {
+		ret = usbg_translate_error(errno);
 	}
-	free(dent);
+
+	return ret;
 }
 
 static int usbg_parse_configs(char *path, usbg_gadget *g)
 {
 	usbg_config *c;
 	int i, n;
+	int ret = USBG_SUCCESS;
 	struct dirent **dent;
 	char cpath[USBG_MAX_PATH_LENGTH];
 
 	sprintf(cpath, "%s/%s/%s", path, g->name, CONFIGS_DIR);
 
-	TAILQ_INIT(&g->configs);
-
 	n = scandir(cpath, &dent, file_select, alphasort);
-	for (i=0; i < n; i++) {
-		c = malloc(sizeof(usbg_config));
-		c->parent = g;
-		strcpy(c->name, dent[i]->d_name);
-		strcpy(c->path, cpath);
-		usbg_parse_config_bindings(c);
-		TAILQ_INSERT_TAIL(&g->configs, c, cnode);
-		free(dent[i]);
+	if (n >= 0) {
+		for (i = 0; i < n; i++) {
+			if (ret == USBG_SUCCESS) {
+				c = malloc(sizeof(usbg_config));
+				if (c) {
+					c->parent = g;
+					strcpy(c->name, dent[i]->d_name);
+					strcpy(c->path, cpath);
+					TAILQ_INIT(&c->bindings);
+					ret = usbg_parse_config_bindings(c);
+					if (ret == USBG_SUCCESS)
+						TAILQ_INSERT_TAIL(&g->configs, c, cnode);
+					else
+						usbg_free_config(c);
+				} else {
+					ret = USBG_ERROR_NO_MEM;
+				}
+			}
+			free(dent[i]);
+		}
+		free(dent);
+	} else {
+		ret = usbg_translate_error(errno);
 	}
-	free(dent);
 
-	return 0;
+	return ret;
 }
 
-static void usbg_parse_gadget_attrs(char *path, char *name,
+static int usbg_parse_gadget_attrs(char *path, char *name,
 		usbg_gadget_attrs *g_attrs)
 {
+	int buf, ret;
+
 	/* Actual attributes */
-	g_attrs->bcdUSB = (uint16_t)usbg_read_hex(path, name, "bcdUSB");
-	g_attrs->bDeviceClass = (uint8_t)usbg_read_hex(path, name, "bDeviceClass");
-	g_attrs->bDeviceSubClass = (uint8_t)usbg_read_hex(path, name, "bDeviceSubClass");
-	g_attrs->bDeviceProtocol = (uint8_t)usbg_read_hex(path, name, "bDeviceProtocol");
-	g_attrs->bMaxPacketSize0 = (uint8_t)usbg_read_hex(path, name, "bMaxPacketSize0");
-	g_attrs->idVendor = (uint16_t)usbg_read_hex(path, name, "idVendor");
-	g_attrs->idProduct = (uint16_t)usbg_read_hex(path, name, "idProduct");
-	g_attrs->bcdDevice = (uint16_t)usbg_read_hex(path, name, "bcdDevice");
+
+	ret = usbg_read_hex(path, name, "bcdUSB", &buf);
+	if (ret == USBG_SUCCESS)
+		g_attrs->bcdUSB = (uint16_t) buf;
+	else
+		goto out;
+
+	ret = usbg_read_hex(path, name, "bDeviceClass", &buf);
+	if (ret == USBG_SUCCESS)
+		g_attrs->bDeviceClass = (uint8_t)buf;
+	else
+		goto out;
+
+	ret = usbg_read_hex(path, name, "bDeviceSubClass", &buf);
+	if (ret == USBG_SUCCESS)
+		g_attrs->bDeviceSubClass = (uint8_t)buf;
+	else
+		goto out;
+
+	ret = usbg_read_hex(path, name, "bDeviceProtocol", &buf);
+	if (ret == USBG_SUCCESS)
+		g_attrs->bDeviceProtocol = (uint8_t) buf;
+	else
+		goto out;
+
+	ret = usbg_read_hex(path, name, "bMaxPacketSize0", &buf);
+	if (ret == USBG_SUCCESS)
+		g_attrs->bMaxPacketSize0 = (uint8_t) buf;
+	else
+		goto out;
+
+	ret = usbg_read_hex(path, name, "idVendor", &buf);
+	if (ret == USBG_SUCCESS)
+		g_attrs->idVendor = (uint16_t) buf;
+	else
+		goto out;
+
+	ret = usbg_read_hex(path, name, "idProduct", &buf);
+	if (ret == USBG_SUCCESS)
+		g_attrs->idProduct = (uint16_t) buf;
+	else
+		goto out;
+
+out:
+	return ret;
 }
 
 static usbg_gadget_strs *usbg_parse_strings(char *path, char *name, int lang,
@@ -515,75 +626,109 @@ static usbg_gadget_strs *usbg_parse_strings(char *path, char *name, int lang,
 	return g_strs;
 }
 
+static inline int usbg_parse_gadget(char *path, char *name, usbg_state *parent,
+		usbg_gadget *g)
+{
+	int ret = USBG_SUCCESS;
+
+	strcpy(g->name, name);
+	strcpy(g->path, path);
+	g->parent = parent;
+	TAILQ_INIT(&g->functions);
+	TAILQ_INIT(&g->configs);
+
+	/* UDC bound to, if any */
+	ret = usbg_read_string(path, g->name, "UDC", g->udc);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_parse_functions(path, g);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_parse_configs(path, g);
+out:
+	return ret;
+}
+
 static int usbg_parse_gadgets(char *path, usbg_state *s)
 {
 	usbg_gadget *g;
 	int i, n;
+	int ret = USBG_SUCCESS;
 	struct dirent **dent;
 
-	TAILQ_INIT(&s->gadgets);
-
 	n = scandir(path, &dent, file_select, alphasort);
-	for (i=0; i < n; i++) {
-		g = malloc(sizeof(usbg_gadget));
-		strcpy(g->name, dent[i]->d_name);
-		strcpy(g->path, s->path);
-		g->parent = s;
-		/* UDC bound to, if any */
-		usbg_read_string(path, g->name, "UDC", g->udc);
-		usbg_parse_functions(path, g);
-		usbg_parse_configs(path, g);
-		TAILQ_INSERT_TAIL(&s->gadgets, g, gnode);
-		free(dent[i]);
+	if (n >= 0) {
+		for (i = 0; i < n; i++) {
+			/* Check if earlier gadgets
+			 * has been created correctly */
+			if (ret == USBG_SUCCESS) {
+				/* Create new gadget and insert it into list */
+				g = malloc(sizeof(usbg_gadget));
+				if (g) {
+					ret = usbg_parse_gadget(path, dent[i]->d_name, s, g);
+					if (ret == USBG_SUCCESS)
+						TAILQ_INSERT_TAIL(&s->gadgets, g, gnode);
+					else
+						usbg_free_gadget(g);
+				} else {
+					ret = USBG_ERROR_NO_MEM;
+				}
+			}
+			free(dent[i]);
+		}
+		free(dent);
+	} else {
+		ret = usbg_translate_error(errno);
 	}
-	free(dent);
 
-	return 0;
+	return ret;
 }
 
 static int usbg_init_state(char *path, usbg_state *s)
 {
+	int ret = USBG_SUCCESS;
+
 	strcpy(s->path, path);
+	TAILQ_INIT(&s->gadgets);
 
-	if (usbg_parse_gadgets(path, s) < 0) {
+	ret = usbg_parse_gadgets(path, s);
+	if (ret != USBG_SUCCESS)
 		ERRORNO("unable to parse %s\n", path);
-		return -1;
-	}
 
-	return 0;
+	return ret;
 }
 
 /*
  * User API
  */
 
-usbg_state *usbg_init(char *configfs_path)
+int usbg_init(char *configfs_path, usbg_state **state)
 {
-	int ret;
-	struct stat sts;
+	int ret = USBG_SUCCESS;
+	DIR *dir;
 	char path[USBG_MAX_PATH_LENGTH];
-	usbg_state *s = NULL;
 
-	strcpy(path, configfs_path);
-	ret = stat(strcat(path, "/usb_gadget"), &sts);
-	if (ret < 0) {
-		ERRORNO("%s", path);
-		goto out;
-	}
+	sprintf(path, "%s/usb_gadget", configfs_path);
 
-	if (!S_ISDIR(sts.st_mode)) {
-		ERRORNO("%s", path);
-		goto out;
-	}
-
-	s = malloc(sizeof(usbg_state));
-	if (s)
-		usbg_init_state(path, s);
-	else
+	/* Check if directory exist */
+	dir = opendir(path);
+	if (dir) {
+		closedir(dir);
+		*state = malloc(sizeof(usbg_state));
+		ret = *state ? usbg_init_state(path, *state)
+			 : USBG_ERROR_NO_MEM;
+		if (*state && ret != USBG_SUCCESS) {
+			ERRORNO("couldn't init gadget state\n");
+			usbg_free_state(*state);
+		}
+	} else {
 		ERRORNO("couldn't init gadget state\n");
+		ret = usbg_translate_error(errno);
+	}
 
-out:
-	return s;
+	return ret;
 }
 
 void usbg_cleanup(usbg_state *s)
