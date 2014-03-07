@@ -25,7 +25,6 @@
 
 /**
  * @file include/usbg/usbg.h
- * @todo Add usbg_remove_[gadget|config|function|binding] APIs
  * @todo Clean up static buffers in structures
  */
 
