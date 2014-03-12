@@ -44,8 +44,8 @@ struct usbg_state
 
 struct usbg_gadget
 {
-	char name[USBG_MAX_NAME_LENGTH];
-	char path[USBG_MAX_PATH_LENGTH];
+	char *name;
+	char *path;
 	char udc[USBG_MAX_STR_LENGTH];
 
 	TAILQ_ENTRY(usbg_gadget) gnode;
@@ -436,6 +436,8 @@ static void usbg_free_gadget(usbg_gadget *g)
 		TAILQ_REMOVE(&g->functions, f, fnode);
 		usbg_free_function(f);
 	}
+	free(g->path);
+	free(g->name);
 	free(g);
 }
 
@@ -450,6 +452,30 @@ static void usbg_free_state(usbg_state *s)
 
 	free(s->path);
 	free(s);
+}
+
+static usbg_gadget *usbg_allocate_gadget(char *path, char *name,
+		usbg_state *parent)
+{
+	usbg_gadget *g;
+
+	g = malloc(sizeof(usbg_gadget));
+	if (g) {
+		TAILQ_INIT(&g->functions);
+		TAILQ_INIT(&g->configs);
+		g->name = strdup(name);
+		g->path = strdup(path);
+		g->parent = parent;
+
+		if (!(g->name) || !(g->path)) {
+			free(g->name);
+			free(g->path);
+			free(g);
+			g = NULL;
+		}
+	}
+
+	return g;
 }
 
 static int usbg_parse_function_net_attrs(usbg_function *f,
@@ -778,27 +804,20 @@ out:
 	return ret;
 }
 
-static inline int usbg_parse_gadget(char *path, char *name, usbg_state *parent,
-		usbg_gadget *g)
+static inline int usbg_parse_gadget(usbg_gadget *g)
 {
-	int ret = USBG_SUCCESS;
-
-	strcpy(g->name, name);
-	strcpy(g->path, path);
-	g->parent = parent;
-	TAILQ_INIT(&g->functions);
-	TAILQ_INIT(&g->configs);
+	int ret;
 
 	/* UDC bound to, if any */
-	ret = usbg_read_string(path, g->name, "UDC", g->udc);
+	ret = usbg_read_string(g->path, g->name, "UDC", g->udc);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	ret = usbg_parse_functions(path, g);
+	ret = usbg_parse_functions(g->path, g);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	ret = usbg_parse_configs(path, g);
+	ret = usbg_parse_configs(g->path, g);
 out:
 	return ret;
 }
@@ -817,9 +836,9 @@ static int usbg_parse_gadgets(char *path, usbg_state *s)
 			 * has been created correctly */
 			if (ret == USBG_SUCCESS) {
 				/* Create new gadget and insert it into list */
-				g = malloc(sizeof(usbg_gadget));
+				g = usbg_allocate_gadget(path, dent[i]->d_name, s);
 				if (g) {
-					ret = usbg_parse_gadget(path, dent[i]->d_name, s, g);
+					ret = usbg_parse_gadget(g);
 					if (ret == USBG_SUCCESS)
 						TAILQ_INSERT_TAIL(&s->gadgets, g, gnode);
 					else
@@ -972,15 +991,9 @@ static int usbg_create_empty_gadget(usbg_state *s, char *name, usbg_gadget **g)
 
 	sprintf(gpath, "%s/%s", s->path, name);
 
-	*g = malloc(sizeof(usbg_gadget));
+	*g = usbg_allocate_gadget(s->path, name, s);
 	if (*g) {
 		usbg_gadget *gad = *g; /* alias only */
-
-		TAILQ_INIT(&gad->configs);
-		TAILQ_INIT(&gad->functions);
-		strcpy(gad->name, name);
-		strcpy(gad->path, s->path);
-		gad->parent = s;
 
 		ret = mkdir(gpath, S_IRWXU|S_IRWXG|S_IRWXO);
 		if (ret == 0) {
@@ -994,7 +1007,7 @@ static int usbg_create_empty_gadget(usbg_state *s, char *name, usbg_gadget **g)
 		}
 
 		if (ret != USBG_SUCCESS) {
-			free(gad);
+			usbg_free_gadget(*g);
 			*g = NULL;
 		}
 	} else {
