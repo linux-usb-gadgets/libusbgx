@@ -37,7 +37,7 @@
 
 struct usbg_state
 {
-	char path[USBG_MAX_PATH_LENGTH];
+	char *path;
 
 	TAILQ_HEAD(ghead, usbg_gadget) gadgets;
 };
@@ -447,6 +447,8 @@ static void usbg_free_state(usbg_state *s)
 		TAILQ_REMOVE(&s->gadgets, g, gnode);
 		usbg_free_gadget(g);
 	}
+
+	free(s->path);
 	free(s);
 }
 
@@ -840,7 +842,8 @@ static int usbg_init_state(char *path, usbg_state *s)
 {
 	int ret = USBG_SUCCESS;
 
-	strcpy(s->path, path);
+	/* State takes the ownership of path and should free it */
+	s->path = path;
 	TAILQ_INIT(&s->gadgets);
 
 	ret = usbg_parse_gadgets(path, s);
@@ -858,9 +861,13 @@ int usbg_init(char *configfs_path, usbg_state **state)
 {
 	int ret = USBG_SUCCESS;
 	DIR *dir;
-	char path[USBG_MAX_PATH_LENGTH];
+	char *path;
 
-	sprintf(path, "%s/usb_gadget", configfs_path);
+	ret = asprintf(&path, "%s/usb_gadget", configfs_path);
+	if (ret < 0)
+		return USBG_ERROR_NO_MEM;
+	else
+		ret = USBG_SUCCESS;
 
 	/* Check if directory exist */
 	dir = opendir(path);
@@ -876,6 +883,7 @@ int usbg_init(char *configfs_path, usbg_state **state)
 	} else {
 		ERRORNO("couldn't init gadget state\n");
 		ret = usbg_translate_error(errno);
+		free(path);
 	}
 
 	return ret;
