@@ -69,8 +69,8 @@ struct usbg_function
 	TAILQ_ENTRY(usbg_function) fnode;
 	usbg_gadget *parent;
 
-	char name[USBG_MAX_NAME_LENGTH];
-	char path[USBG_MAX_PATH_LENGTH];
+	char *name;
+	char *path;
 
 	usbg_function_type type;
 };
@@ -414,6 +414,8 @@ static inline void usbg_free_binding(usbg_binding *b)
 
 static inline void usbg_free_function(usbg_function *f)
 {
+	free(f->path);
+	free(f->name);
 	free(f);
 }
 
@@ -509,6 +511,28 @@ static usbg_config *usbg_allocate_config(char *path, char *name,
 	return c;
 }
 
+static usbg_function *usbg_allocate_function(char *path, char *name,
+		usbg_gadget *parent)
+{
+	usbg_function *f;
+
+	f = malloc(sizeof(usbg_config));
+	if (f) {
+		f->name = strdup(name);
+		f->path = strdup(path);
+		f->parent = parent;
+
+		if (!(f->name) || !(f->path)) {
+			free(f->name);
+			free(f->path);
+			free(f);
+			f = NULL;
+		}
+	}
+
+	return f;
+}
+
 static int usbg_parse_function_net_attrs(usbg_function *f,
 		usbg_function_attrs *f_attrs)
 {
@@ -590,17 +614,19 @@ static int usbg_parse_functions(char *path, usbg_gadget *g)
 	struct dirent **dent;
 	char fpath[USBG_MAX_PATH_LENGTH];
 
-	sprintf(fpath, "%s/%s/%s", path, g->name, FUNCTIONS_DIR);
+	n = snprintf(fpath, sizeof(fpath), "%s/%s/%s", path, g->name,
+			FUNCTIONS_DIR);
+	if (n >= sizeof(fpath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
 
 	n = scandir(fpath, &dent, file_select, alphasort);
 	if (n >= 0) {
 		for (i = 0; i < n; i++) {
 			if (ret == USBG_SUCCESS) {
-				f = malloc(sizeof(usbg_function));
+				f = usbg_allocate_function(fpath, dent[i]->d_name, g);
 				if (f) {
-					f->parent = g;
-					strcpy(f->name, dent[i]->d_name);
-					strcpy(f->path, fpath);
 					f->type = usbg_lookup_function_type(
 							strtok(dent[i]->d_name, "."));
 					TAILQ_INSERT_TAIL(&g->functions, f, fnode);
@@ -615,6 +641,7 @@ static int usbg_parse_functions(char *path, usbg_gadget *g)
 		ret = usbg_translate_error(errno);
 	}
 
+out:
 	return ret;
 }
 
@@ -1354,9 +1381,10 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 		char *instance, usbg_function_attrs *f_attrs, usbg_function **f)
 {
 	char fpath[USBG_MAX_PATH_LENGTH];
-	char name[USBG_MAX_STR_LENGTH];
+	char name[USBG_MAX_PATH_LENGTH];
 	usbg_function *func;
 	int ret = USBG_ERROR_INVALID_PARAM;
+	int n, free_space;
 
 	if (!g || !f)
 		return ret;
@@ -1364,24 +1392,40 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 	/**
 	 * @todo Check for legal function type
 	 */
-	sprintf(name, "%s.%s", function_names[type], instance);
+	n = snprintf(name, sizeof(name), "%s.%s",
+			function_names[type], instance);
+	if (n >= sizeof(name)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
 	func = usbg_get_function(g, name);
 	if (func) {
 		ERROR("duplicate function name\n");
-		return USBG_ERROR_EXIST;
+		ret = USBG_ERROR_EXIST;
+		goto out;
 	}
 
-	sprintf(fpath, "%s/%s/%s/%s", g->path, g->name, FUNCTIONS_DIR, name);
+	n = snprintf(fpath, sizeof(fpath), "%s/%s/%s", g->path, g->name,
+			FUNCTIONS_DIR);
+	if (n >= sizeof(fpath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
 
-	*f = malloc(sizeof(usbg_function));
+	*f = usbg_allocate_function(fpath, name, g);
 	func = *f;
-	if (func) {
-		strcpy(func->name, name);
-		sprintf(func->path, "%s/%s/%s", g->path, g->name, FUNCTIONS_DIR);
+	if (!func) {
+		ERRORNO("allocating function\n");
+		ret = USBG_ERROR_NO_MEM;
+	}
+
+	free_space = sizeof(fpath) - n;
+	n = snprintf(&(fpath[n]), free_space, "/%s", name);
+	if (n < free_space) {
 		func->type = type;
 
 		ret = mkdir(fpath, S_IRWXU | S_IRWXG | S_IRWXO);
-
 		if (!ret) {
 			/* Success */
 			ret = USBG_SUCCESS;
@@ -1390,17 +1434,15 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 		} else {
 			ret = usbg_translate_error(errno);
 		}
-
-		if (ret == USBG_SUCCESS)
-			INSERT_TAILQ_STRING_ORDER(&g->functions, fhead, name,
-				func, fnode);
-		else
-			usbg_free_function(func);
-	} else {
-		ERRORNO("allocating function\n");
-		ret = USBG_ERROR_NO_MEM;
 	}
 
+	if (ret == USBG_SUCCESS)
+		INSERT_TAILQ_STRING_ORDER(&g->functions, fhead, name,
+				func, fnode);
+	else
+		usbg_free_function(func);
+
+out:
 	return ret;
 }
 
