@@ -21,6 +21,7 @@
 #include <sys/queue.h>
 #include <netinet/ether.h>
 #include <stdint.h>
+#include <limits.h>
 
 /**
  * @file include/usbg/usbg.h
@@ -38,7 +39,7 @@
 #define LANG_US_ENG		0x0409
 
 #define USBG_MAX_STR_LENGTH 256
-#define USBG_MAX_PATH_LENGTH 256
+#define USBG_MAX_PATH_LENGTH PATH_MAX
 #define USBG_MAX_NAME_LENGTH 40
 
 /*
@@ -192,6 +193,7 @@ typedef enum  {
 	USBG_ERROR_NO_DEV = -7,
 	USBG_ERROR_BUSY = -8,
 	USBG_ERROR_NOT_SUPPORTED = -9,
+	USBG_ERROR_PATH_TOO_LONG = -10,
 	USBG_ERROR_OTHER_ERROR = -99
 } usbg_error;
 

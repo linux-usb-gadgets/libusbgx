@@ -60,8 +60,8 @@ struct usbg_config
 	TAILQ_HEAD(bhead, usbg_binding) bindings;
 	usbg_gadget *parent;
 
-	char name[USBG_MAX_NAME_LENGTH];
-	char path[USBG_MAX_PATH_LENGTH];
+	char *name;
+	char *path;
 };
 
 struct usbg_function
@@ -206,6 +206,9 @@ const char *usbg_error_name(usbg_error e)
 	case USBG_ERROR_NOT_SUPPORTED:
 		ret = "USBG_ERROR_NOT_SUPPORTED";
 		break;
+	case USBG_ERROR_PATH_TOO_LONG:
+		ret = "USBG_ERROR_PATH_TOO_LONG";
+		break;
 	case USBG_ERROR_OTHER_ERROR:
 		ret = "USBG_ERROR_OTHER_ERROR";
 		break;
@@ -248,6 +251,9 @@ const char *usbg_strerror(usbg_error e)
 		break;
 	case USBG_ERROR_NOT_SUPPORTED:
 		ret = "Function not supported";
+		break;
+	case USBG_ERROR_PATH_TOO_LONG:
+		ret = "Created path was too long to process it.";
 		break;
 	case USBG_ERROR_OTHER_ERROR:
 		ret = "Other error";
@@ -419,6 +425,8 @@ static void usbg_free_config(usbg_config *c)
 		TAILQ_REMOVE(&c->bindings, b, bnode);
 		usbg_free_binding(b);
 	}
+	free(c->path);
+	free(c->name);
 	free(c);
 }
 
@@ -476,6 +484,29 @@ static usbg_gadget *usbg_allocate_gadget(char *path, char *name,
 	}
 
 	return g;
+}
+
+static usbg_config *usbg_allocate_config(char *path, char *name,
+		usbg_gadget *parent)
+{
+	usbg_config *c;
+
+	c = malloc(sizeof(usbg_config));
+	if (c) {
+		TAILQ_INIT(&c->bindings);
+		c->name = strdup(name);
+		c->path = strdup(path);
+		c->parent = parent;
+
+		if (!(c->name) || !(c->path)) {
+			free(c->name);
+			free(c->path);
+			free(c);
+			c = NULL;
+		}
+	}
+
+	return c;
 }
 
 static int usbg_parse_function_net_attrs(usbg_function *f,
@@ -688,18 +719,19 @@ static int usbg_parse_configs(char *path, usbg_gadget *g)
 	struct dirent **dent;
 	char cpath[USBG_MAX_PATH_LENGTH];
 
-	sprintf(cpath, "%s/%s/%s", path, g->name, CONFIGS_DIR);
+	n = snprintf(cpath, sizeof(cpath), "%s/%s/%s", path, g->name,
+			CONFIGS_DIR);
+	if (n >= sizeof(cpath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
 
 	n = scandir(cpath, &dent, file_select, alphasort);
 	if (n >= 0) {
 		for (i = 0; i < n; i++) {
 			if (ret == USBG_SUCCESS) {
-				c = malloc(sizeof(usbg_config));
+				c = usbg_allocate_config(cpath, dent[i]->d_name, g);
 				if (c) {
-					c->parent = g;
-					strcpy(c->name, dent[i]->d_name);
-					strcpy(c->path, cpath);
-					TAILQ_INIT(&c->bindings);
 					ret = usbg_parse_config_bindings(c);
 					if (ret == USBG_SUCCESS)
 						TAILQ_INSERT_TAIL(&g->configs, c, cnode);
@@ -716,6 +748,7 @@ static int usbg_parse_configs(char *path, usbg_gadget *g)
 		ret = usbg_translate_error(errno);
 	}
 
+out:
 	return ret;
 }
 
@@ -1377,9 +1410,10 @@ int usbg_create_config(usbg_gadget *g, char *name,
 	char cpath[USBG_MAX_PATH_LENGTH];
 	usbg_config *conf;
 	int ret = USBG_ERROR_INVALID_PARAM;
+	int n, free_space;
 
 	if (!g || !c)
-		return ret;
+		goto out;
 
 	/**
 	 * @todo Check for legal configuration name
@@ -1387,19 +1421,30 @@ int usbg_create_config(usbg_gadget *g, char *name,
 	conf = usbg_get_config(g, name);
 	if (conf) {
 		ERROR("duplicate configuration name\n");
-		return USBG_ERROR_EXIST;
+		ret = USBG_ERROR_EXIST;
+		goto out;
 	}
 
-	sprintf(cpath, "%s/%s/%s/%s", g->path, g->name, CONFIGS_DIR, name);
+	n = snprintf(cpath, sizeof(cpath), "%s/%s/%s", g->path, g->name,
+			CONFIGS_DIR);
+	if (n >= sizeof(cpath)) {
+		ret =  USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
 
-	*c = malloc(sizeof(usbg_config));
+	*c = usbg_allocate_config(cpath, name, g);
 	conf = *c;
-	if (conf) {
-		TAILQ_INIT(&conf->bindings);
-		strcpy(conf->name, name);
-		sprintf(conf->path, "%s/%s/%s", g->path, g->name, CONFIGS_DIR);
+	if (!conf) {
+		ERRORNO("allocating configuration\n");
+		ret = USBG_ERROR_NO_MEM;
+		goto out;
+	}
 
-		ret = mkdir(cpath, S_IRWXU|S_IRWXG|S_IRWXO);
+	free_space = sizeof(cpath) - n;
+	/* Append string at the end of previous one */
+	n = snprintf(&(cpath[n]), free_space, "/%s", name);
+	if (n < free_space) {
+		ret = mkdir(cpath, S_IRWXU | S_IRWXG | S_IRWXO);
 		if (!ret) {
 			ret = USBG_SUCCESS;
 			if (c_attrs)
@@ -1408,20 +1453,20 @@ int usbg_create_config(usbg_gadget *g, char *name,
 			if (ret == USBG_SUCCESS && c_strs)
 				ret = usbg_set_config_string(conf, LANG_US_ENG,
 						c_strs->configuration);
-
 		} else {
 			ret = usbg_translate_error(errno);
 		}
-
-		if (ret == USBG_SUCCESS)
-			INSERT_TAILQ_STRING_ORDER(&g->configs, chead, name, conf, cnode);
-		else
-			usbg_free_config(conf);
 	} else {
-		ERRORNO("allocating configuration\n");
-		ret = USBG_ERROR_NO_MEM;
+		ret = USBG_ERROR_PATH_TOO_LONG;
 	}
 
+	if (ret == USBG_SUCCESS)
+		INSERT_TAILQ_STRING_ORDER(&g->configs, chead, name,
+				conf, cnode);
+	else
+		usbg_free_config(conf);
+
+out:
 	return ret;
 }
 
