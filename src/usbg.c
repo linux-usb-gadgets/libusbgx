@@ -301,24 +301,28 @@ static int file_select(const struct dirent *dent)
 
 static int usbg_read_buf(char *path, char *name, char *file, char *buf)
 {
-	char p[USBG_MAX_STR_LENGTH];
+	char p[USBG_MAX_PATH_LENGTH];
 	FILE *fp;
+	int nmb;
 	int ret = USBG_SUCCESS;
 
-	sprintf(p, "%s/%s/%s", path, name, file);
+	nmb = snprintf(p, sizeof(p), "%s/%s/%s", path, name, file);
+	if (nmb < sizeof(p)) {
+		fp = fopen(p, "r");
+		if (fp) {
+			/* Successfully opened */
+			if (!fgets(buf, USBG_MAX_STR_LENGTH, fp)) {
+				ERROR("read error");
+				ret = USBG_ERROR_IO;
+			}
 
-	fp = fopen(p, "r");
-	if (fp) {
-		/* Successfully opened */
-		if (!fgets(buf, USBG_MAX_STR_LENGTH, fp)) {
-			ERROR("read error");
-			ret = USBG_ERROR_IO;
+			fclose(fp);
+		} else {
+			/* Set error correctly */
+			ret = usbg_translate_error(errno);
 		}
-
-		fclose(fp);
 	} else {
-		/* Set error correctly */
-		ret = usbg_translate_error(errno);
+		ret = USBG_ERROR_PATH_TOO_LONG;
 	}
 
 	return ret;
@@ -364,25 +368,29 @@ static int usbg_read_string(char *path, char *name, char *file, char *buf)
 
 static int usbg_write_buf(char *path, char *name, char *file, char *buf)
 {
-	char p[USBG_MAX_STR_LENGTH];
+	char p[USBG_MAX_PATH_LENGTH];
 	FILE *fp;
+	int nmb;
 	int ret = USBG_SUCCESS;
 
-	sprintf(p, "%s/%s/%s", path, name, file);
+	nmb = snprintf(p, sizeof(p), "%s/%s/%s", path, name, file);
+	if (nmb < sizeof(p)) {
+		fp = fopen(p, "w");
+		if (fp) {
+			fputs(buf, fp);
+			fflush(fp);
 
-	fp = fopen(p, "w");
-	if (fp) {
-		fputs(buf, fp);
-		fflush(fp);
+			ret = ferror(fp);
+			if (ret)
+				ret = usbg_translate_error(errno);
 
-		ret = ferror(fp);
-		if (ret)
+			fclose(fp);
+		} else {
+			/* Set error correctly */
 			ret = usbg_translate_error(errno);
-
-		fclose(fp);
+		}
 	} else {
-		/* Set error correctly */
-		ret = usbg_translate_error(errno);
+		ret = USBG_ERROR_PATH_TOO_LONG;
 	}
 
 	return ret;
@@ -392,9 +400,12 @@ static int usbg_write_int(char *path, char *name, char *file, int value,
 		char *str)
 {
 	char buf[USBG_MAX_STR_LENGTH];
+	int nmb;
 
-	sprintf(buf, str, value);
-	return usbg_write_buf(path, name, file, buf);
+	nmb = snprintf(buf, USBG_MAX_STR_LENGTH, str, value);
+	return nmb < USBG_MAX_STR_LENGTH ?
+			usbg_write_buf(path, name, file, buf)
+			: USBG_ERROR_INVALID_PARAM;
 }
 
 #define usbg_write_dec(p, n, f, v)	usbg_write_int(p, n, f, v, "%d\n")
@@ -691,18 +702,23 @@ static int usbg_parse_config_strs(char *path, char *name,
 {
 	DIR *dir;
 	int ret;
+	int nmb;
 	char spath[USBG_MAX_PATH_LENGTH];
 
-	sprintf(spath, "%s/%s/%s/0x%x", path, name, STRINGS_DIR, lang);
-
-	/* Check if directory exist */
-	dir = opendir(spath);
-	if (dir) {
-		closedir(dir);
-		ret = usbg_read_string(spath, "", "configuration",
-				c_strs->configuration);
+	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s/0x%x", path, name,
+			STRINGS_DIR, lang);
+	if (nmb < sizeof(spath)) {
+		/* Check if directory exist */
+		dir = opendir(spath);
+		if (dir) {
+			closedir(dir);
+			ret = usbg_read_string(spath, "", "configuration",
+					c_strs->configuration);
+		} else {
+			ret = usbg_translate_error(errno);
+		}
 	} else {
-		ret = usbg_translate_error(errno);
+		ret = USBG_ERROR_PATH_TOO_LONG;
 	}
 
 	return ret;
@@ -872,10 +888,16 @@ static int usbg_parse_gadget_strs(char *path, char *name, int lang,
 		usbg_gadget_strs *g_strs)
 {
 	int ret;
+	int nmb;
 	DIR *dir;
 	char spath[USBG_MAX_PATH_LENGTH];
 
-	sprintf(spath, "%s/%s/%s/0x%x", path, name, STRINGS_DIR, lang);
+	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s/0x%x", path, name,
+			STRINGS_DIR, lang);
+	if (nmb >= sizeof(spath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
 
 	/* Check if directory exist */
 	dir = opendir(spath);
@@ -1083,9 +1105,14 @@ usbg_binding *usbg_get_link_binding(usbg_config *c, usbg_function *f)
 static int usbg_create_empty_gadget(usbg_state *s, char *name, usbg_gadget **g)
 {
 	char gpath[USBG_MAX_PATH_LENGTH];
+	int nmb;
 	int ret = USBG_SUCCESS;
 
-	sprintf(gpath, "%s/%s", s->path, name);
+	nmb = snprintf(gpath, sizeof(gpath), "%s/%s", s->path, name);
+	if (nmb >= sizeof(gpath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
 
 	*g = usbg_allocate_gadget(s->path, name, s);
 	if (*g) {
@@ -1110,6 +1137,7 @@ static int usbg_create_empty_gadget(usbg_state *s, char *name, usbg_gadget **g)
 		ret = USBG_ERROR_NO_MEM;
 	}
 
+out:
 	return ret;
 }
 
@@ -1341,12 +1369,18 @@ int usbg_set_gadget_strs(usbg_gadget *g, int lang,
 		usbg_gadget_strs *g_strs)
 {
 	char path[USBG_MAX_PATH_LENGTH];
+	int nmb;
 	int ret = USBG_ERROR_INVALID_PARAM;
 
 	if (!g || !g_strs)
 		goto out;
 
-	sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, STRINGS_DIR, lang);
+	nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", g->path, g->name,
+			STRINGS_DIR, lang);
+	if (nmb >= sizeof(path)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
 
 	ret = usbg_check_dir(path);
 	if (ret == USBG_SUCCESS) {
@@ -1367,15 +1401,20 @@ out:
 
 int usbg_set_gadget_serial_number(usbg_gadget *g, int lang, char *serno)
 {
-	char path[USBG_MAX_PATH_LENGTH];
 	int ret = USBG_ERROR_INVALID_PARAM;
 
 	if (g && serno) {
-		sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, STRINGS_DIR, lang);
-
-		ret = usbg_check_dir(path);
-		if (ret == USBG_SUCCESS)
-			ret = usbg_write_string(path, "", "serialnumber", serno);
+		char path[USBG_MAX_PATH_LENGTH];
+		int nmb;
+		nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", g->path,
+				g->name, STRINGS_DIR, lang);
+		if (nmb < sizeof(path)) {
+			ret = usbg_check_dir(path);
+			if (ret == USBG_SUCCESS)
+				ret = usbg_write_string(path, "", "serialnumber", serno);
+		} else {
+			ret = USBG_ERROR_PATH_TOO_LONG;
+		}
 	}
 
 	return ret;
@@ -1383,15 +1422,20 @@ int usbg_set_gadget_serial_number(usbg_gadget *g, int lang, char *serno)
 
 int usbg_set_gadget_manufacturer(usbg_gadget *g, int lang, char *mnf)
 {
-	char path[USBG_MAX_PATH_LENGTH];
 	int ret = USBG_ERROR_INVALID_PARAM;
 
 	if (g && mnf) {
-		sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, STRINGS_DIR, lang);
-
-		ret = usbg_check_dir(path);
-		if (ret == USBG_SUCCESS)
-			ret = usbg_write_string(path, "", "manufacturer", mnf);
+		char path[USBG_MAX_PATH_LENGTH];
+		int nmb;
+		nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", g->path,
+				g->name, STRINGS_DIR, lang);
+		if (nmb < sizeof(path)) {
+			ret = usbg_check_dir(path);
+			if (ret == USBG_SUCCESS)
+				ret = usbg_write_string(path, "", "manufacturer", mnf);
+		} else {
+			ret = USBG_ERROR_PATH_TOO_LONG;
+		}
 	}
 
 	return ret;
@@ -1399,15 +1443,20 @@ int usbg_set_gadget_manufacturer(usbg_gadget *g, int lang, char *mnf)
 
 int usbg_set_gadget_product(usbg_gadget *g, int lang, char *prd)
 {
-	char path[USBG_MAX_PATH_LENGTH];
 	int ret = USBG_ERROR_INVALID_PARAM;
 
 	if (g && prd) {
-		sprintf(path, "%s/%s/%s/0x%x", g->path, g->name, STRINGS_DIR, lang);
-
-		ret = usbg_check_dir(path);
-		if (ret == USBG_SUCCESS)
-			ret = usbg_write_string(path, "", "product", prd);
+		char path[USBG_MAX_PATH_LENGTH];
+		int nmb;
+		nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", g->path,
+				g->name, STRINGS_DIR, lang);
+		if (nmb < sizeof(path)) {
+			ret = usbg_check_dir(path);
+			if (ret == USBG_SUCCESS)
+				ret = usbg_write_string(path, "", "product", prd);
+		} else {
+			ret = USBG_ERROR_PATH_TOO_LONG;
+		}
 	}
 
 	return ret;
@@ -1631,12 +1680,16 @@ int usbg_set_config_string(usbg_config *c, int lang, char *str)
 
 	if (c && str) {
 		char path[USBG_MAX_PATH_LENGTH];
-
-		sprintf(path, "%s/%s/%s/0x%x", c->path, c->name, STRINGS_DIR, lang);
-
-		ret = usbg_check_dir(path);
-		if (ret == USBG_SUCCESS)
-			ret = usbg_write_string(path, "", "configuration", str);
+		int nmb;
+		nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", c->path,
+				c->name, STRINGS_DIR, lang);
+		if (nmb < sizeof(path)) {
+			ret = usbg_check_dir(path);
+			if (ret == USBG_SUCCESS)
+				ret = usbg_write_string(path, "", "configuration", str);
+		} else {
+			ret = USBG_ERROR_PATH_TOO_LONG;
+		}
 	}
 
 	return ret;
