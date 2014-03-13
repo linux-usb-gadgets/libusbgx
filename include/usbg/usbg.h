@@ -276,6 +276,16 @@ extern usbg_function *usbg_get_function(usbg_gadget *g,
  */
 extern usbg_config *usbg_get_config(usbg_gadget *g, int id, const char *label);
 
+/* USB gadget/config/function/binding removal */
+
+/**
+ * @brief Remove binding between configuration and function
+ * @details This function frees also the memory allocated for binding
+ * @param b Binding to be removed
+ * @return 0 on success, usbg_error if error occurred
+ */
+extern int usbg_rm_binding(usbg_binding *b);
+
 /* USB gadget allocation and configuration */
 
 /**

@@ -146,6 +146,7 @@ static int usbg_translate_error(int error)
 		break;
 	case EACCES:
 	case EROFS:
+	case EPERM:
 		ret = USBG_ERROR_NO_ACCESS;
 		break;
 	case ENOENT:
@@ -676,6 +677,25 @@ static usbg_binding *usbg_allocate_binding(char *path, char *name,
 
 	return b;
 }
+
+static int ubsg_rm_file(char *path, char *name)
+{
+	int ret = USBG_SUCCESS;
+	int nmb;
+	char buf[USBG_MAX_PATH_LENGTH];
+
+	nmb = snprintf(buf, sizeof(buf), "%s/%s", path, name);
+	if (nmb < sizeof(buf)) {
+		nmb = unlink(buf);
+		if (nmb != 0)
+			ret = usbg_translate_error(errno);
+	} else {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+	}
+
+	return ret;
+}
+
 
 static int usbg_parse_function_net_attrs(usbg_function *f,
 		usbg_function_attrs *f_attrs)
@@ -1261,6 +1281,25 @@ usbg_binding *usbg_get_link_binding(usbg_config *c, usbg_function *f)
 			return b;
 
 	return NULL;
+}
+
+int usbg_rm_binding(usbg_binding *b)
+{
+	int ret = USBG_SUCCESS;
+	usbg_config *c;
+
+	if (!b)
+		return USBG_ERROR_INVALID_PARAM;
+
+	c = b->parent;
+
+	ret = ubsg_rm_file(b->path, b->name);
+	if (ret == USBG_SUCCESS) {
+		TAILQ_REMOVE(&(c->bindings), b, bnode);
+		usbg_free_binding(b);
+	}
+
+	return ret;
 }
 
 static int usbg_create_empty_gadget(usbg_state *s, char *name, usbg_gadget **g)
