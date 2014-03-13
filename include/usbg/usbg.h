@@ -286,6 +286,22 @@ extern usbg_config *usbg_get_config(usbg_gadget *g, int id, const char *label);
  */
 extern int usbg_rm_binding(usbg_binding *b);
 
+/**
+ * @brief Remove configuration strings for given language
+ * @param c Pointer to configuration
+ * @param lang Language of strings which should be deleted
+ * @return 0 on success, usbg_error if error occurred
+ */
+extern int usbg_rm_config_strs(usbg_config *c, int lang);
+
+/**
+ * @brief Remove gadget strings for given language
+ * @param g Pointer to gadget
+ * @param lang Language of strings which should be deleted
+ * @return 0 on success, usbg_error if error occurred
+ */
+extern int usbg_rm_gadget_strs(usbg_gadget *g, int lang);
+
 /* USB gadget allocation and configuration */
 
 /**
