@@ -81,8 +81,8 @@ struct usbg_binding
 	usbg_config *parent;
 	usbg_function *target;
 
-	char name[USBG_MAX_NAME_LENGTH];
-	char path[USBG_MAX_PATH_LENGTH];
+	char *name;
+	char *path;
 };
 
 /**
@@ -409,6 +409,8 @@ static inline int usbg_write_string(char *path, char *name, char *file,
 
 static inline void usbg_free_binding(usbg_binding *b)
 {
+	free(b->path);
+	free(b->name);
 	free(b);
 }
 
@@ -531,6 +533,28 @@ static usbg_function *usbg_allocate_function(char *path, char *name,
 	}
 
 	return f;
+}
+
+static usbg_binding *usbg_allocate_binding(char *path, char *name,
+		usbg_config *parent)
+{
+	usbg_binding *b;
+
+	b = malloc(sizeof(usbg_config));
+	if (b) {
+		b->name = strdup(name);
+		b->path = strdup(path);
+		b->parent = parent;
+
+		if (!(b->name) || !(b->path)) {
+			free(b->name);
+			free(b->path);
+			free(b);
+			b = NULL;
+		}
+	}
+
+	return b;
 }
 
 static int usbg_parse_function_net_attrs(usbg_function *f,
@@ -690,51 +714,63 @@ static int usbg_parse_config_bindings(usbg_config *c)
 	int ret = USBG_SUCCESS;
 	struct dirent **dent;
 	char bpath[USBG_MAX_PATH_LENGTH];
-	char file_name[USBG_MAX_PATH_LENGTH];
 	char target[USBG_MAX_PATH_LENGTH];
 	char *target_name;
+	int end;
 	usbg_gadget *g = c->parent;
 	usbg_binding *b;
 	usbg_function *f;
 
-	sprintf(bpath, "%s/%s", c->path, c->name);
-
-	n = scandir(bpath, &dent, bindings_select, alphasort);
-	if (n >= 0) {
-		for (i = 0; i < n; i++) {
-			sprintf(file_name, "%s/%s", bpath, dent[i]->d_name);
-			nmb = readlink(file_name, target, USBG_MAX_PATH_LENGTH);
-			if (nmb >= 0) {
-				/* readlink() don't add this,
-				 * so we have to do it manually */
-				target[nmb] = '\0';
-				/* Target contains a full path
-				 * but we need only function dir name */
-				target_name = strrchr(target, '/') + 1;
-
-				f = usbg_get_function(g, target_name);
-
-				b = malloc(sizeof(usbg_binding));
-				if (b) {
-					strcpy(b->name, dent[i]->d_name);
-					strcpy(b->path, bpath);
-					b->target = f;
-				b->parent = c;
-					TAILQ_INSERT_TAIL(&c->bindings, b, bnode);
-				} else {
-					ret = USBG_ERROR_NO_MEM;
-				}
-			} else {
-				ret = usbg_translate_error(errno);
-			}
-
-			free(dent[i]);
-		}
-		free(dent);
-	} else {
-		ret = usbg_translate_error(errno);
+	end = snprintf(bpath, sizeof(bpath), "%s/%s", c->path, c->name);
+	if (end >= sizeof(bpath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
 	}
 
+	n = scandir(bpath, &dent, bindings_select, alphasort);
+	if (n < 0) {
+		ret = usbg_translate_error(errno);
+		goto out;
+	}
+
+	for (i = 0; i < n; i++) {
+		if (ret == USBG_SUCCESS) {
+			nmb = snprintf(&(bpath[end]), sizeof(bpath) - end,
+					"/%s", dent[i]->d_name);
+
+			if (nmb < sizeof(bpath) - end) {
+				nmb = readlink(bpath, target, sizeof(target));
+				if (nmb >= 0) {
+					/* readlink() don't add this,
+					 * so we have to do it manually */
+					target[nmb] = '\0';
+					/* Target contains a full path
+					 * but we need only function dir name */
+					target_name = strrchr(target, '/') + 1;
+
+					f = usbg_get_function(g, target_name);
+
+					/* We have to cut last part of path */
+					bpath[end] = '\0';
+					b = usbg_allocate_binding(bpath, dent[i]->d_name, c);
+					if (b) {
+						b->target = f;
+						TAILQ_INSERT_TAIL(&c->bindings, b, bnode);
+					} else {
+						ret = USBG_ERROR_NO_MEM;
+					}
+				} else {
+					ret = usbg_translate_error(errno);
+				}
+			} else {
+				ret = USBG_ERROR_PATH_TOO_LONG;
+			}
+		} /* ret == USBG_SUCCESS */
+		free(dent[i]);
+	}
+	free(dent);
+
+out:
 	return ret;
 }
 
@@ -1612,46 +1648,69 @@ int usbg_add_config_function(usbg_config *c, char *name, usbg_function *f)
 	char fpath[USBG_MAX_PATH_LENGTH];
 	usbg_binding *b;
 	int ret = USBG_SUCCESS;
+	int nmb;
 
-	if (!c || !f)
-		return USBG_ERROR_INVALID_PARAM;
+	if (!c || !f) {
+		ret = USBG_ERROR_INVALID_PARAM;
+		goto out;
+	}
 
 	b = usbg_get_binding(c, name);
 	if (b) {
 		ERROR("duplicate binding name\n");
-		return USBG_ERROR_EXIST;
+		ret = USBG_ERROR_EXIST;
+		goto out;
 	}
 
 	b = usbg_get_link_binding(c, f);
 	if (b) {
 		ERROR("duplicate binding link\n");
-		return USBG_ERROR_EXIST;
+		ret = USBG_ERROR_EXIST;
+		goto out;
 	}
 
-	sprintf(bpath, "%s/%s/%s", c->path, c->name, name);
-	sprintf(fpath, "%s/%s", f->path, f->name);
-
-	b = malloc(sizeof(usbg_binding));
-	if (!b) {
-		ERRORNO("allocating binding\n");
-		return USBG_ERROR_NO_MEM;
+	nmb = snprintf(fpath, sizeof(fpath), "%s/%s", f->path, f->name);
+	if (nmb >= sizeof(fpath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
 	}
 
-	ret = symlink(fpath, bpath);
-	if (ret < 0) {
-		ERRORNO("%s -> %s\n", bpath, fpath);
-		return ret;
+	nmb = snprintf(bpath, sizeof(bpath), "%s/%s", c->path, c->name);
+	if (nmb >= sizeof(bpath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	b = usbg_allocate_binding(bpath, name, c);
+	if (b) {
+		int free_space = sizeof(bpath) - nmb;
+
+		b->target = f;
+		nmb = snprintf(&(bpath[nmb]), free_space, "/%s", name);
+		if (nmb < free_space) {
+
+			ret = symlink(fpath, bpath);
+			if (ret == 0) {
+				b->target = f;
+				INSERT_TAILQ_STRING_ORDER(&c->bindings, bhead,
+						name, b, bnode);
+			} else {
+				ERRORNO("%s -> %s\n", bpath, fpath);
+				ret = usbg_translate_error(errno);
+			}
+		} else {
+			ret = USBG_ERROR_PATH_TOO_LONG;
+		}
+
+		if (ret != USBG_SUCCESS) {
+			usbg_free_binding(b);
+			b = NULL;
+		}
 	} else {
-		ret = USBG_SUCCESS;
+		ret = USBG_ERROR_NO_MEM;
 	}
 
-	strcpy(b->name, name);
-	strcpy(b->path, bpath);
-	b->target = f;
-	b->parent = c;
-
-	INSERT_TAILQ_STRING_ORDER(&c->bindings, bhead, name, b, bnode);
-
+out:
 	return ret;
 }
 
