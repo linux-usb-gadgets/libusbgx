@@ -605,7 +605,7 @@ static int usbg_parse_config_bindings(usbg_config *c)
 	struct dirent **dent;
 	char bpath[USBG_MAX_PATH_LENGTH];
 	char file_name[USBG_MAX_PATH_LENGTH];
-	char target[USBG_MAX_STR_LENGTH];
+	char target[USBG_MAX_PATH_LENGTH];
 	char *target_name;
 	usbg_gadget *g = c->parent;
 	usbg_binding *b;
