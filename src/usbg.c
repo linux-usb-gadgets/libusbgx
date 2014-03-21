@@ -283,6 +283,13 @@ static int usbg_lookup_function_type(char *name)
 	return i;
 }
 
+static inline const char *usbg_get_function_type_name(
+		usbg_function_type type)
+{
+	return type > 0 && type < sizeof(function_names)/sizeof(char *) ?
+			function_names[type] : NULL;
+}
+
 static int bindings_select(const struct dirent *dent)
 {
 	if (dent->d_type == DT_LNK)
@@ -1473,6 +1480,7 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 {
 	char fpath[USBG_MAX_PATH_LENGTH];
 	char name[USBG_MAX_PATH_LENGTH];
+	const char *type_name;
 	usbg_function *func;
 	int ret = USBG_ERROR_INVALID_PARAM;
 	int n, free_space;
@@ -1480,11 +1488,11 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 	if (!g || !f)
 		return ret;
 
-	/**
-	 * @todo Check for legal function type
-	 */
-	n = snprintf(name, sizeof(name), "%s.%s",
-			function_names[type], instance);
+	type_name = usbg_get_function_type_name(type);
+	if (!type_name)
+		goto out;
+
+	n = snprintf(name, sizeof(name), "%s.%s", type_name, instance);
 	if (n >= sizeof(name)) {
 		ret = USBG_ERROR_PATH_TOO_LONG;
 		goto out;
