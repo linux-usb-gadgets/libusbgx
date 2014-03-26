@@ -482,7 +482,7 @@ static usbg_gadget *usbg_allocate_gadget(char *path, char *name,
 {
 	usbg_gadget *g;
 
-	g = malloc(sizeof(usbg_gadget));
+	g = malloc(sizeof(*g));
 	if (g) {
 		TAILQ_INIT(&g->functions);
 		TAILQ_INIT(&g->configs);
@@ -506,7 +506,7 @@ static usbg_config *usbg_allocate_config(char *path, char *name,
 {
 	usbg_config *c;
 
-	c = malloc(sizeof(usbg_config));
+	c = malloc(sizeof(*c));
 	if (c) {
 		TAILQ_INIT(&c->bindings);
 		c->name = strdup(name);
@@ -529,7 +529,7 @@ static usbg_function *usbg_allocate_function(char *path, char *name,
 {
 	usbg_function *f;
 
-	f = malloc(sizeof(usbg_config));
+	f = malloc(sizeof(*f));
 	if (f) {
 		f->name = strdup(name);
 		f->path = strdup(path);
@@ -551,7 +551,7 @@ static usbg_binding *usbg_allocate_binding(char *path, char *name,
 {
 	usbg_binding *b;
 
-	b = malloc(sizeof(usbg_config));
+	b = malloc(sizeof(*b));
 	if (b) {
 		b->name = strdup(name);
 		b->path = strdup(path);
