@@ -844,6 +844,12 @@ static int usbg_parse_gadget_attrs(char *path, char *name,
 	else
 		goto out;
 
+	ret = usbg_read_hex(path, name, "bcdDevice", &buf);
+	if (ret == USBG_SUCCESS)
+		g_attrs->bcdDevice = (uint16_t) buf;
+	else
+		goto out;
+
 	ret = usbg_read_hex(path, name, "bDeviceClass", &buf);
 	if (ret == USBG_SUCCESS)
 		g_attrs->bDeviceClass = (uint8_t)buf;
