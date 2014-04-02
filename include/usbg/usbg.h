@@ -256,10 +256,12 @@ extern usbg_gadget *usbg_get_gadget(usbg_state *s, const char *name);
 /**
  * @brief Get a function by name
  * @param g Pointer to gadget
- * @param name Name of the function
+ * @param type Function type
+ * @param instance Instance of function
  * @return Pointer to function or NULL if a matching function isn't found
  */
-extern usbg_function *usbg_get_function(usbg_gadget *g, const char *name);
+extern usbg_function *usbg_get_function(usbg_gadget *g,
+		usbg_function_type type, const char *instance);
 
 /**
  * @brief Get a configuration by name
@@ -462,20 +464,27 @@ extern int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 		char *instance, usbg_function_attrs *f_attrs, usbg_function **f);
 
 /**
- * @brief Get function name length
- * @param f Config which name length should be returned
+ * @brief Get function instance name length
+ * @param f function which name length should be returned
  * @return Length of name string or usbg_error if error occurred.
  */
-extern size_t usbg_get_function_name_len(usbg_function *f);
+extern size_t usbg_get_function_instance_len(usbg_function *f);
 
 /**
- * @brieg Get config name
+ * @brief Get function instance name
  * @param f Pointer to function
- * @param buf Buffer where name should be copied
+ * @param buf Buffer where instance name should be copied
  * @param len Length of given buffer
  * @return 0 on success or usbg_error if error occurred.
  */
-extern int usbg_get_function_name(usbg_function *f, char *buf, size_t len);
+extern int usbg_get_function_instance(usbg_function *f, char *buf, size_t len);
+
+/**
+ * @brief Get function type as a string
+ * @param type Function type
+ * @return String suitable for given function type
+ */
+extern const char *usbg_get_function_type_str(usbg_function_type type);
 
 /* USB configurations allocation and configuration */
 
@@ -651,8 +660,8 @@ extern int usbg_get_gadget_udc(usbg_gadget *g, char *buf, size_t len);
 /**
  * @brief Get type of given function
  * @param f Pointer to function
- * @return Type of function
- * @warning Pointer to function has to be valid.
+ * @return usbg_function_type (0 or above) or
+ *  usbg_error (below 0) if error occurred
  */
 extern usbg_function_type usbg_get_function_type(usbg_function *f);
 

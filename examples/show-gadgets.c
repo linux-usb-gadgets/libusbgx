@@ -70,11 +70,13 @@ void show_gadget(usbg_gadget *g)
 
 void show_function(usbg_function *f)
 {
-	char buf[USBG_MAX_STR_LENGTH];
+	char instance[USBG_MAX_STR_LENGTH];
+	usbg_function_type type;
 	int usbg_ret;
 	usbg_function_attrs f_attrs;
 
-	usbg_get_function_name(f, buf, USBG_MAX_STR_LENGTH);
+	usbg_get_function_instance(f, instance, USBG_MAX_STR_LENGTH);
+	type = usbg_get_function_type(f);
 	usbg_ret = usbg_get_function_attrs(f, &f_attrs);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
@@ -82,8 +84,9 @@ void show_function(usbg_function *f)
 		return;
 	}
 
-	fprintf(stdout, "  Function '%s'\n", buf);
-	switch (usbg_get_function_type(f)) {
+	fprintf(stdout, "  Function, type: %s instance: %s\n",
+			usbg_get_function_type_str(type), instance);
+	switch (type) {
 	case F_SERIAL:
 	case F_ACM:
 	case F_OBEX:
@@ -114,7 +117,8 @@ void show_config(usbg_config *c)
 {
 	usbg_binding *b;
 	usbg_function *f;
-	char buf[USBG_MAX_STR_LENGTH], buf2[USBG_MAX_STR_LENGTH];
+	char buf[USBG_MAX_STR_LENGTH], instance[USBG_MAX_STR_LENGTH];
+	usbg_function_type type;
 	usbg_config_attrs c_attrs;
 	usbg_config_strs c_strs;
 	int usbg_ret;
@@ -144,8 +148,10 @@ void show_config(usbg_config *c)
 	usbg_for_each_binding(b, c) {
 		usbg_get_binding_name(b, buf, USBG_MAX_STR_LENGTH);
 		f = usbg_get_binding_target(b);
-		usbg_get_function_name(f, buf2, USBG_MAX_STR_LENGTH);
-		fprintf(stdout, "    %s -> %s\n", buf, buf2);
+		usbg_get_function_instance(f, instance, USBG_MAX_STR_LENGTH);
+		type = usbg_get_function_type(f);
+		fprintf(stdout, "    %s -> %s %s\n", buf,
+				usbg_get_function_type_str(type), instance);
 	}
 }
 
