@@ -97,8 +97,8 @@ int main(void)
 		goto out2;
 	}
 
-	usbg_ret = usbg_create_config(g, "c.1", NULL /* use defaults */, &c_strs,
-			&c);
+	/* NULL can be passed to use kernel defaults */
+	usbg_ret = usbg_create_config(g, 1, "The only one", NULL, &c_strs, &c);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating config\n");
 		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),

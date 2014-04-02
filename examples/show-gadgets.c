@@ -57,7 +57,7 @@ void show_gadget(usbg_gadget *g)
 	fprintf(stdout, "  idVendor\t\t0x%04x\n", g_attrs.idVendor);
 	fprintf(stdout, "  idProduct\t\t0x%04x\n", g_attrs.idProduct);
 
-	usbg_get_gadget_strs(g, LANG_US_ENG, &g_strs);
+	usbg_ret = usbg_get_gadget_strs(g, LANG_US_ENG, &g_strs);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
 				usbg_strerror(usbg_ret));
@@ -121,10 +121,11 @@ void show_config(usbg_config *c)
 	usbg_function_type type;
 	usbg_config_attrs c_attrs;
 	usbg_config_strs c_strs;
-	int usbg_ret;
+	int usbg_ret, id;
 
-	usbg_get_config_name(c, buf, USBG_MAX_STR_LENGTH);
-	fprintf(stdout, "  Configuration '%s'\n", buf);
+	usbg_get_config_label(c, buf, USBG_MAX_STR_LENGTH);
+	id = usbg_get_config_id(c);
+	fprintf(stdout, "  Configuration: '%s' ID: %d\n", buf, id);
 
 	usbg_ret = usbg_get_config_attrs(c, &c_attrs);
 	if (usbg_ret != USBG_SUCCESS) {

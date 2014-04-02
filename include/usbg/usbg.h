@@ -37,6 +37,7 @@
 
 #define DEFAULT_UDC		NULL
 #define LANG_US_ENG		0x0409
+#define DEFAULT_CONFIG_LABEL "config"
 
 #define USBG_MAX_STR_LENGTH 256
 #define USBG_MAX_PATH_LENGTH PATH_MAX
@@ -266,10 +267,14 @@ extern usbg_function *usbg_get_function(usbg_gadget *g,
 /**
  * @brief Get a configuration by name
  * @param g Pointer to gadget
- * @param name Name of the configuration
+ * @param id Identify of configuration
+ * @param label Configuration label. If not NULL this function will return
+ * valid value only if configuration with given id exist and has this label.
+ * If NULL this function will return config with given id (if such exist)
+ * and ignore this param.
  * @return Pointer to config or NULL if a matching config isn't found
  */
-extern usbg_config *usbg_get_config(usbg_gadget *g, const char *name);
+extern usbg_config *usbg_get_config(usbg_gadget *g, int id, const char *label);
 
 /* USB gadget allocation and configuration */
 
@@ -491,31 +496,39 @@ extern const char *usbg_get_function_type_str(usbg_function_type type);
 /**
  * @brief Create a new USB gadget configuration
  * @param g Pointer to gadget
- * @param name Name of configuration
+ * @param id Identify of configuration
+ * @param label configuration label, if NULL, default is used
  * @param c_attrs Configuration attributes to be set
  * @param c_strs Configuration strings to be set
  * @param c Pointer to be filled with pointer to configuration
  * @note Given strings are assumed to be in US English
  * @return 0 on success usbg_error if error occurred
  */
-extern int usbg_create_config(usbg_gadget *g, char *name,
+extern int usbg_create_config(usbg_gadget *g, int id, const char *label,
 		usbg_config_attrs *c_attrs, usbg_config_strs *c_strs, usbg_config **c);
 
 /**
- * @brief Get config name length
- * @param c Config which name length should be returned
- * @return Length of name string or usbg_error if error occurred.
+ * @brief Get config label length
+ * @param c Config which label length should be returned
+ * @return Length of label or usbg_error if error occurred.
  */
-extern size_t usbg_get_config_name_len(usbg_config *c);
+extern size_t usbg_get_config_label_len(usbg_config *c);
 
 /**
- * @brieg Get config name
+ * @brieg Get config label
  * @param c Pointer to config
- * @param buf Buffer where name should be copied
+ * @param buf Buffer where label should be copied
  * @param len Length of given buffer
  * @return 0 on success or usbg_error if error occurred.
  */
-extern int usbg_get_config_name(usbg_config *c, char *buf, size_t len);
+extern int usbg_get_config_label(usbg_config *c, char *buf, size_t len);
+
+/**
+ * @brieg Get config id
+ * @param c Pointer to config
+ * @return Configuration id or usbg_error if error occurred.
+ */
+extern int usbg_get_config_id(usbg_config *c);
 
 /**
  * @brief Set the USB configuration attributes
