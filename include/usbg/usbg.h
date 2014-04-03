@@ -43,6 +43,13 @@
 #define USBG_MAX_PATH_LENGTH PATH_MAX
 #define USBG_MAX_NAME_LENGTH 40
 
+/**
+ * @brief Additional option for usbg_rm_* functions.
+ * @details This option allows to remove all content
+ * of gadget/config/function recursive.
+ */
+#define USBG_RM_RECURSE 1
+
 /*
  * Internal structures
  */
@@ -285,6 +292,15 @@ extern usbg_config *usbg_get_config(usbg_gadget *g, int id, const char *label);
  * @return 0 on success, usbg_error if error occurred
  */
 extern int usbg_rm_binding(usbg_binding *b);
+
+/**
+ * @brief Remove configuration
+ * @details This function frees also the memory allocated for configuration
+ * @param c Configuration to be removed
+ * @param opts Additional options for configuration removal.
+ * @return 0 on success, usbg_error if error occurred
+ */
+extern int usbg_rm_config(usbg_config *c, int opts);
 
 /**
  * @brief Remove configuration strings for given language

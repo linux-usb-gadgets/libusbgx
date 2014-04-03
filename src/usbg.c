@@ -714,6 +714,28 @@ static int usbg_rm_dir(char *path, char *name)
 	return ret;
 }
 
+static int usbg_rm_all_dirs(char *path)
+{
+	int ret = USBG_SUCCESS;
+	int n, i;
+	struct dirent **dent;
+
+	n = scandir(path, &dent, file_select, alphasort);
+	if (n >= 0) {
+		for (i = 0; i < n; ++i) {
+			if (ret == USBG_SUCCESS)
+				ret = usbg_rm_dir(path, dent[i]->d_name);
+
+			free(dent[i]);
+		}
+		free(dent);
+	} else {
+		ret = usbg_translate_error(errno);
+	}
+
+	return ret;
+}
+
 static int usbg_parse_function_net_attrs(usbg_function *f,
 		usbg_function_attrs *f_attrs)
 {
@@ -1316,6 +1338,52 @@ int usbg_rm_binding(usbg_binding *b)
 		usbg_free_binding(b);
 	}
 
+	return ret;
+}
+
+int usbg_rm_config(usbg_config *c, int opts)
+{
+	int ret = USBG_ERROR_INVALID_PARAM;
+	usbg_gadget *g;
+
+	if (!c)
+		return ret;
+
+	g = c->parent;
+
+	if (opts & USBG_RM_RECURSE) {
+		/* Recursive flag was given
+		 * so remove all bindings and strings */
+		char spath[USBG_MAX_PATH_LENGTH];
+		int nmb;
+		usbg_binding *b;
+
+		while (!TAILQ_EMPTY(&c->bindings)) {
+			b = TAILQ_FIRST(&c->bindings);
+			ret = usbg_rm_binding(b);
+			if (ret != USBG_SUCCESS)
+				goto out;
+		}
+
+		nmb = snprintf(spath, sizeof(spath), "%s/%s/%s", c->path,
+				c->name, STRINGS_DIR);
+		if (nmb >= sizeof(spath)) {
+			ret = USBG_ERROR_PATH_TOO_LONG;
+			goto out;
+		}
+
+		ret = usbg_rm_all_dirs(spath);
+		if (ret != USBG_SUCCESS)
+			goto out;
+	}
+
+	ret = usbg_rm_dir(c->path, c->name);
+	if (ret == USBG_SUCCESS) {
+		TAILQ_REMOVE(&(g->configs), c, cnode);
+		usbg_free_config(c);
+	}
+
+out:
 	return ret;
 }
 
