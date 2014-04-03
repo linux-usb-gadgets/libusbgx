@@ -1429,6 +1429,60 @@ int usbg_rm_function(usbg_function *f, int opts)
 	return ret;
 }
 
+int usbg_rm_gadget(usbg_gadget *g, int opts)
+{
+	int ret = USBG_ERROR_INVALID_PARAM;
+	usbg_state *s;
+	if (!g)
+		goto out;
+
+	s = g->parent;
+
+	if (opts & USBG_RM_RECURSE) {
+		/* Recursive flag was given
+		 * so remove all configs and functions
+		 * using recursive flags */
+		usbg_config *c;
+		usbg_function *f;
+		int nmb;
+		char spath[USBG_MAX_PATH_LENGTH];
+
+		while (!TAILQ_EMPTY(&g->configs)) {
+			c = TAILQ_FIRST(&g->configs);
+			ret = usbg_rm_config(c, opts);
+			if (ret != USBG_SUCCESS)
+				goto out;
+		}
+
+		while (!TAILQ_EMPTY(&g->functions)) {
+			f = TAILQ_FIRST(&g->functions);
+			ret = usbg_rm_function(f, opts);
+			if (ret != USBG_SUCCESS)
+				goto out;
+		}
+
+		nmb = snprintf(spath, sizeof(spath), "%s/%s/%s", g->path,
+				g->name, STRINGS_DIR);
+		if (nmb >= sizeof(spath)) {
+			ret = USBG_ERROR_PATH_TOO_LONG;
+			goto out;
+		}
+
+		ret = usbg_rm_all_dirs(spath);
+		if (ret != USBG_SUCCESS)
+			goto out;
+	}
+
+	ret = usbg_rm_dir(g->path, g->name);
+	if (ret == USBG_SUCCESS) {
+		TAILQ_REMOVE(&(s->gadgets), g, gnode);
+		usbg_free_gadget(g);
+	}
+
+out:
+	return ret;
+}
+
 int usbg_rm_config_strs(usbg_config *c, int lang)
 {
 	int ret = USBG_SUCCESS;
