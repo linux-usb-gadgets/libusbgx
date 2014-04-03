@@ -303,6 +303,15 @@ extern int usbg_rm_binding(usbg_binding *b);
 extern int usbg_rm_config(usbg_config *c, int opts);
 
 /**
+ * @brief Remove existing USB function
+ * @details This function frees also the memory allocated for function
+ * @param f Function to be removed
+ * @param opts Additional options for configuration removal.
+ * @return 0 on success, usbg_error if error occurred
+ */
+extern int usbg_rm_function(usbg_function *f, int opts);
+
+/**
  * @brief Remove configuration strings for given language
  * @param c Pointer to configuration
  * @param lang Language of strings which should be deleted

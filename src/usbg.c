@@ -1387,6 +1387,48 @@ out:
 	return ret;
 }
 
+int usbg_rm_function(usbg_function *f, int opts)
+{
+	int ret = USBG_ERROR_INVALID_PARAM;
+	usbg_gadget *g;
+
+	if (!f)
+		return ret;
+
+	g = f->parent;
+
+	if (opts & USBG_RM_RECURSE) {
+		/* Recursive flag was given
+		 * so remove all bindings to this function */
+		usbg_config *c;
+		usbg_binding *b;
+
+		TAILQ_FOREACH(c, &g->configs, cnode) {
+			b = TAILQ_FIRST(&c->bindings);
+			while (b != NULL) {
+				if (b->target == f) {
+					usbg_binding *b_next = TAILQ_NEXT(b, bnode);
+					ret = usbg_rm_binding(b);
+					if (ret != USBG_SUCCESS)
+						return ret;
+
+					b = b_next;
+				} else {
+					b = TAILQ_NEXT(b, bnode);
+				}
+			} /* while */
+		} /* TAILQ_FOREACH */
+	}
+
+	ret = usbg_rm_dir(f->path, f->name);
+	if (ret == USBG_SUCCESS) {
+		TAILQ_REMOVE(&(g->functions), f, fnode);
+		usbg_free_function(f);
+	}
+
+	return ret;
+}
+
 int usbg_rm_config_strs(usbg_config *c, int lang)
 {
 	int ret = USBG_SUCCESS;
