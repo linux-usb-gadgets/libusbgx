@@ -1653,6 +1653,7 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 	if (!func) {
 		ERRORNO("allocating function\n");
 		ret = USBG_ERROR_NO_MEM;
+		goto out;
 	}
 
 	free_space = sizeof(fpath) - n;
