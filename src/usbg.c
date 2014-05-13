@@ -850,7 +850,7 @@ static int usbg_parse_config_binding(usbg_config *c, char *bpath,
 	usbg_function *f;
 	usbg_binding *b;
 
-	nmb = readlink(bpath, target, sizeof(target));
+	nmb = readlink(bpath, target, sizeof(target) - 1 );
 	if (nmb < 0) {
 		ret = usbg_translate_error(errno);
 		goto out;
