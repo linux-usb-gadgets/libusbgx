@@ -681,7 +681,7 @@ static int usbg_parse_function_net_attrs(usbg_function *f,
 		usbg_function_attrs *f_attrs)
 {
 	struct ether_addr *addr;
-	char str_addr[40];
+	char str_addr[USBG_MAX_STR_LENGTH];
 	int ret;
 
 	ret = usbg_read_string(f->path, f->name, "dev_addr", str_addr);
