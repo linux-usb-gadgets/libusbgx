@@ -1787,7 +1787,7 @@ int usbg_set_config_attrs(usbg_config *c, usbg_config_attrs *c_attrs)
 {
 	int ret = USBG_ERROR_INVALID_PARAM;
 
-	if (c && !c_attrs) {
+	if (c && c_attrs) {
 		ret = usbg_write_dec(c->path, c->name, "MaxPower", c_attrs->bMaxPower);
 		if (ret == USBG_SUCCESS)
 			ret = usbg_write_hex8(c->path, c->name, "bmAttributes",
