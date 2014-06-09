@@ -41,6 +41,8 @@
 #define USBG_MAX_STR_LENGTH 256
 #define USBG_MAX_PATH_LENGTH PATH_MAX
 #define USBG_MAX_NAME_LENGTH 40
+/* Dev name for ffs is a part of function name, we subtracs 4 char for "ffs." */
+#define USBG_MAX_DEV_LENGTH (USBG_MAX_NAME_LENGTH - 4)
 
 /**
  * @brief Additional option for usbg_rm_* functions.
@@ -144,6 +146,7 @@ typedef enum
 	F_EEM,
 	F_RNDIS,
 	F_PHONET,
+	F_FFS
 } usbg_function_type;
 
 /**
@@ -174,6 +177,16 @@ typedef struct {
 } usbg_f_phonet_attrs;
 
 /**
+ * @typedef usbg_f_ffs_attrs
+ * @brief Attributes for function fs based functions
+ * @details This is read only and virtual attribute it is non present
+ * on config fs.
+ */
+typedef struct {
+	char dev_name[USBG_MAX_DEV_LENGTH];
+} usbg_f_ffs_attrs;
+
+/**
  * @typedef attrs
  * @brief Attributes for a given function type
  */
@@ -181,6 +194,7 @@ typedef union {
 	usbg_f_serial_attrs serial;
 	usbg_f_net_attrs net;
 	usbg_f_phonet_attrs phonet;
+	usbg_f_ffs_attrs ffs;
 } usbg_function_attrs;
 
 /* Error codes */

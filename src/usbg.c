@@ -104,6 +104,7 @@ const char *function_names[] =
 	"eem",
 	"rndis",
 	"phonet",
+	"ffs",
 };
 
 #define ERROR(msg, ...) do {\
@@ -799,6 +800,12 @@ static int usbg_parse_function_attrs(usbg_function *f,
 	case F_PHONET:
 		ret = usbg_read_string(f->path, f->name, "ifname",
 				f_attrs->phonet.ifname);
+		break;
+	case F_FFS:
+		strncpy(f_attrs->ffs.dev_name, f->instance,
+			sizeof(f_attrs->ffs.dev_name) - 1);
+		f_attrs->ffs.dev_name[sizeof(f_attrs->ffs.dev_name) - 1] = '\0';
+		ret = 0;
 		break;
 	default:
 		ERROR("Unsupported function type\n");
@@ -1903,8 +1910,19 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 	int ret = USBG_ERROR_INVALID_PARAM;
 	int n, free_space;
 
-	if (!g || !f || !instance)
+	if (!g || !f)
 		return ret;
+
+	if (!instance) {
+		/* If someone creates ffs function and doesn't pass instance name
+		   this means that device name from attrs should be used */
+		if (type == F_FFS && f_attrs) {
+			instance = f_attrs->ffs.dev_name;
+			f_attrs = NULL;
+		} else {
+			return ret;
+		}
+	}
 
 	func = usbg_get_function(g, type, instance);
 	if (func) {
@@ -2336,6 +2354,8 @@ int  usbg_set_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
 	case F_PHONET:
 		ret = usbg_write_string(f->path, f->name, "ifname", f_attrs->phonet.ifname);
 		break;
+	case F_FFS:
+		ret = USBG_ERROR_NOT_SUPPORTED;
 	default:
 		ERROR("Unsupported function type\n");
 		ret = USBG_ERROR_NOT_SUPPORTED;
