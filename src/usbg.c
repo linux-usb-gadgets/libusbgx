@@ -1218,6 +1218,7 @@ int usbg_init(char *configfs_path, usbg_state **state)
 	int ret = USBG_SUCCESS;
 	DIR *dir;
 	char *path;
+	usbg_state *s;
 
 	ret = asprintf(&path, "%s/usb_gadget", configfs_path);
 	if (ret < 0)
@@ -1227,21 +1228,33 @@ int usbg_init(char *configfs_path, usbg_state **state)
 
 	/* Check if directory exist */
 	dir = opendir(path);
-	if (dir) {
-		closedir(dir);
-		*state = malloc(sizeof(usbg_state));
-		ret = *state ? usbg_init_state(path, *state)
-			 : USBG_ERROR_NO_MEM;
-		if (*state && ret != USBG_SUCCESS) {
-			ERRORNO("couldn't init gadget state\n");
-			usbg_free_state(*state);
-		}
-	} else {
+	if (!dir) {
 		ERRORNO("couldn't init gadget state\n");
 		ret = usbg_translate_error(errno);
-		free(path);
+		goto err;
 	}
 
+	closedir(dir);
+	s = malloc(sizeof(usbg_state));
+	if (!s) {
+		ret = USBG_ERROR_NO_MEM;
+		goto err;
+	}
+
+	ret = usbg_init_state(path, s);
+	if (ret != USBG_SUCCESS) {
+		ERRORNO("couldn't init gadget state\n");
+		usbg_free_state(s);
+		goto out;
+	}
+
+	*state = s;
+
+	return ret;
+
+err:
+	free(path);
+out:
 	return ret;
 }
 
