@@ -108,6 +108,9 @@ void show_function(usbg_function *f)
 	case F_PHONET:
 		fprintf(stdout, "    ifname\t\t%s\n", f_attrs.phonet.ifname);
 		break;
+	case F_FFS:
+		fprintf(stdout, "    dev_name\t\t%s\n", f_attrs.ffs.dev_name);
+		break;
 	default:
 		fprintf(stdout, "    UNKNOWN\n");
 	}
