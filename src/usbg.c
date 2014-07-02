@@ -2311,6 +2311,12 @@ int usbg_set_function_net_attrs(usbg_function *f, usbg_f_net_attrs *attrs)
 	int ret = USBG_SUCCESS;
 	char *addr;
 
+	/* ifname is read only so we accept only empty string for this param */
+	if (attrs->ifname[0]) {
+		ret = USBG_ERROR_INVALID_PARAM;
+		goto out;
+	}
+
 	addr = ether_ntoa(&attrs->dev_addr);
 	ret = usbg_write_string(f->path, f->name, "dev_addr", addr);
 	if (ret != USBG_SUCCESS)
@@ -2318,10 +2324,6 @@ int usbg_set_function_net_attrs(usbg_function *f, usbg_f_net_attrs *attrs)
 
 	addr = ether_ntoa(&attrs->host_addr);
 	ret = usbg_write_string(f->path, f->name, "host_addr", addr);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_string(f->path, f->name, "ifname", attrs->ifname);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
@@ -2342,7 +2344,10 @@ int  usbg_set_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
 	case F_SERIAL:
 	case F_ACM:
 	case F_OBEX:
-		ret = usbg_write_dec(f->path, f->name, "port_num", f_attrs->serial.port_num);
+		/* port_num attribute is read only so we accept only 0
+		 * and do nothing with it */
+		ret = f_attrs->serial.port_num ? USBG_ERROR_INVALID_PARAM
+			: USBG_SUCCESS;
 		break;
 	case F_ECM:
 	case F_SUBSET:
@@ -2352,10 +2357,17 @@ int  usbg_set_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
 		ret = usbg_set_function_net_attrs(f, &f_attrs->net);
 		break;
 	case F_PHONET:
-		ret = usbg_write_string(f->path, f->name, "ifname", f_attrs->phonet.ifname);
+		/* ifname attribute is read only
+		 * so we accept only empty string */
+		ret = f_attrs->phonet.ifname[0] ? USBG_ERROR_INVALID_PARAM
+			: USBG_SUCCESS;
 		break;
 	case F_FFS:
-		ret = USBG_ERROR_NOT_SUPPORTED;
+		/* dev_name is a virtual atribute so allow only to use empty
+		 * empty string which means nop */
+		ret = f_attrs->ffs.dev_name[0] ? USBG_ERROR_INVALID_PARAM
+			: USBG_SUCCESS;
+		break;
 	default:
 		ERROR("Unsupported function type\n");
 		ret = USBG_ERROR_NOT_SUPPORTED;
