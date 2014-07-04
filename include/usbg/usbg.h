@@ -240,7 +240,7 @@ extern const char *usbg_strerror(usbg_error e);
  * @param Pointer to be filled with pointer to usbg_state
  * @return 0 on success, usbg_error on error
  */
-extern int usbg_init(char *configfs_path, usbg_state **state);
+extern int usbg_init(const char *configfs_path, usbg_state **state);
 
 /**
  * @brief Clean up the libusbgx library state
@@ -360,7 +360,7 @@ extern int usbg_rm_gadget_strs(usbg_gadget *g, int lang);
  * @param g Pointer to be filled with pointer to gadget
  * @return 0 on success usbg_error if error occurred
  */
-extern int usbg_create_gadget_vid_pid(usbg_state *s, char *name,
+extern int usbg_create_gadget_vid_pid(usbg_state *s, const char *name,
 		uint16_t idVendor, uint16_t idProduct, usbg_gadget **g);
 
 /**
@@ -374,8 +374,9 @@ extern int usbg_create_gadget_vid_pid(usbg_state *s, char *name,
  * @note Given strings are assumed to be in US English
  * @return 0 on success usbg_error if error occurred
  */
-extern int usbg_create_gadget(usbg_state *s, char *name,
-		usbg_gadget_attrs *g_attrs, usbg_gadget_strs *g_strs, usbg_gadget **g);
+extern int usbg_create_gadget(usbg_state *s, const char *name,
+		usbg_gadget_attrs *g_attrs, usbg_gadget_strs *g_strs,
+			      usbg_gadget **g);
 
 /**
  * @brief Set the USB gadget attributes
@@ -506,7 +507,8 @@ extern int usbg_set_gadget_strs(usbg_gadget *g, int lang,
  * @param ser Serial number
  * @return 0 on success usbg_error if error occurred
  */
-extern int usbg_set_gadget_serial_number(usbg_gadget *g, int lang, char *ser);
+extern int usbg_set_gadget_serial_number(usbg_gadget *g, int lang,
+					 const char *ser);
 
 /**
  * @brief Set the manufacturer name for a gadget
@@ -515,7 +517,8 @@ extern int usbg_set_gadget_serial_number(usbg_gadget *g, int lang, char *ser);
  * @param mnf Manufacturer
  * @return 0 on success usbg_error if error occurred
  */
-extern int usbg_set_gadget_manufacturer(usbg_gadget *g, int lang, char *mnf);
+extern int usbg_set_gadget_manufacturer(usbg_gadget *g, int lang,
+					const char *mnf);
 
 /**
  * @brief Set the product name for a gadget
@@ -524,7 +527,8 @@ extern int usbg_set_gadget_manufacturer(usbg_gadget *g, int lang, char *mnf);
  * @param prd Product
  * @return 0 on success usbg_error if error occurred
  */
-extern int usbg_set_gadget_product(usbg_gadget *g, int lang, char *prd);
+extern int usbg_set_gadget_product(usbg_gadget *g, int lang,
+				   const char *prd);
 
 /* USB function allocation and configuration */
 
@@ -539,7 +543,8 @@ extern int usbg_set_gadget_product(usbg_gadget *g, int lang, char *prd);
  * @return 0 on success usbg_error if error occurred
  */
 extern int usbg_create_function(usbg_gadget *g, usbg_function_type type,
-		char *instance, usbg_function_attrs *f_attrs, usbg_function **f);
+		 const char *instance, usbg_function_attrs *f_attrs,
+				usbg_function **f);
 
 /**
  * @brief Get function instance name length
@@ -663,7 +668,7 @@ extern int usbg_set_config_strs(usbg_config *c, int lang,
  * @param string Configuration description
  * @return 0 on success, usbg_error on failure.
  */
-extern int usbg_set_config_string(usbg_config *c, int lang, char *string);
+extern int usbg_set_config_string(usbg_config *c, int lang, const char *string);
 
 /**
  * @brief Add a function to a configuration
@@ -672,7 +677,8 @@ extern int usbg_set_config_string(usbg_config *c, int lang, char *string);
  * @param f Pointer to function
  * @return 0 on success, usbg_error on failure.
  */
-extern int usbg_add_config_function(usbg_config *c, char *name, usbg_function *f);
+extern int usbg_add_config_function(usbg_config *c, const char *name,
+				    usbg_function *f);
 
 /**
  * @brief Get target function of given binding
@@ -712,7 +718,7 @@ extern int usbg_get_udcs(struct dirent ***udc_list);
  * @param udc Name of UDC to enable gadget
  * @return 0 on success or usbg_error if error occurred.
  */
-extern int usbg_enable_gadget(usbg_gadget *g, char *udc);
+extern int usbg_enable_gadget(usbg_gadget *g, const char *udc);
 
 /**
  * @brief Disable a USB gadget device
