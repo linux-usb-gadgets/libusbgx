@@ -4213,7 +4213,7 @@ const char *usbg_get_func_import_error_text(usbg_gadget *g)
 	return config_error_text(g->last_failed_import);
 }
 
-const char *usbg_get_func_import_error_line(usbg_gadget *g)
+int usbg_get_func_import_error_line(usbg_gadget *g)
 {
 	if (!g || !g->last_failed_import)
 		return -1;
@@ -4229,7 +4229,7 @@ const char *usbg_get_config_import_error_text(usbg_gadget *g)
 	return config_error_text(g->last_failed_import);
 }
 
-const char *usbg_get_config_import_error_line(usbg_gadget *g)
+int usbg_get_config_import_error_line(usbg_gadget *g)
 {
 	if (!g || !g->last_failed_import)
 		return -1;
@@ -4245,7 +4245,7 @@ const char *usbg_get_gadget_import_error_text(usbg_state *s)
 	return config_error_text(s->last_failed_import);
 }
 
-const char *usbg_get_gadget_import_error_line(usbg_state *s)
+int usbg_get_gadget_import_error_line(usbg_state *s)
 {
 	if (!s || !s->last_failed_import)
 		return -1;
