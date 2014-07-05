@@ -927,6 +927,19 @@ extern int usbg_export_config(usbg_config *c, FILE *stream);
 extern int usbg_export_gadget(usbg_gadget *g, FILE *stream);
 
 /**
+
+/**
+ * @brief Imports usb function from file and adds it to given gadget
+ * @param g Gadget where function should be placed
+ * @param stream from which function should be imported
+ * @param instance name which shuld be used for new function
+ * @param f place for pointer to imported function
+ * if NULL this param will be ignored.
+ * @return 0 on success, usbg_error otherwise
+ */
+extern int usbg_import_function(usbg_gadget *g, FILE *stream,
+				const char *instance, usbg_function **f);
+
  * @}
  */
 #endif /* __USBG_H__ */

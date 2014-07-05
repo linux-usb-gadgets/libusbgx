@@ -3246,3 +3246,191 @@ out:
 	config_destroy(&cfg);
 	return ret;
 }
+
+#define usbg_config_is_int(node) (config_setting_type(node) == CONFIG_TYPE_INT)
+#define usbg_config_is_string(node) \
+	(config_setting_type(node) == CONFIG_TYPE_STRING)
+
+static void usbg_set_failed_import(config_t **to_set, config_t *failed)
+{
+	if (*to_set != NULL) {
+		config_destroy(*to_set);
+		free(*to_set);
+	}
+
+	*to_set = failed;
+}
+
+static int usbg_import_f_net_attrs(config_setting_t *root, usbg_function *f)
+{
+	config_setting_t *node;
+	int ret = USBG_SUCCESS;
+	int qmult;
+	struct ether_addr *addr;
+	struct ether_addr addr_buf;
+	const char *str;
+
+#define GET_OPTIONAL_ADDR(NAME)					\
+	do {							\
+		node = config_setting_get_member(root, #NAME);	\
+		if (node) {					\
+			str = config_setting_get_string(node);	\
+			if (!str) {				\
+				ret = USBG_ERROR_INVALID_TYPE;	\
+				goto out;			\
+			}					\
+								\
+			addr = ether_aton_r(str, &addr_buf);	\
+			if (!addr) {				\
+				ret = USBG_ERROR_INVALID_VALUE;	\
+				goto out;			\
+			}					\
+			ret = usbg_set_net_##NAME(f, addr);	\
+			if (ret != USBG_SUCCESS)		\
+				goto out;			\
+		}						\
+	} while (0)
+
+	GET_OPTIONAL_ADDR(host_addr);
+	GET_OPTIONAL_ADDR(dev_addr);
+
+#undef GET_OPTIONAL_ADDR
+
+	node = config_setting_get_member(root, "qmult");
+	if (node) {
+		if (!usbg_config_is_int(node)) {
+			ret = USBG_ERROR_INVALID_TYPE;
+			goto out;
+		}
+		qmult = config_setting_get_int(node);
+		ret = usbg_set_net_qmult(f, qmult);
+	}
+
+out:
+	return ret;
+}
+
+static int usbg_import_function_attrs(config_setting_t *root, usbg_function *f)
+{
+	int ret = USBG_SUCCESS;
+
+	switch (f->type) {
+	case F_SERIAL:
+	case F_ACM:
+	case F_OBEX:
+		/* Don't import port_num because it is read only */
+		break;
+	case F_ECM:
+	case F_SUBSET:
+	case F_NCM:
+	case F_EEM:
+	case F_RNDIS:
+		ret = usbg_import_f_net_attrs(root, f);
+		break;
+	case F_PHONET:
+		/* Don't import ifname because it is read only */
+		break;
+	case F_FFS:
+		/* We don't need to export ffs attributes
+		 * due to instance name export */
+		break;
+	default:
+		ERROR("Unsupported function type\n");
+		ret = USBG_ERROR_NOT_SUPPORTED;
+	}
+
+	return ret;
+}
+
+static int usbg_import_function_run(usbg_gadget *g, config_setting_t *root,
+				    const char *instance, usbg_function **f)
+{
+	config_setting_t *node;
+	const char *type_str;
+	int usbg_ret;
+	int function_type;
+	int ret = USBG_ERROR_MISSING_TAG;
+
+	/* function type is mandatory */
+	node = config_setting_get_member(root, USBG_TYPE_TAG);
+	if (!node)
+		goto out;
+
+	type_str = config_setting_get_string(node);
+	if (!type_str) {
+		ret = USBG_ERROR_INVALID_TYPE;
+		goto out;
+	}
+
+	/* Check if this type is supported */
+	function_type = usbg_lookup_function_type(type_str);
+	if (function_type < 0) {
+		ret = USBG_ERROR_NOT_SUPPORTED;
+		goto out;
+	}
+
+	/* All data collected, let's get to work and create this function */
+	ret = usbg_create_function(g, (usbg_function_type)function_type,
+				   instance, NULL, f);
+
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	/* Attrs are optional */
+	node = config_setting_get_member(root, USBG_ATTRS_TAG);
+	if (node) {
+		usbg_ret = usbg_import_function_attrs(node, *f);
+		if (usbg_ret != USBG_SUCCESS) {
+			ret = usbg_ret;
+			goto out;
+		}
+	}
+out:
+	return ret;
+}
+
+int usbg_import_function(usbg_gadget *g, FILE *stream, const char *instance,
+			 usbg_function **f)
+{
+	config_t *cfg;
+	config_setting_t *root;
+	usbg_function *newf;
+	int ret, cfg_ret;
+
+	if (!g || !stream || !instance)
+		return USBG_ERROR_INVALID_PARAM;
+
+	cfg = malloc(sizeof(*cfg));
+	if (!cfg)
+		return USBG_ERROR_NO_MEM;
+
+	config_init(cfg);
+
+	cfg_ret = config_read(cfg, stream);
+	if (cfg_ret != CONFIG_TRUE) {
+		usbg_set_failed_import(&g->last_failed_import, cfg);
+		ret = USBG_ERROR_INVALID_FORMAT;
+		goto out;
+	}
+
+	/* Allways successful */
+	root = config_root_setting(cfg);
+
+	ret = usbg_import_function_run(g, root, instance, &newf);
+	if (ret != USBG_SUCCESS) {
+		usbg_set_failed_import(&g->last_failed_import, cfg);
+		goto out;
+	}
+
+	if (f)
+		*f = newf;
+
+	config_destroy(cfg);
+	free(cfg);
+	/* Clean last error */
+	usbg_set_failed_import(&g->last_failed_import, NULL);
+out:
+	return ret;
+
+}
+
