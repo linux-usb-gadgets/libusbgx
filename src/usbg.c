@@ -42,6 +42,7 @@ struct usbg_state
 	char *path;
 
 	TAILQ_HEAD(ghead, usbg_gadget) gadgets;
+	config_t *last_failed_import;
 };
 
 struct usbg_gadget
@@ -588,6 +589,11 @@ static void usbg_free_state(usbg_state *s)
 		g = TAILQ_FIRST(&s->gadgets);
 		TAILQ_REMOVE(&s->gadgets, g, gnode);
 		usbg_free_gadget(g);
+	}
+
+	if (s->last_failed_import) {
+		config_destroy(s->last_failed_import);
+		free(s->last_failed_import);
 	}
 
 	free(s->path);
@@ -1246,6 +1252,7 @@ static int usbg_init_state(char *path, usbg_state *s)
 
 	/* State takes the ownership of path and should free it */
 	s->path = path;
+	s->last_failed_import = NULL;
 	TAILQ_INIT(&s->gadgets);
 
 	ret = usbg_parse_gadgets(path, s);
