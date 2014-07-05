@@ -915,6 +915,14 @@ extern int usbg_export_function(usbg_function *f, FILE *stream);
 extern int usbg_export_config(usbg_config *c, FILE *stream);
 
 /**
+ * @brief Exports whole gadget to file
+ * @param g Pointer to gadget to be exported
+ * @param stream where gadget should be saved
+ * @return 0 on success, usbg_error otherwise
+ */
+extern int usbg_export_gadget(usbg_gadget *g, FILE *stream);
+
+/**
  * @}
  */
 #endif /* __USBG_H__ */

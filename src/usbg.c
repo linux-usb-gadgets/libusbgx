@@ -2467,6 +2467,7 @@ usbg_binding *usbg_get_next_binding(usbg_binding *b)
 #define USBG_ATTRS_TAG "attrs"
 #define USBG_STRINGS_TAG "strings"
 #define USBG_FUNCTIONS_TAG "functions"
+#define USBG_CONFIGS_TAG "configs"
 #define USBG_LANG_TAG "lang"
 #define USBG_TYPE_TAG "type"
 #define USBG_INSTANCE_TAG "instance"
@@ -2723,6 +2724,41 @@ out:
 
 }
 
+static int usbg_export_gadget_configs(usbg_gadget *g, config_setting_t *root)
+{
+	usbg_config *c;
+	config_setting_t *node, *id_node;
+	int ret = USBG_SUCCESS;
+	int cfg_ret;
+
+	TAILQ_FOREACH(c, &g->configs, cnode) {
+		node = config_setting_add(root, NULL, CONFIG_TYPE_GROUP);
+		if (!node) {
+			ret = USBG_ERROR_NO_MEM;
+			break;
+		}
+
+		id_node = config_setting_add(node, USBG_ID_TAG,
+					     CONFIG_TYPE_INT);
+		if (!id_node) {
+			ret = USBG_ERROR_NO_MEM;
+			break;
+		}
+
+		cfg_ret = config_setting_set_int(id_node, c->id);
+		if (cfg_ret != CONFIG_TRUE) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			break;
+		}
+
+		ret = usbg_export_config_prep(c, node);
+		if (ret != USBG_SUCCESS)
+			break;
+	}
+
+	return ret;
+}
+
 static int usbg_export_f_net_attrs(usbg_f_net_attrs *attrs,
 				      config_setting_t *root)
 {
@@ -2844,6 +2880,258 @@ out:
 }
 
 
+static int usbg_export_gadget_functions(usbg_gadget *g, config_setting_t *root)
+{
+	usbg_function *f;
+	config_setting_t *node, *inst_node;
+	int ret = USBG_SUCCESS;
+	int cfg_ret;
+	char label[USBG_MAX_NAME_LENGTH];
+	char *func_label;
+	int nmb;
+
+	TAILQ_FOREACH(f, &g->functions, fnode) {
+		if (f->label) {
+			func_label = f->label;
+		} else {
+			nmb = generate_function_label(f, label, sizeof(label));
+			if (nmb >= sizeof(label)) {
+				ret = USBG_ERROR_OTHER_ERROR;
+				break;
+			}
+			func_label = label;
+		}
+
+		node = config_setting_add(root, func_label, CONFIG_TYPE_GROUP);
+		if (!node) {
+			ret = USBG_ERROR_NO_MEM;
+			break;
+		}
+
+		/* Add instance name to identify in this gadget */
+		inst_node = config_setting_add(node, USBG_INSTANCE_TAG,
+					  CONFIG_TYPE_STRING);
+		if (!inst_node) {
+			ret = USBG_ERROR_NO_MEM;
+			break;
+		}
+
+		cfg_ret = config_setting_set_string(inst_node, f->instance);
+		if (cfg_ret != CONFIG_TRUE) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			break;
+		}
+
+		ret = usbg_export_function_prep(f, node);
+		if (ret != USBG_SUCCESS)
+			break;
+	}
+
+	return ret;
+}
+
+static int usbg_export_gadget_strs_lang(usbg_gadget *g, const char *lang_str,
+					config_setting_t *root)
+{
+	config_setting_t *node;
+	usbg_gadget_strs strs;
+	int lang;
+	int usbg_ret, cfg_ret;
+	int ret = USBG_ERROR_NO_MEM;
+
+	ret = sscanf(lang_str, "%x", &lang);
+	if (ret != 1) {
+		ret = USBG_ERROR_OTHER_ERROR;
+		goto out;
+	}
+
+	usbg_ret = usbg_get_gadget_strs(g, lang, &strs);
+	if (usbg_ret != USBG_SUCCESS) {
+		ret = usbg_ret;
+		goto out;
+	}
+
+	node = config_setting_add(root, USBG_LANG_TAG, CONFIG_TYPE_INT);
+	if (!node)
+		goto out;
+
+	cfg_ret = config_setting_set_format(node, CONFIG_FORMAT_HEX);
+	if (cfg_ret != CONFIG_TRUE) {
+		ret = USBG_ERROR_OTHER_ERROR;
+		goto out;
+	}
+
+	cfg_ret = config_setting_set_int(node, lang);
+	if (cfg_ret != CONFIG_TRUE) {
+		ret = USBG_ERROR_OTHER_ERROR;
+		goto out;
+	}
+
+#define ADD_GADGET_STR(str_name, field)					\
+	do {								\
+		node = config_setting_add(root, str_name, CONFIG_TYPE_STRING); \
+		if (!node)						\
+			goto out;					\
+		cfg_ret = config_setting_set_string(node, strs.field);	\
+		if (cfg_ret != CONFIG_TRUE) {				\
+			ret = USBG_ERROR_OTHER_ERROR;			\
+			goto out;					\
+		}							\
+	} while (0)
+
+	ADD_GADGET_STR("manufacturer", str_mnf);
+	ADD_GADGET_STR("product", str_prd);
+	ADD_GADGET_STR("serialnumber", str_ser);
+
+#undef ADD_GADGET_STR
+	ret = USBG_SUCCESS;
+out:
+	return ret;
+}
+
+static int usbg_export_gadget_strings(usbg_gadget *g, config_setting_t *root)
+{
+	config_setting_t *node;
+	int usbg_ret = USBG_SUCCESS;
+	int nmb, i;
+	int ret = USBG_ERROR_NO_MEM;
+	char spath[USBG_MAX_PATH_LENGTH];
+	struct dirent **dent;
+
+	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s", g->path,
+		       g->name, STRINGS_DIR);
+	if (nmb >= sizeof(spath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	nmb = scandir(spath, &dent, file_select, alphasort);
+	if (nmb < 0) {
+		ret = usbg_translate_error(errno);
+		goto out;
+	}
+
+	for (i = 0; i < nmb; ++i) {
+		node = config_setting_add(root, NULL, CONFIG_TYPE_GROUP);
+		if (!node)
+			break;
+
+		usbg_ret = usbg_export_gadget_strs_lang(g, dent[i]->d_name,
+							node);
+		if (usbg_ret != USBG_SUCCESS)
+			break;
+
+		free(dent[i]);
+	}
+	/* This loop will be executed only if error occurred in previous one */
+	for (; i < nmb; ++i)
+		free(dent[i]);
+
+	free(dent);
+	ret = usbg_ret;
+out:
+	return ret;
+}
+
+static int usbg_export_gadget_attrs(usbg_gadget *g, config_setting_t *root)
+{
+	config_setting_t *node;
+	usbg_gadget_attrs attrs;
+	int usbg_ret, cfg_ret;
+	int ret = USBG_ERROR_NO_MEM;
+
+	usbg_ret = usbg_get_gadget_attrs(g, &attrs);
+	if (usbg_ret) {
+		ret = usbg_ret;
+		goto out;
+	}
+
+#define ADD_GADGET_ATTR(attr_name)					\
+	do {								\
+		node = config_setting_add(root, #attr_name, CONFIG_TYPE_INT); \
+		if (!node)						\
+			goto out;					\
+		cfg_ret = config_setting_set_format(node, CONFIG_FORMAT_HEX); \
+		if (cfg_ret != CONFIG_TRUE) {				\
+			ret = USBG_ERROR_OTHER_ERROR;			\
+			goto out;					\
+		}							\
+		cfg_ret = config_setting_set_int(node, attrs.attr_name); \
+		if (cfg_ret != CONFIG_TRUE) {				\
+			ret = USBG_ERROR_OTHER_ERROR;			\
+			goto out;					\
+		}							\
+	} while (0)
+
+	ADD_GADGET_ATTR(bcdUSB);
+	ADD_GADGET_ATTR(bDeviceClass);
+	ADD_GADGET_ATTR(bDeviceSubClass);
+	ADD_GADGET_ATTR(bDeviceProtocol);
+	ADD_GADGET_ATTR(bMaxPacketSize0);
+	ADD_GADGET_ATTR(idVendor);
+	ADD_GADGET_ATTR(idProduct);
+	ADD_GADGET_ATTR(bcdDevice);
+
+#undef ADD_GADGET_ATTR
+
+	ret = 0;
+out:
+	return ret;
+}
+
+static int usbg_export_gadget_prep(usbg_gadget *g, config_setting_t *root)
+{
+	config_setting_t *node;
+	int ret = USBG_ERROR_NO_MEM;
+	int usbg_ret;
+	int cfg_ret;
+
+	/* We don't export name tag because name should be given during
+	 * loading of gadget */
+
+	node = config_setting_add(root, USBG_ATTRS_TAG, CONFIG_TYPE_GROUP);
+	if (!node)
+		goto out;
+
+	usbg_ret = usbg_export_gadget_attrs(g, node);
+	if (usbg_ret) {
+		ret = usbg_ret;
+		goto out;
+	}
+
+	node = config_setting_add(root, USBG_STRINGS_TAG,
+				     CONFIG_TYPE_LIST);
+	if (!node)
+		goto out;
+
+	usbg_ret = usbg_export_gadget_strings(g, node);
+	if (usbg_ret) {
+		ret = usbg_ret;
+		goto out;
+	}
+
+	node = config_setting_add(root, USBG_FUNCTIONS_TAG,
+				  CONFIG_TYPE_GROUP);
+	if (!node)
+		goto out;
+
+	usbg_ret = usbg_export_gadget_functions(g, node);
+	if (usbg_ret) {
+		ret = usbg_ret;
+		goto out;
+	}
+
+	node = config_setting_add(root, USBG_CONFIGS_TAG,
+				     CONFIG_TYPE_LIST);
+	if (!node)
+		goto out;
+
+	usbg_ret = usbg_export_gadget_configs(g, node);
+	ret = usbg_ret;
+out:
+	return ret;
+}
+
 /* Export gadget/function/config API implementation */
 
 int usbg_export_function(usbg_function *f, FILE *stream)
@@ -2900,3 +3188,29 @@ out:
 	return ret;
 }
 
+int usbg_export_gadget(usbg_gadget *g, FILE *stream)
+{
+	config_t cfg;
+	config_setting_t *root;
+	int ret;
+
+	if (!g || !stream)
+		return USBG_ERROR_INVALID_PARAM;
+
+	config_init(&cfg);
+
+	/* Set format */
+	config_set_tab_width(&cfg, USBG_TAB_WIDTH);
+
+	/* Allways successful */
+	root = config_root_setting(&cfg);
+
+	ret = usbg_export_gadget_prep(g, root);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	config_write(&cfg, stream);
+out:
+	config_destroy(&cfg);
+	return ret;
+}
