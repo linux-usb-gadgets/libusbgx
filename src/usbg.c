@@ -217,6 +217,18 @@ const char *usbg_error_name(usbg_error e)
 	case USBG_ERROR_PATH_TOO_LONG:
 		ret = "USBG_ERROR_PATH_TOO_LONG";
 		break;
+	case USBG_ERROR_INVALID_FORMAT:
+		ret = "USBG_ERROR_INVALID_FORMAT";
+		break;
+	case USBG_ERROR_MISSING_TAG:
+		ret = "USBG_ERROR_MISSING_TAG";
+		break;
+	case USBG_ERROR_INVALID_TYPE:
+		ret = "USBG_ERROR_INVALUD_TYPE";
+		break;
+	case USBG_ERROR_INVALID_VALUE:
+		ret = "USBG_ERROR_INVALID_VALUE";
+		break;
 	case USBG_ERROR_OTHER_ERROR:
 		ret = "USBG_ERROR_OTHER_ERROR";
 		break;
@@ -262,6 +274,18 @@ const char *usbg_strerror(usbg_error e)
 		break;
 	case USBG_ERROR_PATH_TOO_LONG:
 		ret = "Created path was too long to process it.";
+		break;
+	case USBG_ERROR_INVALID_FORMAT:
+		ret = "Given file has incompatible format.";
+		break;
+	case USBG_ERROR_MISSING_TAG:
+		ret = "One of mandatory tags is missing.";
+		break;
+	case USBG_ERROR_INVALID_TYPE:
+		ret = "One of attributes has incompatible type.";
+		break;
+	case USBG_ERROR_INVALID_VALUE:
+		ret = "Incorrect value provided as attribute.";
 		break;
 	case USBG_ERROR_OTHER_ERROR:
 		ret = "Other error";
