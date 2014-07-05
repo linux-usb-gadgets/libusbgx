@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <libconfig.h>
 
 #define STRINGS_DIR "strings"
 #define CONFIGS_DIR "configs"
@@ -2461,3 +2462,158 @@ usbg_binding *usbg_get_next_binding(usbg_binding *b)
 {
 	return b ? TAILQ_NEXT(b, bnode) : NULL;
 }
+
+#define USBG_ATTRS_TAG "attrs"
+#define USBG_TYPE_TAG "type"
+#define USBG_INSTANCE_TAG "instance"
+#define USBG_TAB_WIDTH 4
+
+static int usbg_export_f_net_attrs(usbg_f_net_attrs *attrs,
+				      config_setting_t *root)
+{
+	config_setting_t *node;
+	char *addr;
+	char addr_buf[USBG_MAX_STR_LENGTH];
+	int cfg_ret;
+	int ret = USBG_ERROR_NO_MEM;
+
+	node = config_setting_add(root, "dev_addr", CONFIG_TYPE_STRING);
+	if (!node)
+		goto out;
+
+	addr = ether_ntoa_r(&attrs->dev_addr, addr_buf);
+	cfg_ret = config_setting_set_string(node, addr);
+	if (cfg_ret != CONFIG_TRUE) {
+		ret = USBG_ERROR_OTHER_ERROR;
+		goto out;
+	}
+
+	node = config_setting_add(root, "host_addr", CONFIG_TYPE_STRING);
+	if (!node)
+		goto out;
+
+	addr = ether_ntoa_r(&attrs->host_addr, addr_buf);
+	cfg_ret = config_setting_set_string(node, addr);
+	if (cfg_ret != CONFIG_TRUE) {
+		ret = USBG_ERROR_OTHER_ERROR;
+		goto out;
+	}
+
+	node = config_setting_add(root, "qmult", CONFIG_TYPE_INT);
+	if (!node)
+		goto out;
+
+	cfg_ret = config_setting_set_int(node, attrs->qmult);
+	ret = cfg_ret == CONFIG_TRUE ? 0 : USBG_ERROR_OTHER_ERROR;
+
+	/* if name is read only so we don't export it */
+out:
+	return ret;
+
+}
+
+static int usbg_export_function_attrs(usbg_function *f, config_setting_t *root)
+{
+	config_setting_t *node;
+	usbg_function_attrs f_attrs;
+	int usbg_ret, cfg_ret;
+	int ret = USBG_ERROR_NO_MEM;
+
+	usbg_ret = usbg_get_function_attrs(f, &f_attrs);
+	if (usbg_ret) {
+		ret = usbg_ret;
+		goto out;
+	}
+
+	switch (f->type) {
+	case F_SERIAL:
+	case F_ACM:
+	case F_OBEX:
+		node = config_setting_add(root, "port_num", CONFIG_TYPE_INT);
+		if (!node)
+			goto out;
+
+		cfg_ret = config_setting_set_int(node, f_attrs.serial.port_num);
+		ret = cfg_ret == CONFIG_TRUE ? 0 : USBG_ERROR_OTHER_ERROR;
+		break;
+	case F_ECM:
+	case F_SUBSET:
+	case F_NCM:
+	case F_EEM:
+	case F_RNDIS:
+		ret = usbg_export_f_net_attrs(&f_attrs.net, root);
+		break;
+	case F_PHONET:
+		/* Don't export ifname because it is read only */
+		break;
+	case F_FFS:
+		/* We don't need to export ffs attributes
+		 * due to instance name export */
+		ret = USBG_SUCCESS;
+		break;
+	default:
+		ERROR("Unsupported function type\n");
+		ret = USBG_ERROR_NOT_SUPPORTED;
+	}
+
+out:
+	return ret;
+}
+
+/* This function does not import instance name becuase this is more property
+ * of a gadget than a function itselt */
+static int usbg_export_function_prep(usbg_function *f, config_setting_t *root)
+{
+	config_setting_t *node;
+	int ret = USBG_ERROR_NO_MEM;
+	int cfg_ret;
+
+	node = config_setting_add(root, USBG_TYPE_TAG, CONFIG_TYPE_STRING);
+	if (!node)
+		goto out;
+
+	cfg_ret = config_setting_set_string(node, usbg_get_function_type_str(
+						    f->type));
+	if (cfg_ret != CONFIG_TRUE) {
+		ret = USBG_ERROR_OTHER_ERROR;
+		goto out;
+	}
+
+	node = config_setting_add(root, USBG_ATTRS_TAG, CONFIG_TYPE_GROUP);
+	if (!node)
+		goto out;
+
+	ret = usbg_export_function_attrs(f, node);
+out:
+	return ret;
+}
+
+
+/* Export gadget/function/config API implementation */
+int usbg_export_function(usbg_function *f, FILE *stream)
+{
+	config_t cfg;
+	config_setting_t *root;
+	int ret;
+
+	if (!f || !stream)
+		return USBG_ERROR_INVALID_PARAM;
+
+	config_init(&cfg);
+
+	/* Set format */
+	config_set_tab_width(&cfg, USBG_TAB_WIDTH);
+
+	/* Allways successful */
+	root = config_root_setting(&cfg);
+
+	ret = usbg_export_function_prep(f, root);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	config_write(&cfg, stream);
+out:
+	config_destroy(&cfg);
+	return ret;
+}
+

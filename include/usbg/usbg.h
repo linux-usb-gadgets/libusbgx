@@ -22,6 +22,7 @@
 #include <netinet/ether.h>
 #include <stdint.h>
 #include <limits.h>
+#include <stdio.h> /* For FILE * */
 
 /**
  * @file include/usbg/usbg.h
@@ -894,6 +895,16 @@ extern usbg_config *usbg_get_next_config(usbg_config *c);
  * @return Next binding or NULL if end of list.
  */
 extern usbg_binding *usbg_get_next_binding(usbg_binding *b);
+
+/* Import / Export API */
+
+/**
+ * @brief Exports usb function to file
+ * @param f Pointer to function to be exported
+ * @param stream where function should be saved
+ * @return 0 on success, usbg_error otherwise
+ */
+extern int usbg_export_function(usbg_function *f, FILE *stream);
 
 /**
  * @}
