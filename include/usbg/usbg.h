@@ -951,6 +951,18 @@ extern int usbg_import_function(usbg_gadget *g, FILE *stream,
  */
 extern int usbg_import_config(usbg_gadget *g, FILE *stream, int id,
 				usbg_config **c);
+/**
+ * @brief Imports usb gadget from file
+ * @param s current state of library
+ * @param stream from which gadget should be imported
+ * @param name which shuld be used for new gadget
+ * @param g place for pointer to imported gadget
+ * if NULL this param will be ignored.
+ * @return 0 on success, usbg_error otherwise
+ */
+extern int usbg_import_gadget(usbg_state *s, FILE *stream,
+			      const char *name, usbg_gadget **g);
+/**
  * @}
  */
 #endif /* __USBG_H__ */
