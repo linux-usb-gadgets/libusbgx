@@ -940,6 +940,17 @@ extern int usbg_export_gadget(usbg_gadget *g, FILE *stream);
 extern int usbg_import_function(usbg_gadget *g, FILE *stream,
 				const char *instance, usbg_function **f);
 
+/**
+ * @brief Imports usb configuration from file and adds it to given gadget
+ * @param g Gadget where configuration should be placed
+ * @param stream from which configuration should be imported
+ * @param id which shuld be used for new configuration
+ * @param c place for pointer to imported configuration
+ * if NULL this param will be ignored.
+ * @return 0 on success, usbg_error otherwise
+ */
+extern int usbg_import_config(usbg_gadget *g, FILE *stream, int id,
+				usbg_config **c);
  * @}
  */
 #endif /* __USBG_H__ */

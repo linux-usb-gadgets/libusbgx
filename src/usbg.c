@@ -3251,6 +3251,38 @@ out:
 #define usbg_config_is_string(node) \
 	(config_setting_type(node) == CONFIG_TYPE_STRING)
 
+static int split_function_label(const char *label, usbg_function_type *type,
+				const char **instance)
+{
+	const char *floor;
+	char buf[USBG_MAX_NAME_LENGTH];
+	int len;
+	int function_type;
+	int ret = USBG_ERROR_NOT_FOUND;
+
+	/* We assume that function type string doesn't contain '_' */
+	floor = strchr(label, '_');
+	/* if phrase before _ is longer than max name length we may
+	 * stop looking */
+	len = floor - label;
+	if (len >= USBG_MAX_NAME_LENGTH || floor == label)
+		goto out;
+
+	strncpy(buf, label, len);
+	buf[len] = '\0';
+
+	function_type = usbg_lookup_function_type(buf);
+	if (function_type < 0)
+		goto out;
+
+	*type = (usbg_function_type)function_type;
+	*instance = floor + 1;
+
+	ret = USBG_SUCCESS;
+out:
+	return ret;
+}
+
 static void usbg_set_failed_import(config_t **to_set, config_t *failed)
 {
 	if (*to_set != NULL) {
@@ -3389,6 +3421,346 @@ out:
 	return ret;
 }
 
+static usbg_function *usbg_lookup_function(usbg_gadget *g, const char *label)
+{
+	usbg_function *f;
+	int usbg_ret;
+
+	/* check if such function has also been imported */
+	TAILQ_FOREACH(f, &g->functions, fnode) {
+		if (f->label && !strcmp(f->label, label))
+			break;
+	}
+
+	/* if not let's check if label follows the naming convention */
+	if (!f) {
+		usbg_function_type type;
+		const char *instance;
+
+		usbg_ret = split_function_label(label, &type, &instance);
+		if (usbg_ret != USBG_SUCCESS)
+			goto out;
+
+		/* check if such function exist */
+		f = usbg_get_function(g, type, instance);
+	}
+
+out:
+	return f;
+}
+
+/* We have a string which should match with one of function names */
+static int usbg_import_binding_string(config_setting_t *root, usbg_config *c)
+{
+	const char *func_label;
+	usbg_function *target;
+	int ret;
+
+	func_label = config_setting_get_string(root);
+	if (!func_label) {
+		ret = USBG_ERROR_OTHER_ERROR;
+		goto out;
+	}
+
+	target = usbg_lookup_function(c->parent, func_label);
+	if (!target) {
+		ret = USBG_ERROR_NOT_FOUND;
+		goto out;
+	}
+
+	ret = usbg_add_config_function(c, target->name, target);
+out:
+	return ret;
+}
+
+static int usbg_import_binding_group(config_setting_t *root, usbg_config *c)
+{
+	config_setting_t *node;
+	const char *func_label, *name;
+	usbg_function *target;
+	int ret;
+
+	node = config_setting_get_member(root, USBG_FUNCTION_TAG);
+	if (!node) {
+		ret = USBG_ERROR_MISSING_TAG;
+		goto out;
+	}
+
+	/* It is allowed to provide link to existing function
+	 * or define unlabeled instance of function in this place */
+	if (usbg_config_is_string(node)) {
+		func_label = config_setting_get_string(node);
+		if (!func_label) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			goto out;
+		}
+
+		target = usbg_lookup_function(c->parent, func_label);
+		if (!target) {
+			ret = USBG_ERROR_NOT_FOUND;
+			goto out;
+		}
+	} else if (config_setting_is_group(node)) {
+		config_setting_t *inst_node;
+		const char *instance;
+
+		inst_node = config_setting_get_member(node, USBG_INSTANCE_TAG);
+		if (!inst_node) {
+			ret = USBG_ERROR_MISSING_TAG;
+			goto out;
+		}
+
+		instance = config_setting_get_string(inst_node);
+		if (!instance) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			goto out;
+		}
+
+		ret = usbg_import_function_run(c->parent, node,
+					       instance, &target);
+		if (ret != USBG_SUCCESS)
+			goto out;
+	} else {
+		ret = USBG_ERROR_INVALID_TYPE;
+		goto out;
+	}
+
+	/* Name tag is optional. When no such tag, default one will be used */
+	node = config_setting_get_member(root, USBG_NAME_TAG);
+	if (node) {
+		if (!usbg_config_is_string(node)) {
+			ret = USBG_ERROR_INVALID_TYPE;
+			goto out;
+		}
+
+		name = config_setting_get_string(node);
+		if (!name) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			goto out;
+		}
+	} else {
+		name = target->name;
+	}
+
+	ret = usbg_add_config_function(c, name, target);
+out:
+	return ret;
+}
+
+static int usbg_import_config_bindings(config_setting_t *root, usbg_config *c)
+{
+	config_setting_t *node;
+	int usbg_ret, cfg_ret;
+	int ret = USBG_SUCCESS;
+	int count, i;
+
+	count = config_setting_length(root);
+
+	for (i = 0; i < count; ++i) {
+		node = config_setting_get_elem(root, i);
+
+		if (usbg_config_is_string(node))
+			ret = usbg_import_binding_string(node, c);
+		else if (config_setting_is_group(node))
+			ret = usbg_import_binding_group(node, c);
+		else
+			ret = USBG_ERROR_INVALID_TYPE;
+
+		if (ret != USBG_SUCCESS)
+			break;
+	}
+
+	return ret;
+}
+
+static int usbg_import_config_strs_lang(config_setting_t *root, usbg_config *c)
+{
+	config_setting_t *node;
+	int lang;
+	const char *str;
+	usbg_config_strs c_strs = {0};
+	int usbg_ret, cfg_ret;
+	int ret = USBG_ERROR_INVALID_TYPE;
+
+	node = config_setting_get_member(root, USBG_LANG_TAG);
+	if (!node) {
+		ret = USBG_ERROR_MISSING_TAG;
+		goto out;
+	}
+
+	if (!usbg_config_is_int(node))
+		goto out;
+
+	lang = config_setting_get_int(node);
+
+	/* Configuratin string is optional */
+	node = config_setting_get_member(root, "configuration");
+	if (node) {
+		if (!usbg_config_is_string(node))
+			goto out;
+
+		str = config_setting_get_string(node);
+
+		/* Auto truncate the string to max length */
+		strncpy(c_strs.configuration, str, USBG_MAX_STR_LENGTH);
+		c_strs.configuration[USBG_MAX_STR_LENGTH - 1] = 0;
+	}
+
+	ret = usbg_set_config_strs(c, lang, &c_strs);
+
+out:
+	return ret;
+}
+
+static int usbg_import_config_strings(config_setting_t *root, usbg_config *c)
+{
+	config_setting_t *node;
+	int usbg_ret, cfg_ret;
+	int ret = USBG_SUCCESS;
+	int count, i;
+
+	count = config_setting_length(root);
+
+	for (i = 0; i < count; ++i) {
+		node = config_setting_get_elem(root, i);
+		if (!config_setting_is_group(node)) {
+			ret = USBG_ERROR_INVALID_TYPE;
+			break;
+		}
+
+		ret = usbg_import_config_strs_lang(node, c);
+		if (ret != USBG_SUCCESS)
+			break;
+	}
+
+	return ret;
+}
+
+static int usbg_import_config_attrs(config_setting_t *root, usbg_config *c)
+{
+	config_setting_t *node;
+	int usbg_ret, cfg_ret;
+	int bmAttributes, bMaxPower;
+	short format;
+	int ret = USBG_ERROR_INVALID_TYPE;
+
+	node = config_setting_get_member(root, "bmAttributes");
+	if (node) {
+		if (!usbg_config_is_int(node))
+			goto out;
+
+		bmAttributes = config_setting_get_int(node);
+		usbg_ret = usbg_set_config_bm_attrs(c, bmAttributes);
+		if (usbg_ret != USBG_SUCCESS) {
+			ret = usbg_ret;
+			goto out;
+		}
+	}
+
+	node = config_setting_get_member(root, "bMaxPower");
+	if (node) {
+		if (!usbg_config_is_int(node))
+			goto out;
+
+		bMaxPower = config_setting_get_int(node);
+		usbg_ret = usbg_set_config_max_power(c, bMaxPower);
+		if (usbg_ret != USBG_SUCCESS) {
+			ret = usbg_ret;
+			goto out;
+		}
+	}
+
+	/* Empty attrs section is also considered to be valid */
+	ret = USBG_SUCCESS;
+out:
+	return ret;
+
+}
+
+static int usbg_import_config_run(usbg_gadget *g, config_setting_t *root,
+				  int id, usbg_config **c)
+{
+	config_setting_t *node;
+	const char *name;
+	usbg_config *newc;
+	int usbg_ret;
+	int ret = USBG_ERROR_MISSING_TAG;
+
+	/*
+	 * Label is mandatory,
+	 * if attrs aren't present defaults are used
+	 */
+	node = config_setting_get_member(root, USBG_NAME_TAG);
+	if (!node)
+		goto out;
+
+	name = config_setting_get_string(node);
+	if (!name) {
+		ret = USBG_ERROR_INVALID_TYPE;
+		goto out;
+	}
+
+	/* Required data collected, let's create our config */
+	usbg_ret = usbg_create_config(g, id, name, NULL, NULL, &newc);
+	if (usbg_ret != USBG_SUCCESS) {
+		ret = usbg_ret;
+		goto out;
+	}
+
+	/* Attrs are optional */
+	node = config_setting_get_member(root, USBG_ATTRS_TAG);
+	if (node) {
+		if (!config_setting_is_group(node)) {
+			ret = USBG_ERROR_INVALID_TYPE;
+			goto error2;
+		}
+
+		usbg_ret = usbg_import_config_attrs(node, newc);
+		if (usbg_ret != USBG_SUCCESS)
+			goto error;
+	}
+
+	/* Strings are also optional */
+	node = config_setting_get_member(root, USBG_STRINGS_TAG);
+	if (node) {
+		if (!config_setting_is_list(node)) {
+			ret = USBG_ERROR_INVALID_TYPE;
+			goto error2;
+		}
+
+		usbg_ret = usbg_import_config_strings(node, newc);
+		if (usbg_ret != USBG_SUCCESS)
+			goto error;
+	}
+
+	/* Functions too, because some config may not be
+	 * fully configured and not contain any function */
+	node = config_setting_get_member(root, USBG_FUNCTIONS_TAG);
+	if (node) {
+		if (!config_setting_is_list(node)) {
+			ret = USBG_ERROR_INVALID_TYPE;
+			goto error2;
+		}
+
+		usbg_ret = usbg_import_config_bindings(node, newc);
+		if (usbg_ret != USBG_SUCCESS)
+			goto error;
+	}
+
+	*c = newc;
+	ret = USBG_SUCCESS;
+out:
+	return ret;
+
+error:
+	ret = usbg_ret;
+error2:
+	/* We ignore returned value, if function fails
+	 * there is no way to handle it */
+	usbg_rm_config(newc, USBG_RM_RECURSE);
+	return ret;
+}
+
 int usbg_import_function(usbg_gadget *g, FILE *stream, const char *instance,
 			 usbg_function **f)
 {
@@ -3424,6 +3796,50 @@ int usbg_import_function(usbg_gadget *g, FILE *stream, const char *instance,
 
 	if (f)
 		*f = newf;
+
+	config_destroy(cfg);
+	free(cfg);
+	/* Clean last error */
+	usbg_set_failed_import(&g->last_failed_import, NULL);
+out:
+	return ret;
+
+}
+
+int usbg_import_config(usbg_gadget *g, FILE *stream, int id,  usbg_config **c)
+{
+	config_t *cfg;
+	config_setting_t *root;
+	usbg_config *newc;
+	int ret, cfg_ret;
+
+	if (!g || !stream || id < 0)
+		return USBG_ERROR_INVALID_PARAM;
+
+	cfg = malloc(sizeof(*cfg));
+	if (!cfg)
+		return USBG_ERROR_NO_MEM;
+
+	config_init(cfg);
+
+	cfg_ret = config_read(cfg, stream);
+	if (cfg_ret != CONFIG_TRUE) {
+		usbg_set_failed_import(&g->last_failed_import, cfg);
+		ret = USBG_ERROR_INVALID_FORMAT;
+		goto out;
+	}
+
+	/* Allways successful */
+	root = config_root_setting(cfg);
+
+	ret = usbg_import_config_run(g, root, id, &newc);
+	if (ret != USBG_SUCCESS) {
+		usbg_set_failed_import(&g->last_failed_import, cfg);
+		goto out;
+	}
+
+	if (c)
+		*c = newc;
 
 	config_destroy(cfg);
 	free(cfg);
