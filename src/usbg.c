@@ -75,7 +75,8 @@ struct usbg_function
 	char *name;
 	char *path;
 	char *instance;
-
+	/* Only for internal library usage */
+	char *label;
 	usbg_function_type type;
 };
 
@@ -511,6 +512,7 @@ static inline void usbg_free_function(usbg_function *f)
 {
 	free(f->path);
 	free(f->name);
+	free(f->label);
 	free(f);
 }
 
@@ -631,6 +633,7 @@ static usbg_function *usbg_allocate_function(const char *path,
 	if (!f)
 		goto out;
 
+	f->label = NULL;
 	type_name = usbg_get_function_type_str(type);
 	if (!type_name) {
 		free(f);
