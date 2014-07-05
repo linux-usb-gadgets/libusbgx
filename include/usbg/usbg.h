@@ -907,6 +907,14 @@ extern usbg_binding *usbg_get_next_binding(usbg_binding *b);
 extern int usbg_export_function(usbg_function *f, FILE *stream);
 
 /**
+ * @brief Exports configuration to file
+ * @param c Pointer to configuration to be exported
+ * @param stream where configuration should be saved
+ * @return 0 on success, usbg_error otherwise
+ */
+extern int usbg_export_config(usbg_config *c, FILE *stream);
+
+/**
  * @}
  */
 #endif /* __USBG_H__ */
