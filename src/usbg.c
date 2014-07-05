@@ -54,6 +54,7 @@ struct usbg_gadget
 	TAILQ_HEAD(chead, usbg_config) configs;
 	TAILQ_HEAD(fhead, usbg_function) functions;
 	usbg_state *parent;
+	config_t *last_failed_import;
 };
 
 struct usbg_config
@@ -559,6 +560,12 @@ static void usbg_free_gadget(usbg_gadget *g)
 {
 	usbg_config *c;
 	usbg_function *f;
+
+	if (g->last_failed_import) {
+		config_destroy(g->last_failed_import);
+		free(g->last_failed_import);
+	}
+
 	while (!TAILQ_EMPTY(&g->configs)) {
 		c = TAILQ_FIRST(&g->configs);
 		TAILQ_REMOVE(&g->configs, c, cnode);
@@ -596,6 +603,7 @@ static usbg_gadget *usbg_allocate_gadget(const char *path, const char *name,
 	if (g) {
 		TAILQ_INIT(&g->functions);
 		TAILQ_INIT(&g->configs);
+		g->last_failed_import = NULL;
 		g->name = strdup(name);
 		g->path = strdup(path);
 		g->parent = parent;
