@@ -744,6 +744,7 @@ static int usbg_parse_function_net_attrs(usbg_function *f,
 		usbg_function_attrs *f_attrs)
 {
 	struct ether_addr *addr;
+	struct ether_addr addr_buf;
 	char str_addr[USBG_MAX_STR_LENGTH];
 	int ret;
 
@@ -751,7 +752,7 @@ static int usbg_parse_function_net_attrs(usbg_function *f,
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	addr = ether_aton(str_addr);
+	addr = ether_aton_r(str_addr, &addr_buf);
 	if (addr) {
 		f_attrs->net.dev_addr = *addr;
 	} else {
@@ -763,7 +764,7 @@ static int usbg_parse_function_net_attrs(usbg_function *f,
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	addr = ether_aton(str_addr);
+	addr = ether_aton_r(str_addr, &addr_buf);
 	if (addr) {
 		f_attrs->net.host_addr = *addr;
 	} else {
@@ -2314,6 +2315,7 @@ int usbg_get_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
 int usbg_set_function_net_attrs(usbg_function *f, usbg_f_net_attrs *attrs)
 {
 	int ret = USBG_SUCCESS;
+	char addr_buf[USBG_MAX_STR_LENGTH];
 	char *addr;
 
 	/* ifname is read only so we accept only empty string for this param */
@@ -2322,12 +2324,12 @@ int usbg_set_function_net_attrs(usbg_function *f, usbg_f_net_attrs *attrs)
 		goto out;
 	}
 
-	addr = ether_ntoa(&attrs->dev_addr);
+	addr = ether_ntoa_r(&attrs->dev_addr, addr_buf);
 	ret = usbg_write_string(f->path, f->name, "dev_addr", addr);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	addr = ether_ntoa(&attrs->host_addr);
+	addr = ether_ntoa_r(&attrs->host_addr, addr_buf);
 	ret = usbg_write_string(f->path, f->name, "host_addr", addr);
 	if (ret != USBG_SUCCESS)
 		goto out;
@@ -2386,7 +2388,8 @@ int usbg_set_net_dev_addr(usbg_function *f, struct ether_addr *dev_addr)
 	int ret = USBG_SUCCESS;
 
 	if (f && dev_addr) {
-		char *str_addr = ether_ntoa(dev_addr);
+		char str_buf[USBG_MAX_STR_LENGTH];
+		char *str_addr = ether_ntoa_r(dev_addr, str_buf);
 		ret = usbg_write_string(f->path, f->name, "dev_addr", str_addr);
 	} else {
 		ret = USBG_ERROR_INVALID_PARAM;
@@ -2400,7 +2403,8 @@ int usbg_set_net_host_addr(usbg_function *f, struct ether_addr *host_addr)
 	int ret = USBG_SUCCESS;
 
 	if (f && host_addr) {
-		char *str_addr = ether_ntoa(host_addr);
+		char str_buf[USBG_MAX_STR_LENGTH];
+		char *str_addr = ether_ntoa_r(host_addr, str_buf);
 		ret = usbg_write_string(f->path, f->name, "host_addr", str_addr);
 	} else {
 		ret = USBG_ERROR_INVALID_PARAM;

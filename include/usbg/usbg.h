@@ -38,6 +38,7 @@
 #define LANG_US_ENG		0x0409
 #define DEFAULT_CONFIG_LABEL "config"
 
+/* This one has to be at least 18 bytes to hold network addres */
 #define USBG_MAX_STR_LENGTH 256
 #define USBG_MAX_PATH_LENGTH PATH_MAX
 #define USBG_MAX_NAME_LENGTH 40
