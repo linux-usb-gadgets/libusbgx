@@ -1,0 +1,301 @@
+
+			    Gadget schemes
+
+
+Index:
+1. What are gadget schemes?
+2. Why gadget schemes?
+3. Gadget scheme syntax
+   3.1 Function scheme
+   3.2 Configuration scheme
+   3.3 Gadget scheme
+4. Conclusion
+
+
+		     1. What are gadget schemes?
+
+Gadget schemes are files which contains configuration data of
+gadget/function/configuration. Those files can be generated using
+usbg_export_*() functions for whole gadget, configuration or single
+function. Library provides also set of usbg_import_*() functions which
+allows to load configuration data back to configfs.
+
+
+			2. Why gadget schemes?
+
+New kernel interface - ConfigFS which along with libcomposite allows
+to set up custom gadget. This can be achieved using simple, command
+line file system operation like mkdir, rmdir, ln -s, read and
+write. Yes, it is possible to configure usb gadget using only command
+line but each time after reboot user needs to recreate all gadgets
+once again. This means that after each reboot user needs to use about
+15 commands (depends on number and types of function). This is
+definitely not acceptable for those who used legacy gadgets and write
+only modprobe g_ether.
+
+One of first idea to solve this is to create a script and run it
+after each reboot. This approach is feasible but has many
+disadvantages. First of them is security. ConfigFS is modifiable by
+default only by root, so scripts has to be executed with root
+rights. Secondly it's really hard to modify such a script because many
+calls has hard-coded path where for example echo should be
+done. There is a lot of simple, but low level operations which can
+cause a lot of confusion for beginner.
+
+Second approach is to create executable which will create our gadget
+using base libusbg API. It is also possible but let's think for a
+moment why configfs has been introduced. It has been announced to
+separate code from configuration. Code is a piece of C code in kernel
+module which realizes usb function and configuration is understood as
+composition of those functions into a gadget as a whole. If we would
+like to create binary file for each gadget we would waste a lot of
+work which kernel contributors put to remove hard-coded gadgets from
+linux kernel. This all leads us to solution described in this document
+- gadget schemes. Light weight configuration files which describes
+composition of functions into gadget. They can be simply loaded using
+usbg_import_*() and exported using usbg_export_*(). This makes them
+easy to use equivalent of modprobe gadget_module.
+
+
+		       3. Gadget scheme syntax
+
+Gadget schemes implementation uses libconfig for reading and writing
+scheme files. This means that all limitations of libconfig are also
+present in gadget schemes. More over there are additional constrains
+for scheme files. Gadget scheme is only a password and import and
+export is not limited to whole gadgets. It is possible to export all 3
+types of gadget entity: function, configuration and gadget. Please
+refer to libconfig documentation for details about syntax and rules.
+
+			 3.1 Function scheme
+
+Function scheme is a file or part of file which represents single
+function.
+
+Example:
+
+instance = "my_func_instance"
+type = "ecm"
+
+attrs = {
+      dev_addr = "ef:33:be:9a:90:36"
+      dev_addr = "ab:63:6e:8b:10:16"
+      qmult = 5
+}
+
+For functions, type is the only attribute which is always
+mandatory. Instance is mandatory only if function is part of bigger
+scheme (gadget for example). By default usbg_export_function() does
+not export instance name, because usbg_import_function() takes
+instance as one of parameters. This convention allows for simple
+function movement between gadgets without names conflict.
+
+Attrs section is optional. It may not be included, present but empty
+or present and filled with function attributes. Attribute names are
+similar as those from configfs. Each type of function has own set of
+possible attributes. It is worth to mention that some attributes are
+read only and they cannot be imported from file. To make it more
+user-friendly read-only parameters are just ignored. This allows for
+direct use of previously exported function in import. If some
+attribute has not been provided default value provided by kernel will
+be used.
+
+		      3.2 Configuration scheme
+
+Configuration scheme is a file or part of file which represents single
+configuration with its attributes, strings and bindings.
+
+Simple example:
+
+id = 1
+name = "My favorite config"
+
+attrs = {
+      bMaxPower = 0x40
+      bmAttributes = 0x00
+}
+
+strings = (
+	{
+		lang = 0x409
+      		configuration = "My favorite string"
+	}
+)
+
+functions = (
+	  "function_label"
+)
+
+This is example of simple configuration with some attributes values,
+strings in US English and only one function. For configurations name
+is the only field which is always mandatory. Id is mandatory only if
+this is a part of bigger structure (gadget scheme).
+
+Attrs section is optional. It may not be included, present but empty
+or present and filled with function attributes. Attribute names are
+similar as those from configfs. Currently usb configuration has only
+two attributes: bMaxPower and bmAttributes. Their meaning and set of
+allowed values can be found in usb standard.
+
+Strings section presence policy is the same as attrs section. This
+section contains a list (that's the meaning of parentheses) of strings
+with their language codes. Each group of strings has to declare their
+language using lang field. Configuration string is optional. If this
+field is not set, empty string provided by kernel will be used for
+this language. Max number of languages is defined during kernel
+compilation using MAX_USB_STRING_LANGS define.
+
+Functions section is also optional. This allows for exporting not
+fully configured configurations. This section defines bindings between
+functions and configurations. The easiest and shortest way to define a
+connection between functions and configuration is to provide list of
+comma separated functions labels. For details about function labels
+please refer to gadget schemes subsection. Bindings of function to
+given configuration could be defined in different ways which has been
+presented in featured example.
+
+Featured example:
+
+id = 1
+name = "My favorite config"
+
+attrs = {
+    bMaxPower = 0x40
+    bmAttributes = 0x00
+}
+
+strings = (
+    {
+        lang = 0x409
+        configuration = "My favorite string"
+    } , {
+        lang = 0x415
+        configuration = "Moj ulubiony napis"
+    }
+)
+
+functions = (
+    "function_label"
+    , {
+        name = "my_binding_name"
+        function = "other_function_label"
+    } , {
+        name = "my_binding_name"
+        function = {
+            type = "ecm"
+            instance = "my_inline_func_definition"
+            attrs = {
+                dev_addr = "ef:33:be:9a:90:36"
+	    }
+	}
+    }
+)
+
+First way to add function to configuration has been described along
+with simple example. Second way is to provide a group with two
+fields. First one is name and it should contain a string with binding
+name. This field is optional and can be omitted what makes this more
+verbose equivalent of previous method. Second field, named function
+is mandatory. This field should contain function label. Third way to
+add function to config is to define it inline. This method allows to
+define a brand new function instead of providing function label of
+existing one.
+
+			  3.3 Gadget scheme
+
+Gadget scheme is a file which represents whole gadget with
+configurations, attributes, strings and functions.
+
+Example:
+
+attrs = {
+    bcdUSB = 0x200
+    bDeviceClass = 0x0
+    bDeviceSubClass = 0x0
+    bDeviceProtocol = 0x0
+    bMaxPacketSize0 = 0x40
+    idVendor = 0x1D6B
+    idProduct = 0x104
+    bcdDevice = 0x1
+}
+
+strings = (
+    {
+        lang = 0x409
+        manufacturer = "Foo Inc."
+        product = "Bar Gadget"
+        serialnumber = "0123456789"
+    }
+)
+
+functions = {
+    acm_usb0 = {
+        instance = "usb0"
+	type = "acm"
+    }
+
+    my_awesome_label = {
+        instance = "inst_name"
+	@include "my_func_scheme.scheme"
+    }
+}
+
+configs = (
+    {
+        id = 1
+        name = "The only one"
+        attrs = {
+            bmAttributes = 0x80
+            bMaxPower = 0x2
+        }
+        strings = (
+            {
+                lang = 0x409
+                configuration = "Config id 1"
+            } )
+        functions = (
+            {
+                name = "acm.GS0"
+                function = "acm_usb0"
+            }
+        )
+    } , {
+        id = 2
+	@include "some_config.scheme"
+    }
+)
+
+All sections in gadget scheme are optional. If attrs section has not
+been defined defaults provided by kernel are used for each attribute.
+All possible gadget attributes has been listed in above example. Their
+names are similar to those provided by usb standard and configfs.
+
+Strings section is similar to strings section from configuration
+scheme. Allowed strings are listed in example.
+
+Functions section is used to define functions which are aggregated by
+this gadget. Definition of each function begins with unique label. Any
+string which fulfills libconfig naming rules can be used as label,
+but there is one important thing - function labels are not stored in
+configfs. They are transient and are lost while executing
+usbg_cleanup(). To allow using this label after next usbg_init() there
+is a naming rule: type + "_" + instance. If label follows this
+convention it could be regenerated each time when it is
+needed. Definition of each function contains a function scheme which
+has been described in one of previous sections. It is also possible
+to use include directive of libconfig and provide only instance name
+in gadget shceme and include previously exported function scheme from
+other gadget.
+
+Configfs section contains list of configurations definitions. Each
+configuration is defined using configuration scheme described in
+previous section. Each configuration can be fully defined in gadget
+scheme file or simply included from other file just like function.
+
+			    4. Conclusion
+
+Syntax of gadget scheme is based on libconfig and if any doubts appear
+don't hesitate to look into documentation of this library. There are
+also sample applications which shows how to use usbg_import_*() and
+usbg_export_*() functions in examples directory.
+
