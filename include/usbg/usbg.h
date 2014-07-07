@@ -962,6 +962,49 @@ extern int usbg_import_config(usbg_gadget *g, FILE *stream, int id,
  */
 extern int usbg_import_gadget(usbg_state *s, FILE *stream,
 			      const char *name, usbg_gadget **g);
+
+/**
+ * @brief Get text of error which occurred during last function import
+ * @param g gadget where function import error occurred
+ * @return Text of error or NULL if no error data
+ */
+extern const char *usbg_get_func_import_error_text(usbg_gadget *g);
+
+/**
+ * @brief Get line number where function import error occurred
+ * @param g gadget where function import error occurred
+ * @return line number or value below 0 if no error data
+ */
+extern int usbg_get_func_import_error_line(usbg_gadget *g);
+
+/**
+ * @brief Get text of error which occurred during last config import
+ * @param g gadget where config import error occurred
+ * @return Text of error or NULL if no error data
+ */
+extern const char *usbg_get_config_import_error_text(usbg_gadget *g);
+
+/**
+ * @brief Get line number where config import error occurred
+ * @param g gadget where config import error occurred
+ * @return line number or value below 0 if no error data
+ */
+extern int usbg_get_config_import_error_line(usbg_gadget *g);
+
+/**
+ * @brief Get text of error which occurred during last gadget import
+ * @param s where gadget import error occurred
+ * @return Text of error or NULL if no error data
+ */
+extern const char *usbg_get_gadget_import_error_text(usbg_state *s);
+
+/**
+ * @brief Get line number where gadget import error occurred
+ * @param s where gadget import error occurred
+ * @return line number or value below 0 if no error data
+ */
+extern int usbg_get_gadget_import_error_line(usbg_state *s);
+
 /**
  * @}
  */

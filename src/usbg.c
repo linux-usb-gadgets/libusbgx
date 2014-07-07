@@ -4205,3 +4205,51 @@ out:
 	return ret;
 }
 
+const char *usbg_get_func_import_error_text(usbg_gadget *g)
+{
+	if (!g || !g->last_failed_import)
+		return NULL;
+
+	return config_error_text(g->last_failed_import);
+}
+
+const char *usbg_get_func_import_error_line(usbg_gadget *g)
+{
+	if (!g || !g->last_failed_import)
+		return -1;
+
+	return config_error_line(g->last_failed_import);
+}
+
+const char *usbg_get_config_import_error_text(usbg_gadget *g)
+{
+	if (!g || !g->last_failed_import)
+		return NULL;
+
+	return config_error_text(g->last_failed_import);
+}
+
+const char *usbg_get_config_import_error_line(usbg_gadget *g)
+{
+	if (!g || !g->last_failed_import)
+		return -1;
+
+	return config_error_line(g->last_failed_import);
+}
+
+const char *usbg_get_gadget_import_error_text(usbg_state *s)
+{
+	if (!s || !s->last_failed_import)
+		return NULL;
+
+	return config_error_text(s->last_failed_import);
+}
+
+const char *usbg_get_gadget_import_error_line(usbg_state *s)
+{
+	if (!s || !s->last_failed_import)
+		return -1;
+
+	return config_error_line(s->last_failed_import);
+}
+
