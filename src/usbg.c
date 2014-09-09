@@ -319,7 +319,7 @@ static int usbg_lookup_function_type(const char *name)
 
 const const char *usbg_get_function_type_str(usbg_function_type type)
 {
-	return type > 0 && type < sizeof(function_names)/sizeof(char *) ?
+	return type >= 0 && type < sizeof(function_names)/sizeof(char *) ?
 			function_names[type] : NULL;
 }
 
