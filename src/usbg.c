@@ -1931,7 +1931,36 @@ out:
 
 usbg_udc *usbg_get_gadget_udc(usbg_gadget *g)
 {
-	return g ? g->udc : NULL;
+	usbg_udc *u = NULL;
+
+	if (!g)
+		goto out;
+	/*
+	 * if gadget was enabled we have to check if kernel
+	 * didn't modify the UDC file due to some errors.
+	 * For example some FFS daemon could just get
+	 * a segmentation fault or sth
+	 */
+	if (g->udc) {
+		char buf[USBG_MAX_STR_LENGTH];
+		int ret;
+
+		ret = usbg_read_string(g->path, g->name, "UDC", buf);
+		if (ret != USBG_SUCCESS)
+			goto out;
+
+		if (!strcmp(g->udc->name, buf)) {
+			/* Gadget is still assigned to this UDC */
+			u = g->udc;
+		} else {
+			/* Kernel decided to detach this gadget */
+			g->udc->gadget = NULL;
+			g->udc = NULL;
+		}
+	}
+
+out:
+	return u;
 }
 
 int usbg_set_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs)
@@ -2510,8 +2539,12 @@ int usbg_enable_gadget(usbg_gadget *g, usbg_udc *udc)
 	}
 
 	ret = usbg_write_string(g->path, g->name, "UDC", udc->name);
-
 	if (ret == USBG_SUCCESS) {
+		/* If gadget has been detached and we didn't noticed
+		 * it we have to clean up now.
+		 */
+		if (g->udc)
+			g->udc->gadget = NULL;
 		g->udc = udc;
 		udc->gadget = g;
 	}
