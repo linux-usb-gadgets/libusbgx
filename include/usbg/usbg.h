@@ -836,13 +836,6 @@ extern int usbg_cpy_binding_name(usbg_binding *b, char *buf, size_t len);
 /* USB gadget setup and teardown */
 
 /**
- * @brief Get a list of UDC devices on the system
- * @param udc_list Pointer to pointer to dirent pointer
- * @return Number of UDC devices on success, usbg_error on failure
- */
-extern int usbg_get_udcs(struct dirent ***udc_list);
-
-/**
  * @brief Enable a USB gadget device
  * @param g Pointer to gadget
  * @param udc Name of UDC to enable gadget
@@ -965,6 +958,15 @@ extern int usbg_set_net_qmult(usbg_function *f, int qmult);
 	b = usbg_get_next_binding(b))
 
 /**
+ * @def usbg_for_each_udc(b, c)
+ * Iterates over each udc
+ */
+#define usbg_for_each_udc(u, s)	\
+	for (u = usbg_get_first_udc(s); \
+	u != NULL; \
+	u = usbg_get_next_udc(u))
+
+/**
  * @brief Get first gadget in gadget list
  * @param s State of library
  * @return Pointer to gadget or NULL if list is empty.
@@ -997,6 +999,14 @@ extern usbg_config *usbg_get_first_config(usbg_gadget *g);
 extern usbg_binding *usbg_get_first_binding(usbg_config *c);
 
 /**
+ * @brief Get first udc in udc list
+ * @param s State of library
+ * @return Pointer to udc or NULL if list is empty.
+ * @note UDCs are sorted in strings (name) order
+ */
+extern usbg_udc *usbg_get_first_udc(usbg_state *s);
+
+/**
  * @brief Get the next gadget on a list.
  * @param g Pointer to current gadget
  * @return Next gadget or NULL if end of list.
@@ -1023,6 +1033,13 @@ extern usbg_config *usbg_get_next_config(usbg_config *c);
  * @return Next binding or NULL if end of list.
  */
 extern usbg_binding *usbg_get_next_binding(usbg_binding *b);
+
+/**
+ * @brief Get the next udc on a list.
+ * @param u Pointer to current udc
+ * @return Next udc or NULL if end of list.
+ */
+extern usbg_udc *usbg_get_next_udc(usbg_udc *u);
 
 /* Import / Export API */
 

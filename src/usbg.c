@@ -2472,49 +2472,28 @@ int usbg_cpy_binding_name(usbg_binding *b, char *buf, size_t len)
 	return USBG_SUCCESS;
 }
 
-int usbg_get_udcs(struct dirent ***udc_list)
-{
-	int ret = USBG_ERROR_INVALID_PARAM;
-
-	if (udc_list) {
-		ret = scandir("/sys/class/udc", udc_list, file_select, alphasort);
-		if (ret < 0)
-			ret = usbg_translate_error(errno);
-	}
-
-	return ret;
-}
-
 int usbg_enable_gadget(usbg_gadget *g, const char *udc)
 {
-	char gudc[USBG_MAX_STR_LENGTH];
-	struct dirent **udc_list;
-	int i;
+	usbg_udc *sudc;
 	int ret = USBG_ERROR_INVALID_PARAM;
 
 	if (!g)
 		return ret;
 
 	if (!udc) {
-		ret = usbg_get_udcs(&udc_list);
-		if (ret >= 0) {
-			/* Look for default one - first in string order */
-			strcpy(gudc, udc_list[0]->d_name);
-			udc = gudc;
-
-			/** Free the memory */
-			for (i = 0; i < ret; ++i)
-				free(udc_list[i]);
-			free(udc_list);
-		} else {
+		sudc = usbg_get_first_udc(g->parent);
+		if (sudc)
+			udc = sudc->name;
+		else
 			return ret;
-		}
 	}
 
 	ret = usbg_write_string(g->path, g->name, "UDC", udc);
 
-	if (ret == USBG_SUCCESS)
-		strcpy(g->udc, udc);
+	if (ret == USBG_SUCCESS) {
+		strncpy(g->udc, udc, USBG_MAX_STR_LENGTH);
+		g->udc[USBG_MAX_STR_LENGTH - 1] = '\0';
+	}
 
 	return ret;
 }
@@ -2673,6 +2652,11 @@ usbg_binding *usbg_get_first_binding(usbg_config *c)
 	return c ? TAILQ_FIRST(&c->bindings) : NULL;
 }
 
+usbg_udc *usbg_get_first_udc(usbg_state *s)
+{
+	return s ? TAILQ_FIRST(&s->udcs) : NULL;
+}
+
 usbg_gadget *usbg_get_next_gadget(usbg_gadget *g)
 {
 	return g ? TAILQ_NEXT(g, gnode) : NULL;
@@ -2691,6 +2675,11 @@ usbg_config *usbg_get_next_config(usbg_config *c)
 usbg_binding *usbg_get_next_binding(usbg_binding *b)
 {
 	return b ? TAILQ_NEXT(b, bnode) : NULL;
+}
+
+usbg_udc *usbg_get_next_udc(usbg_udc *u)
+{
+	return u ? TAILQ_NEXT(u, unode) : NULL;
 }
 
 #define USBG_NAME_TAG "name"
