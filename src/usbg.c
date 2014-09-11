@@ -1963,6 +1963,34 @@ out:
 	return u;
 }
 
+usbg_gadget *usbg_get_udc_gadget(usbg_udc *u)
+{
+	usbg_gadget *g = NULL;
+
+	if (!u)
+		goto out;
+	/*
+	 * if gadget was enabled on this UDC we have to check if kernel
+	 * didn't modify this due to some errors.
+	 * For example some FFS daemon could just get a segmentation fault
+	 * what causes detach of gadget
+	 */
+	if (u->gadget) {
+		usbg_udc *u_checked;
+
+		u_checked = usbg_get_gadget_udc(u->gadget);
+		if (u_checked) {
+			g = u->gadget;
+		} else {
+			u->gadget->udc = NULL;
+			u->gadget = NULL;
+		}
+	}
+
+out:
+	return g;
+}
+
 int usbg_set_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs)
 {
 	int ret;

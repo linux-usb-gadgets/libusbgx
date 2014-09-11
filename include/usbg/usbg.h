@@ -885,6 +885,13 @@ extern int usbg_cpy_udc_name(usbg_udc *u, char *buf, size_t len);
  */
 extern usbg_udc *usbg_get_gadget_udc(usbg_gadget *g);
 
+/**
+ * @brief Get gadget which is attached to this UDC
+ * @param u Pointer to udc
+ * @return Pointer to gadget or NULL if UDC is free
+ */
+extern usbg_gadget *usbg_get_udc_gadget(usbg_udc *u);
+
 /*
  * USB function-specific attribute configuration
  */
