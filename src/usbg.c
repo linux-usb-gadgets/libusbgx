@@ -2023,7 +2023,7 @@ int usbg_create_config(usbg_gadget *g, int id, const char *label,
 		usbg_config_attrs *c_attrs, usbg_config_strs *c_strs, usbg_config **c)
 {
 	char cpath[USBG_MAX_PATH_LENGTH];
-	usbg_config *conf;
+	usbg_config *conf = NULL;
 	int ret = USBG_ERROR_INVALID_PARAM;
 	int n, free_space;
 
@@ -2060,6 +2060,8 @@ int usbg_create_config(usbg_gadget *g, int id, const char *label,
 	n = snprintf(&(cpath[n]), free_space, "/%s", (*c)->name);
 	if (n < free_space) {
 		ret = USBG_ERROR_PATH_TOO_LONG;
+		usbg_free_config(conf);
+		goto out;
 	}
 
 	ret = mkdir(cpath, S_IRWXU | S_IRWXG | S_IRWXO);
