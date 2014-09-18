@@ -42,6 +42,7 @@ struct usbg_state
 	char *path;
 
 	TAILQ_HEAD(ghead, usbg_gadget) gadgets;
+	TAILQ_HEAD(uhead, usbg_udc) udcs;
 	config_t *last_failed_import;
 };
 
@@ -91,6 +92,15 @@ struct usbg_binding
 
 	char *name;
 	char *path;
+};
+
+struct usbg_udc
+{
+	TAILQ_ENTRY(usbg_udc) unode;
+	usbg_state *parent;
+	usbg_gadget *gadget;
+
+	char *name;
 };
 
 /**
@@ -616,13 +626,28 @@ static void usbg_free_gadget(usbg_gadget *g)
 	free(g);
 }
 
+static void usbg_free_udc(usbg_udc *u)
+{
+	free(u->name);
+	free(u);
+}
+
 static void usbg_free_state(usbg_state *s)
 {
 	usbg_gadget *g;
+	usbg_udc *u;
+
 	while (!TAILQ_EMPTY(&s->gadgets)) {
 		g = TAILQ_FIRST(&s->gadgets);
 		TAILQ_REMOVE(&s->gadgets, g, gnode);
 		usbg_free_gadget(g);
+	}
+
+
+	while (!TAILQ_EMPTY(&s->udcs)) {
+		u = TAILQ_FIRST(&s->udcs);
+		TAILQ_REMOVE(&s->udcs, u, unode);
+		usbg_free_udc(u);
 	}
 
 	if (s->last_failed_import) {
@@ -756,6 +781,26 @@ static usbg_binding *usbg_allocate_binding(const char *path, const char *name,
 	}
 
 	return b;
+}
+
+static usbg_udc *usbg_allocate_udc(usbg_state *parent, const char *name)
+{
+	usbg_udc *u;
+
+	u = malloc(sizeof(*u));
+	if (!u)
+		goto out;
+
+	u->gadget = NULL;
+	u->parent = parent;
+	u->name = strdup(name);
+	if (!u->name) {
+		free(u);
+		u = NULL;
+	}
+
+ out:
+	return u;
 }
 
 static int ubsg_rm_file(const char *path, const char *name)
@@ -1280,6 +1325,36 @@ static int usbg_parse_gadgets(const char *path, usbg_state *s)
 	return ret;
 }
 
+static int usbg_parse_udcs(usbg_state *s)
+{
+	usbg_udc *u;
+	int n, i;
+	int ret = USBG_SUCCESS;
+	struct dirent **dent;
+
+	n = scandir("/sys/class/udc", &dent, file_select, alphasort);
+	if (n < 0) {
+		ret = usbg_translate_error(errno);
+		goto out;
+	}
+
+	for (i = 0; i < n; ++i) {
+		if (ret == USBG_SUCCESS) {
+			u = usbg_allocate_udc(s, dent[i]->d_name);
+			if (u)
+				TAILQ_INSERT_TAIL(&s->udcs, u, unode);
+			else
+				ret = USBG_ERROR_NO_MEM;
+		}
+
+		free(dent[i]);
+	}
+	free(dent);
+
+out:
+	return ret;
+}
+
 static int usbg_init_state(char *path, usbg_state *s)
 {
 	int ret = USBG_SUCCESS;
@@ -1288,11 +1363,19 @@ static int usbg_init_state(char *path, usbg_state *s)
 	s->path = path;
 	s->last_failed_import = NULL;
 	TAILQ_INIT(&s->gadgets);
+	TAILQ_INIT(&s->udcs);
+
+	ret = usbg_parse_udcs(s);
+	if (ret != USBG_SUCCESS) {
+		ERROR("Unable to parse udcs");
+		goto out;
+	}
 
 	ret = usbg_parse_gadgets(path, s);
 	if (ret != USBG_SUCCESS)
 		ERROR("unable to parse %s\n", path);
 
+out:
 	return ret;
 }
 
@@ -1403,6 +1486,17 @@ usbg_config *usbg_get_config(usbg_gadget *g, int id, const char *label)
 			break;
 
 	return c;
+}
+
+usbg_udc *usbg_get_udc(usbg_state *s, const char *name)
+{
+	usbg_udc *u;
+
+	TAILQ_FOREACH(u, &s->udcs, unode)
+		if (!strcmp(u->name, name))
+			return u;
+
+	return NULL;
 }
 
 usbg_binding *usbg_get_binding(usbg_config *c, const char *name)

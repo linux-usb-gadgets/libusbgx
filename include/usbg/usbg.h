@@ -61,6 +61,7 @@ struct usbg_gadget;
 struct usbg_config;
 struct usbg_function;
 struct usbg_binding;
+struct usbg_udc;
 
 /**
  * @brief State of the gadget devices in the system
@@ -86,6 +87,11 @@ typedef struct usbg_function usbg_function;
  * @brief USB function to config binding
  */
 typedef struct usbg_binding usbg_binding;
+
+/**
+ * @brief USB device controler
+ */
+typedef struct usbg_udc usbg_udc;
 
 /**
  * @typedef usbg_gadget_attr
@@ -327,6 +333,14 @@ extern usbg_function *usbg_get_function(usbg_gadget *g,
  * @return Pointer to config or NULL if a matching config isn't found
  */
 extern usbg_config *usbg_get_config(usbg_gadget *g, int id, const char *label);
+
+/**
+ * @brief Get a udc by name
+ * @param s Pointer to state
+ * @param name Name of the udc
+ * @return Pointer to udc or NULL if a matching udc isn't found
+ */
+extern usbg_udc *usbg_get_udc(usbg_state *s, const char *name);
 
 /* USB gadget/config/function/binding removal */
 
