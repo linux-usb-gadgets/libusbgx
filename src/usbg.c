@@ -1316,12 +1316,17 @@ void usbg_cleanup(usbg_state *s)
 	usbg_free_state(s);
 }
 
+const char *usbg_get_configfs_path(usbg_state *s)
+{
+	return s ? s->path : NULL;
+}
+
 size_t usbg_get_configfs_path_len(usbg_state *s)
 {
 	return s ? strlen(s->path) : USBG_ERROR_INVALID_PARAM;
 }
 
-int usbg_get_configfs_path(usbg_state *s, char *buf, size_t len)
+int usbg_cpy_configfs_path(usbg_state *s, char *buf, size_t len)
 {
 	if (!s || !buf || len == 0)
 		return USBG_ERROR_INVALID_PARAM;
@@ -1704,12 +1709,17 @@ int usbg_get_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs)
 			: USBG_ERROR_INVALID_PARAM;
 }
 
+const char *usbg_get_gadget_name(usbg_gadget *g)
+{
+	return g ? g->name : NULL;
+}
+
 size_t usbg_get_gadget_name_len(usbg_gadget *g)
 {
 	return g ? strlen(g->name) : USBG_ERROR_INVALID_PARAM;
 }
 
-int usbg_get_gadget_name(usbg_gadget *g, char *buf, size_t len)
+int usbg_cpy_gadget_name(usbg_gadget *g, char *buf, size_t len)
 {
 	if (!g || !buf || len == 0)
 		return USBG_ERROR_INVALID_PARAM;
@@ -2087,12 +2097,17 @@ out:
 	return ret;
 }
 
+const char *usbg_get_config_label(usbg_config *c)
+{
+	return c ? c->label : NULL;
+}
+
 size_t usbg_get_config_label_len(usbg_config *c)
 {
 	return c ? strlen(c->label) : USBG_ERROR_INVALID_PARAM;
 }
 
-int usbg_get_config_label(usbg_config *c, char *buf, size_t len)
+int usbg_cpy_config_label(usbg_config *c, char *buf, size_t len)
 {
 	if (!c || !buf || len == 0)
 		return USBG_ERROR_INVALID_PARAM;
@@ -2108,12 +2123,17 @@ int usbg_get_config_id(usbg_config *c)
 	return c ? c->id : USBG_ERROR_INVALID_PARAM;
 }
 
+const char *usbg_get_function_instance(usbg_function *f)
+{
+	return f ? f->instance : NULL;
+}
+
 size_t usbg_get_function_instance_len(usbg_function *f)
 {
 	return f ? strlen(f->instance) : USBG_ERROR_INVALID_PARAM;
 }
 
-int usbg_get_function_instance(usbg_function *f, char *buf, size_t len)
+int usbg_cpy_function_instance(usbg_function *f, char *buf, size_t len)
 {
 	if (!f || !buf || len == 0)
 		return USBG_ERROR_INVALID_PARAM;
@@ -2267,12 +2287,17 @@ usbg_function *usbg_get_binding_target(usbg_binding *b)
 	return b ? b->target : NULL;
 }
 
+const char *usbg_get_binding_name(usbg_binding *b)
+{
+	return b ? b->name : NULL;
+}
+
 size_t usbg_get_binding_name_len(usbg_binding *b)
 {
 	return b ? strlen(b->name) : USBG_ERROR_INVALID_PARAM;
 }
 
-int usbg_get_binding_name(usbg_binding *b, char *buf, size_t len)
+int usbg_cpy_binding_name(usbg_binding *b, char *buf, size_t len)
 {
 	if (!b || !buf || len == 0)
 		return USBG_ERROR_INVALID_PARAM;

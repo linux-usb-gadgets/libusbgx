@@ -30,20 +30,26 @@
 void show_gadget(usbg_gadget *g)
 {
 	char buf[USBG_MAX_STR_LENGTH];
+	const char *name;
 	int usbg_ret;
 	usbg_gadget_attrs g_attrs;
 	usbg_gadget_strs g_strs;
 
-	usbg_get_gadget_name(g, buf, USBG_MAX_STR_LENGTH);
+	name = usbg_get_gadget_name(g);
+	if (!name) {
+		fprintf(stderr, "Unable to get gadget name\n");
+		return;
+	}
+
 	usbg_ret = usbg_get_gadget_attrs(g, &g_attrs);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
-				usbg_strerror(usbg_ret));
+			usbg_strerror(usbg_ret));
 		return;
 	}
 
 	fprintf(stdout, "ID %04x:%04x '%s'\n",
-			g_attrs.idVendor, g_attrs.idProduct, buf);
+			g_attrs.idVendor, g_attrs.idProduct, name);
 
 	usbg_get_gadget_udc(g, buf, USBG_MAX_STR_LENGTH);
 	fprintf(stdout, "  UDC\t\t\t%s\n", buf);
@@ -70,12 +76,17 @@ void show_gadget(usbg_gadget *g)
 
 void show_function(usbg_function *f)
 {
-	char instance[USBG_MAX_STR_LENGTH];
+	const char *instance;
 	usbg_function_type type;
 	int usbg_ret;
 	usbg_function_attrs f_attrs;
 
-	usbg_get_function_instance(f, instance, USBG_MAX_STR_LENGTH);
+	instance = usbg_get_function_instance(f);
+	if (!instance) {
+		fprintf(stderr, "Unable to get function instance name\n");
+		return;
+	}
+
 	type = usbg_get_function_type(f);
 	usbg_ret = usbg_get_function_attrs(f, &f_attrs);
 	if (usbg_ret != USBG_SUCCESS) {
@@ -120,15 +131,20 @@ void show_config(usbg_config *c)
 {
 	usbg_binding *b;
 	usbg_function *f;
-	char buf[USBG_MAX_STR_LENGTH], instance[USBG_MAX_STR_LENGTH];
+	const char *label, *instance, *bname;
 	usbg_function_type type;
 	usbg_config_attrs c_attrs;
 	usbg_config_strs c_strs;
 	int usbg_ret, id;
 
-	usbg_get_config_label(c, buf, USBG_MAX_STR_LENGTH);
+	label = usbg_get_config_label(c);
+	if (!label) {
+		fprintf(stderr, "Unable to get config label\n");
+		return;
+	}
+
 	id = usbg_get_config_id(c);
-	fprintf(stdout, "  Configuration: '%s' ID: %d\n", buf, id);
+	fprintf(stdout, "  Configuration: '%s' ID: %d\n", label, id);
 
 	usbg_ret = usbg_get_config_attrs(c, &c_attrs);
 	if (usbg_ret != USBG_SUCCESS) {
@@ -150,11 +166,15 @@ void show_config(usbg_config *c)
 	fprintf(stdout, "    configuration\t%s\n", c_strs.configuration);
 
 	usbg_for_each_binding(b, c) {
-		usbg_get_binding_name(b, buf, USBG_MAX_STR_LENGTH);
+		bname = usbg_get_binding_name(b);
 		f = usbg_get_binding_target(b);
-		usbg_get_function_instance(f, instance, USBG_MAX_STR_LENGTH);
+		instance = usbg_get_function_instance(f);
 		type = usbg_get_function_type(f);
-		fprintf(stdout, "    %s -> %s %s\n", buf,
+		if (!bname || !instance) {
+			fprintf(stderr, "Unable to get binding details\n");
+			return;
+		}
+		fprintf(stdout, "    %s -> %s %s\n", bname,
 				usbg_get_function_type_str(type), instance);
 	}
 }

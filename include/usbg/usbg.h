@@ -255,6 +255,16 @@ extern int usbg_init(const char *configfs_path, usbg_state **state);
 extern void usbg_cleanup(usbg_state *s);
 
 /**
+ * @brief Get ConfigFS path
+ * @param s Pointer to state
+ * @return Path to configfs or NULL if error occurred
+ * @warning Returned buffer should not be edited!
+ * Returned string is valid as long as passed usbg_state is valid.
+ * For example path is valid unitill usbg_cleanup() call.
+ */
+extern const char *usbg_get_configfs_path(usbg_state *s);
+
+/**
  * @brief Get ConfigFS path length
  * @param s Pointer to state
  * @return Length of path or usbg_error if error occurred.
@@ -262,13 +272,13 @@ extern void usbg_cleanup(usbg_state *s);
 extern size_t usbg_get_configfs_path_len(usbg_state *s);
 
 /**
- * @brief Get ConfigFS path
+ * @brief Copy ConfigFS path to buffer
  * @param s Pointer to state
  * @param buf Buffer where path should be copied
  * @param len Length of given buffer
  * @return 0 on success or usbg_error if error occurred.
  */
-extern int usbg_get_configfs_path(usbg_state *s, char *buf, size_t len);
+extern int usbg_cpy_configfs_path(usbg_state *s, char *buf, size_t len);
 
 /* USB gadget queries */
 
@@ -402,6 +412,16 @@ extern int usbg_set_gadget_attrs(usbg_gadget *g,
 extern int usbg_get_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs);
 
 /**
+ * @brief Get gadget name
+ * @param g Pointer to gadget
+ * @return Gadget name or NULL if error occurred.
+ * @warning Returned buffer should not be edited!
+ * Returned string is valid as long as passed usbg_gadget is valid.
+ * For example gadget name is valid until someone remove gadget.
+ */
+extern const char *usbg_get_gadget_name(usbg_gadget *g);
+
+/**
  * @brief Get gadget name length
  * @param g Gadget which name length should be returned
  * @return Length of name string or usbg_error if error occurred.
@@ -409,13 +429,13 @@ extern int usbg_get_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs);
 extern size_t usbg_get_gadget_name_len(usbg_gadget *g);
 
 /**
- * @brief Get gadget name
+ * @brief Copy gadget name
  * @param g Pointer to gadget
  * @param buf Buffer where name should be copied
  * @param len Length of given buffer
  * @return 0 on success or usbg_error if error occurred.
  */
-extern int usbg_get_gadget_name(usbg_gadget *g, char *buf, size_t len);
+extern int usbg_cpy_gadget_name(usbg_gadget *g, char *buf, size_t len);
 
 /**
  * @brief Set the USB gadget vendor id
@@ -553,6 +573,16 @@ extern int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 				usbg_function **f);
 
 /**
+ * @brief Get function instance name
+ * @param f Pointer to function
+ * @return instance name or NULL if error occurred.
+ * @warning Returned buffer should not be edited!
+ * Returned string is valid as long as passed usbg_function is valid.
+ * For example instance name is valid until someone remove this function.
+ */
+extern const char *usbg_get_function_instance(usbg_function *f);
+
+/**
  * @brief Get function instance name length
  * @param f function which name length should be returned
  * @return Length of name string or usbg_error if error occurred.
@@ -560,13 +590,13 @@ extern int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 extern size_t usbg_get_function_instance_len(usbg_function *f);
 
 /**
- * @brief Get function instance name
+ * @brief Copy function instance name
  * @param f Pointer to function
  * @param buf Buffer where instance name should be copied
  * @param len Length of given buffer
  * @return 0 on success or usbg_error if error occurred.
  */
-extern int usbg_get_function_instance(usbg_function *f, char *buf, size_t len);
+extern int usbg_cpy_function_instance(usbg_function *f, char *buf, size_t len);
 
 /**
  * @brief Get function type as a string
@@ -592,6 +622,16 @@ extern int usbg_create_config(usbg_gadget *g, int id, const char *label,
 		usbg_config_attrs *c_attrs, usbg_config_strs *c_strs, usbg_config **c);
 
 /**
+ * @brief Get config label
+ * @param c Pointer to config
+ * @return config label or NULL if error occurred.
+ * @warning Returned buffer should not be edited!
+ * Returned string is valid as long as passed usbg_config is valid.
+ * For example config label is valid until someone remove this function.
+ */
+extern const char *usbg_get_config_label(usbg_config *c);
+
+/**
  * @brief Get config label length
  * @param c Config which label length should be returned
  * @return Length of label or usbg_error if error occurred.
@@ -599,13 +639,13 @@ extern int usbg_create_config(usbg_gadget *g, int id, const char *label,
 extern size_t usbg_get_config_label_len(usbg_config *c);
 
 /**
- * @brief Get config label
+ * @brief Copy config label
  * @param c Pointer to config
  * @param buf Buffer where label should be copied
  * @param len Length of given buffer
  * @return 0 on success or usbg_error if error occurred.
  */
-extern int usbg_get_config_label(usbg_config *c, char *buf, size_t len);
+extern int usbg_cpy_config_label(usbg_config *c, char *buf, size_t len);
 
 /**
  * @brief Get config id
@@ -694,6 +734,16 @@ extern int usbg_add_config_function(usbg_config *c, const char *name,
 extern usbg_function *usbg_get_binding_target(usbg_binding *b);
 
 /**
+ * @brief Get binding name
+ * @param b Pointer to binding
+ * @return Binding name or NULL if error occurred.
+ * @warning Returned buffer should not be edited!
+ * Returned string is valid as long as passed usbg_binding is valid.
+ * For example binding name is valid until someone remove this binding.
+ */
+extern const char *usbg_get_binding_name(usbg_binding *b);
+
+/**
  * @brief Get binding name length
  * @param b Binding which name length should be returned
  * @return Length of name string or usbg_error if error occurred.
@@ -701,13 +751,13 @@ extern usbg_function *usbg_get_binding_target(usbg_binding *b);
 extern size_t usbg_get_binding_name_len(usbg_binding *b);
 
 /**
- * @brief Get binding name
+ * @brief Copy binding name
  * @param b Pointer to binding
  * @param buf Buffer where name should be copied
  * @param len Length of given buffer
  * @return 0 on success or usbg_error if error occurred.
  */
-extern int usbg_get_binding_name(usbg_binding *b, char *buf, size_t len);
+extern int usbg_cpy_binding_name(usbg_binding *b, char *buf, size_t len);
 
 /* USB gadget setup and teardown */
 
