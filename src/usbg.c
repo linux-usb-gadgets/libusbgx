@@ -3125,7 +3125,6 @@ static int usbg_export_gadget_prep(usbg_gadget *g, config_setting_t *root)
 	config_setting_t *node;
 	int ret = USBG_ERROR_NO_MEM;
 	int usbg_ret;
-	int cfg_ret;
 
 	/* We don't export name tag because name should be given during
 	 * loading of gadget */
@@ -3559,7 +3558,6 @@ out:
 static int usbg_import_config_bindings(config_setting_t *root, usbg_config *c)
 {
 	config_setting_t *node;
-	int usbg_ret, cfg_ret;
 	int ret = USBG_SUCCESS;
 	int count, i;
 
@@ -3588,7 +3586,6 @@ static int usbg_import_config_strs_lang(config_setting_t *root, usbg_config *c)
 	int lang;
 	const char *str;
 	usbg_config_strs c_strs = {0};
-	int usbg_ret, cfg_ret;
 	int ret = USBG_ERROR_INVALID_TYPE;
 
 	node = config_setting_get_member(root, USBG_LANG_TAG);
@@ -3624,7 +3621,6 @@ out:
 static int usbg_import_config_strings(config_setting_t *root, usbg_config *c)
 {
 	config_setting_t *node;
-	int usbg_ret, cfg_ret;
 	int ret = USBG_SUCCESS;
 	int count, i;
 
@@ -3648,9 +3644,8 @@ static int usbg_import_config_strings(config_setting_t *root, usbg_config *c)
 static int usbg_import_config_attrs(config_setting_t *root, usbg_config *c)
 {
 	config_setting_t *node;
-	int usbg_ret, cfg_ret;
+	int usbg_ret;
 	int bmAttributes, bMaxPower;
-	short format;
 	int ret = USBG_ERROR_INVALID_TYPE;
 
 	node = config_setting_get_member(root, "bmAttributes");
@@ -3773,7 +3768,6 @@ error2:
 static int usbg_import_gadget_configs(config_setting_t *root, usbg_gadget *g)
 {
 	config_setting_t *node, *id_node;
-	int usbg_ret, cfg_ret;
 	int id;
 	usbg_config *c;
 	int ret = USBG_SUCCESS;
@@ -3818,7 +3812,6 @@ static int usbg_import_gadget_configs(config_setting_t *root, usbg_gadget *g)
 static int usbg_import_gadget_functions(config_setting_t *root, usbg_gadget *g)
 {
 	config_setting_t *node, *inst_node;
-	int usbg_ret, cfg_ret;
 	const char *instance;
 	const char *label;
 	usbg_function *f;
@@ -3884,7 +3877,6 @@ static int usbg_import_gadget_strs_lang(config_setting_t *root, usbg_gadget *g)
 	int lang;
 	const char *str;
 	usbg_gadget_strs g_strs = {0};
-	int usbg_ret, cfg_ret;
 	int ret = USBG_ERROR_INVALID_TYPE;
 
 	node = config_setting_get_member(root, USBG_LANG_TAG);
@@ -3926,7 +3918,6 @@ out:
 static int usbg_import_gadget_strings(config_setting_t *root, usbg_gadget *g)
 {
 	config_setting_t *node;
-	int usbg_ret, cfg_ret;
 	int ret = USBG_SUCCESS;
 	int count, i;
 
@@ -3951,7 +3942,7 @@ static int usbg_import_gadget_strings(config_setting_t *root, usbg_gadget *g)
 static int usbg_import_gadget_attrs(config_setting_t *root, usbg_gadget *g)
 {
 	config_setting_t *node;
-	int usbg_ret, cfg_ret;
+	int usbg_ret;
 	int val;
 	int ret = USBG_ERROR_INVALID_TYPE;
 
