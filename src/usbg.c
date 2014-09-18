@@ -2058,7 +2058,7 @@ int usbg_create_config(usbg_gadget *g, int id, const char *label,
 	free_space = sizeof(cpath) - n;
 	/* Append string at the end of previous one */
 	n = snprintf(&(cpath[n]), free_space, "/%s", (*c)->name);
-	if (n < free_space) {
+	if (n >= free_space) {
 		ret = USBG_ERROR_PATH_TOO_LONG;
 		usbg_free_config(conf);
 		goto out;
