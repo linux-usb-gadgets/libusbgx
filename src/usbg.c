@@ -111,6 +111,18 @@ const char *function_names[] =
 	"ffs",
 };
 
+const char *gadget_attr_names[] =
+{
+	"bcdUSB",
+	"bDeviceClass",
+	"bDeviceSubClass",
+	"bDeviceProtocol",
+	"bMaxPacketSize0",
+	"idVendor",
+	"idProduct",
+	"bcdDevice"
+};
+
 #define ERROR(msg, ...) do {\
                         fprintf(stderr, "%s()  "msg" \n", \
                                 __func__, ##__VA_ARGS__);\
@@ -158,6 +170,7 @@ static int usbg_translate_error(int error)
 	case ENOTDIR:
 		ret = USBG_ERROR_NOT_FOUND;
 		break;
+	case ERANGE:
 	case EINVAL:
 	case USBG_ERROR_INVALID_PARAM:
 		ret = USBG_ERROR_INVALID_PARAM;
@@ -321,6 +334,29 @@ const const char *usbg_get_function_type_str(usbg_function_type type)
 {
 	return type >= 0 && type < sizeof(function_names)/sizeof(char *) ?
 			function_names[type] : NULL;
+}
+
+int usbg_lookup_gadget_attr(const char *name)
+{
+	int i = 0;
+	int max = sizeof(gadget_attr_names)/sizeof(char *);
+
+	if (!name)
+		return USBG_ERROR_INVALID_PARAM;
+
+	do {
+		if (!strcmp(name, gadget_attr_names[i]))
+			return i;
+		i++;
+	} while (i != max);
+
+	return USBG_ERROR_NOT_FOUND;
+}
+
+const const char *usbg_get_gadget_attr_str(usbg_gadget_attr attr)
+{
+	return attr >= 0 && attr < sizeof(gadget_attr_names)/sizeof(char *) ?
+			gadget_attr_names[attr] : NULL;
 }
 
 static usbg_error usbg_split_function_instance_type(const char *full_name,
@@ -519,6 +555,7 @@ static int usbg_write_int(const char *path, const char *name, const char *file,
 }
 
 #define usbg_write_dec(p, n, f, v)	usbg_write_int(p, n, f, v, "%d\n")
+#define usbg_write_hex(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%x\n")
 #define usbg_write_hex16(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%04x\n")
 #define usbg_write_hex8(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%02x\n")
 
@@ -1744,6 +1781,42 @@ int usbg_get_gadget_udc(usbg_gadget *g, char *buf, size_t len)
 	strncpy(buf, g->udc, len);
 
 	return USBG_SUCCESS;
+}
+
+int usbg_set_gadget_attr(usbg_gadget *g, usbg_gadget_attr attr, int val)
+{
+	const char *attr_name;
+	int ret = USBG_ERROR_INVALID_PARAM;
+
+	if (!g)
+		goto out;
+
+	attr_name = usbg_get_gadget_attr_str(attr);
+	if (!attr_name)
+		goto out;
+
+	ret = usbg_write_hex(g->path, g->name, attr_name, val);
+
+out:
+	return ret;
+}
+
+int usbg_get_gadget_attr(usbg_gadget *g, usbg_gadget_attr attr)
+{
+	const char *attr_name;
+	int ret = USBG_ERROR_INVALID_PARAM;
+
+	if (!g)
+		goto out;
+
+	attr_name = usbg_get_gadget_attr_str(attr);
+	if (!attr_name)
+		goto out;
+
+	usbg_read_hex(g->path, g->name, attr_name, &ret);
+
+out:
+	return ret;
 }
 
 int usbg_set_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs)

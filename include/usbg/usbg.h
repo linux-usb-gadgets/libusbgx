@@ -88,6 +88,22 @@ typedef struct usbg_function usbg_function;
 typedef struct usbg_binding usbg_binding;
 
 /**
+ * @typedef usbg_gadget_attr
+ * @brief Gadget attributes which can be set using
+ * usbg_set_gadget_attr() function.
+ */
+typedef enum {
+	BCD_USB = 0,
+	B_DEVICE_CLASS,
+	B_DEVICE_SUB_CLASS,
+	B_DEVICE_PROTOCOL,
+	B_MAX_PACKET_SIZE_0,
+	ID_VENDOR,
+	ID_PRODUCT,
+	BCD_DEVICE,
+} usbg_gadget_attr;
+
+/**
  * @typedef usbg_gadget_attrs
  * @brief USB gadget device attributes
  */
@@ -393,6 +409,43 @@ extern int usbg_create_gadget_vid_pid(usbg_state *s, const char *name,
 extern int usbg_create_gadget(usbg_state *s, const char *name,
 		usbg_gadget_attrs *g_attrs, usbg_gadget_strs *g_strs,
 			      usbg_gadget **g);
+
+/**
+ * @brief Get string representing selected gadget attribute
+ * @param attr code of selected attrobute
+ * @return String suitable for given attribute or NULL if such
+ * string has not been found
+ */
+extern const char *usbg_get_gadget_attr_str(usbg_gadget_attr attr);
+
+/**
+ * @brief Lookup attr code based on its name
+ * @param name of attribute
+ * @return code of suitable attribute or usbg_error
+ */
+extern int usbg_lookup_gadget_attr(const char *name);
+
+/**
+ * @brief Set selected attribute to value
+ * @param g Pointer to gadget
+ * @param attr Code of selected attribute
+ * @param val value to be set
+ * @return 0 on success, usbg_error otherwise
+ * @note val is of type int but value provided to this function should
+ * be suitable to place it in type dedicated for selected attr (uint16 or uint8)
+ */
+extern int usbg_set_gadget_attr(usbg_gadget *g, usbg_gadget_attr attr, int val);
+
+/**
+ * @brief Get value of selected attribute
+ * @param g Pointer to gadget
+ * @param attr Code of selected attribute
+ * @return Value of selected attribute (always above zero) or
+ * usbg_error if error occurred.
+ * @note User should use only lowest one or two bytes as attribute value
+ * depending on attribute size (see usbg_gadget_attrs for details).
+ */
+extern int usbg_get_gadget_attr(usbg_gadget *g, usbg_gadget_attr attr);
 
 /**
  * @brief Set the USB gadget attributes
