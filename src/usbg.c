@@ -2336,7 +2336,7 @@ int usbg_disable_gadget(usbg_gadget *g)
 
 	if (g) {
 		strcpy(g->udc, "");
-		ret = usbg_write_string(g->path, g->name, "UDC", "");
+		ret = usbg_write_string(g->path, g->name, "UDC", "\n");
 	}
 
 	return ret;
