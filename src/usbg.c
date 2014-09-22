@@ -316,18 +316,15 @@ static int usbg_lookup_function_type(const char *name)
 	int max = sizeof(function_names)/sizeof(char *);
 
 	if (!name)
-		return -1;
+		return USBG_ERROR_INVALID_PARAM;
 
 	do {
 		if (!strcmp(name, function_names[i]))
-			break;
+			return i;
 		i++;
 	} while (i != max);
 
-	if (i == max)
-		i = -1;
-
-	return i;
+	return USBG_ERROR_NOT_FOUND;
 }
 
 const const char *usbg_get_function_type_str(usbg_function_type type)
