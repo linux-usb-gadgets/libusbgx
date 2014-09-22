@@ -658,6 +658,13 @@ extern int usbg_cpy_function_instance(usbg_function *f, char *buf, size_t len);
  */
 extern const char *usbg_get_function_type_str(usbg_function_type type);
 
+/**
+ * @brief Lookup function type sutable for given name
+ * @param name Name of function
+ * @return Function type enum or negative error code
+ */
+extern int usbg_lookup_function_type(const char *name);
+
 /* USB configurations allocation and configuration */
 
 /**

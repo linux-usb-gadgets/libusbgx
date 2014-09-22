@@ -310,7 +310,7 @@ const char *usbg_strerror(usbg_error e)
 	return ret;
 }
 
-static int usbg_lookup_function_type(const char *name)
+int usbg_lookup_function_type(const char *name)
 {
 	int i = 0;
 	int max = sizeof(function_names)/sizeof(char *);
