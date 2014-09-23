@@ -838,10 +838,11 @@ extern int usbg_cpy_binding_name(usbg_binding *b, char *buf, size_t len);
 /**
  * @brief Enable a USB gadget device
  * @param g Pointer to gadget
- * @param udc Name of UDC to enable gadget
+ * @param udc where gadget should be assigned.
+ *  If NULL, default one (first) is used.
  * @return 0 on success or usbg_error if error occurred.
  */
-extern int usbg_enable_gadget(usbg_gadget *g, const char *udc);
+extern int usbg_enable_gadget(usbg_gadget *g, usbg_udc *udc);
 
 /**
  * @brief Disable a USB gadget device
@@ -849,6 +850,16 @@ extern int usbg_enable_gadget(usbg_gadget *g, const char *udc);
  * @return 0 on success or usbg_error if error occurred.
  */
 extern int usbg_disable_gadget(usbg_gadget *g);
+
+/**
+ * @brief Get name of udc
+ * @param u Pointer to udc
+ * @return UDC name or NULL if error occurred.
+ * @warning Returned buffer should not be edited!
+ * Returned string is valid as long as passed usbg_state is valid.
+ * For example UDC name is valid until usbg_cleanup().
+ */
+extern const char *usbg_get_udc_name(usbg_udc *u);
 
 /**
  * @brief Get gadget name length
@@ -859,14 +870,20 @@ extern int usbg_disable_gadget(usbg_gadget *g);
 extern size_t usbg_get_gadget_udc_len(usbg_gadget *g);
 
 /**
- * @brief Get name of udc to which gadget is binded
- * @param g Pointer to gadget
+ * @brief Copy name of udc
+ * @param u Pointer to udc
  * @param buf Buffer where udc name should be copied
  * @param len Length of given buffer
  * @return 0 on success or usbg_error if error occurred.
- * @note If gadget isn't enabled on any udc returned string is empty.
  */
-extern int usbg_get_gadget_udc(usbg_gadget *g, char *buf, size_t len);
+extern int usbg_cpy_udc_name(usbg_udc *u, char *buf, size_t len);
+
+/**
+ * @brief Get udc to which gadget is binded
+ * @param g Pointer to gadget
+ * @return Pointer to UDC or NULL if gadget is not enabled
+ */
+extern usbg_udc *usbg_get_gadget_udc(usbg_gadget *g);
 
 /*
  * USB function-specific attribute configuration

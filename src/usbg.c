@@ -50,13 +50,13 @@ struct usbg_gadget
 {
 	char *name;
 	char *path;
-	char udc[USBG_MAX_STR_LENGTH];
 
 	TAILQ_ENTRY(usbg_gadget) gnode;
 	TAILQ_HEAD(chead, usbg_config) configs;
 	TAILQ_HEAD(fhead, usbg_function) functions;
 	usbg_state *parent;
 	config_t *last_failed_import;
+	usbg_udc *udc;
 };
 
 struct usbg_config
@@ -672,6 +672,7 @@ static usbg_gadget *usbg_allocate_gadget(const char *path, const char *name,
 		g->name = strdup(name);
 		g->path = strdup(path);
 		g->parent = parent;
+		g->udc = NULL;
 
 		if (!(g->name) || !(g->path)) {
 			free(g->name);
@@ -1275,11 +1276,16 @@ out:
 static inline int usbg_parse_gadget(usbg_gadget *g)
 {
 	int ret;
+	char buf[USBG_MAX_STR_LENGTH];
 
 	/* UDC bound to, if any */
-	ret = usbg_read_string(g->path, g->name, "UDC", g->udc);
+	ret = usbg_read_string(g->path, g->name, "UDC", buf);
 	if (ret != USBG_SUCCESS)
 		goto out;
+
+	g->udc = usbg_get_udc(g->parent, buf);
+	if (g->udc)
+		g->udc->gadget = g;
 
 	ret = usbg_parse_functions(g->path, g);
 	if (ret != USBG_SUCCESS)
@@ -1725,7 +1731,9 @@ static int usbg_create_empty_gadget(usbg_state *s, const char *name,
 				    usbg_gadget **g)
 {
 	char gpath[USBG_MAX_PATH_LENGTH];
+	char buf[USBG_MAX_STR_LENGTH];
 	int nmb;
+	usbg_gadget *gad;
 	int ret = USBG_SUCCESS;
 
 	nmb = snprintf(gpath, sizeof(gpath), "%s/%s", s->path, name);
@@ -1735,26 +1743,32 @@ static int usbg_create_empty_gadget(usbg_state *s, const char *name,
 	}
 
 	*g = usbg_allocate_gadget(s->path, name, s);
-	if (*g) {
-		usbg_gadget *gad = *g; /* alias only */
+	if (!*g) {
+		ret = USBG_ERROR_NO_MEM;
+		goto out;
+	}
 
-		ret = mkdir(gpath, S_IRWXU|S_IRWXG|S_IRWXO);
-		if (ret == 0) {
-			/* Should be empty but read the default */
-			ret = usbg_read_string(gad->path, gad->name, "UDC",
-				 gad->udc);
-			if (ret != USBG_SUCCESS)
-				rmdir(gpath);
-		} else {
-			ret = usbg_translate_error(errno);
-		}
+	gad = *g; /* alias only */
 
+	ret = mkdir(gpath, S_IRWXU|S_IRWXG|S_IRWXO);
+	if (ret == 0) {
+		/* Should be empty but read the default */
+		ret = usbg_read_string(gad->path, gad->name,
+				       "UDC", buf);
 		if (ret != USBG_SUCCESS) {
-			usbg_free_gadget(*g);
-			*g = NULL;
+			rmdir(gpath);
+		} else {
+			gad->udc = usbg_get_udc(s, buf);
+			if (gad->udc)
+				gad->udc->gadget = gad;
 		}
 	} else {
-		ret = USBG_ERROR_NO_MEM;
+		ret = usbg_translate_error(errno);
+	}
+
+	if (ret != USBG_SUCCESS) {
+		usbg_free_gadget(*g);
+		*g = NULL;
 	}
 
 out:
@@ -1858,18 +1872,23 @@ int usbg_cpy_gadget_name(usbg_gadget *g, char *buf, size_t len)
 	return USBG_SUCCESS;
 }
 
-size_t usbg_get_gadget_udc_len(usbg_gadget *g)
+const char *usbg_get_udc_name(usbg_udc *u)
 {
-	return g ? strlen(g->udc) : USBG_ERROR_INVALID_PARAM;
+	return u ? u->name : NULL;
 }
 
-int usbg_get_gadget_udc(usbg_gadget *g, char *buf, size_t len)
+size_t usbg_get_udc_name_len(usbg_udc *u)
 {
-	if (!g || !buf || len == 0)
+	return u ? strlen(u->name) : USBG_ERROR_INVALID_PARAM;
+}
+
+int usbg_cpy_udc_name(usbg_udc *u, char *buf, size_t len)
+{
+	if (!u || !buf || len == 0)
 		return USBG_ERROR_INVALID_PARAM;
 
 	buf[--len] = '\0';
-	strncpy(buf, g->udc, len);
+	strncpy(buf, u->name, len);
 
 	return USBG_SUCCESS;
 }
@@ -1908,6 +1927,11 @@ int usbg_get_gadget_attr(usbg_gadget *g, usbg_gadget_attr attr)
 
 out:
 	return ret;
+}
+
+usbg_udc *usbg_get_gadget_udc(usbg_gadget *g)
+{
+	return g ? g->udc : NULL;
 }
 
 int usbg_set_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs)
@@ -2472,27 +2496,24 @@ int usbg_cpy_binding_name(usbg_binding *b, char *buf, size_t len)
 	return USBG_SUCCESS;
 }
 
-int usbg_enable_gadget(usbg_gadget *g, const char *udc)
+int usbg_enable_gadget(usbg_gadget *g, usbg_udc *udc)
 {
-	usbg_udc *sudc;
 	int ret = USBG_ERROR_INVALID_PARAM;
 
 	if (!g)
 		return ret;
 
 	if (!udc) {
-		sudc = usbg_get_first_udc(g->parent);
-		if (sudc)
-			udc = sudc->name;
-		else
+		udc = usbg_get_first_udc(g->parent);
+		if (!udc)
 			return ret;
 	}
 
-	ret = usbg_write_string(g->path, g->name, "UDC", udc);
+	ret = usbg_write_string(g->path, g->name, "UDC", udc->name);
 
 	if (ret == USBG_SUCCESS) {
-		strncpy(g->udc, udc, USBG_MAX_STR_LENGTH);
-		g->udc[USBG_MAX_STR_LENGTH - 1] = '\0';
+		g->udc = udc;
+		udc->gadget = g;
 	}
 
 	return ret;
@@ -2502,9 +2523,14 @@ int usbg_disable_gadget(usbg_gadget *g)
 {
 	int ret = USBG_ERROR_INVALID_PARAM;
 
-	if (g) {
-		strcpy(g->udc, "");
-		ret = usbg_write_string(g->path, g->name, "UDC", "\n");
+	if (!g)
+		return ret;
+
+	ret = usbg_write_string(g->path, g->name, "UDC", "\n");
+	if (ret == USBG_SUCCESS) {
+		if (g->udc)
+			g->udc->gadget = NULL;
+		g->udc = NULL;
 	}
 
 	return ret;

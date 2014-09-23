@@ -29,8 +29,8 @@
 
 void show_gadget(usbg_gadget *g)
 {
-	char buf[USBG_MAX_STR_LENGTH];
-	const char *name;
+	const char *name, *udc;
+	usbg_udc *u;
 	int usbg_ret;
 	usbg_gadget_attrs g_attrs;
 	usbg_gadget_strs g_strs;
@@ -51,8 +51,15 @@ void show_gadget(usbg_gadget *g)
 	fprintf(stdout, "ID %04x:%04x '%s'\n",
 			g_attrs.idVendor, g_attrs.idProduct, name);
 
-	usbg_get_gadget_udc(g, buf, USBG_MAX_STR_LENGTH);
-	fprintf(stdout, "  UDC\t\t\t%s\n", buf);
+	u = usbg_get_gadget_udc(g);
+	if (u)
+		/* gadget is enabled */
+		udc = usbg_get_udc_name(u);
+	else
+		/* gadget is disabled */
+		udc = "\0";
+
+	fprintf(stdout, "  UDC\t\t\t%s\n", udc);
 
 	fprintf(stdout, "  bDeviceClass\t\t0x%02x\n", g_attrs.bDeviceClass);
 	fprintf(stdout, "  bDeviceSubClass\t0x%02x\n", g_attrs.bDeviceSubClass);

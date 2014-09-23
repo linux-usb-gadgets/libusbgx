@@ -31,19 +31,13 @@
 int remove_gadget(usbg_gadget *g)
 {
 	int usbg_ret;
-	char udc[USBG_MAX_STR_LENGTH];
+	usbg_udc *u;
 
 	/* Check if gadget is enabled */
-	usbg_ret = usbg_get_gadget_udc(g, udc, USBG_MAX_STR_LENGTH);
-	if (usbg_ret != USBG_SUCCESS) {
-		fprintf(stderr, "Error on USB get gadget udc\n");
-		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
-				usbg_strerror(usbg_ret));
-		goto out;
-	}
+	u = usbg_get_gadget_udc(g);
 
 	/* If gadget is enable we have to disable it first */
-	if (udc[0] != '\0') {
+	if (u) {
 		usbg_ret = usbg_disable_gadget(g);
 		if (usbg_ret != USBG_SUCCESS) {
 			fprintf(stderr, "Error on USB disable gadget udc\n");
