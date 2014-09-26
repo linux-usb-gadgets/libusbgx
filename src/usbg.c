@@ -1291,7 +1291,7 @@ static int usbg_init_state(char *path, usbg_state *s)
 
 	ret = usbg_parse_gadgets(path, s);
 	if (ret != USBG_SUCCESS)
-		ERRORNO("unable to parse %s\n", path);
+		ERROR("unable to parse %s\n", path);
 
 	return ret;
 }
@@ -1330,7 +1330,7 @@ int usbg_init(const char *configfs_path, usbg_state **state)
 
 	ret = usbg_init_state(path, s);
 	if (ret != USBG_SUCCESS) {
-		ERRORNO("couldn't init gadget state\n");
+		ERROR("couldn't init gadget state\n");
 		usbg_free_state(s);
 		goto out;
 	}
@@ -2070,7 +2070,7 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 	*f = usbg_allocate_function(fpath, type, instance, g);
 	func = *f;
 	if (!func) {
-		ERRORNO("allocating function\n");
+		ERROR("allocating function\n");
 		ret = USBG_ERROR_NO_MEM;
 		goto out;
 	}
@@ -2130,7 +2130,7 @@ int usbg_create_config(usbg_gadget *g, int id, const char *label,
 	*c = usbg_allocate_config(cpath, label, id, g);
 	conf = *c;
 	if (!conf) {
-		ERRORNO("allocating configuration\n");
+		ERROR("allocating configuration\n");
 		ret = USBG_ERROR_NO_MEM;
 		goto out;
 	}
