@@ -99,7 +99,8 @@ typedef struct usbg_udc usbg_udc;
  * usbg_set_gadget_attr() function.
  */
 typedef enum {
-	BCD_USB = 0,
+	USBG_GADGET_ATTR_MIN = 0,
+	BCD_USB = USBG_GADGET_ATTR_MIN,
 	B_DEVICE_CLASS,
 	B_DEVICE_SUB_CLASS,
 	B_DEVICE_PROTOCOL,
@@ -107,6 +108,7 @@ typedef enum {
 	ID_VENDOR,
 	ID_PRODUCT,
 	BCD_DEVICE,
+	USBG_GADGET_ATTR_MAX,
 } usbg_gadget_attr;
 
 /**
@@ -161,7 +163,8 @@ typedef struct
  */
 typedef enum
 {
-	F_SERIAL,
+	USBG_FUNCTION_TYPE_MIN = 0,
+	F_SERIAL = USBG_FUNCTION_TYPE_MIN,
 	F_ACM,
 	F_OBEX,
 	F_ECM,
@@ -170,7 +173,8 @@ typedef enum
 	F_EEM,
 	F_RNDIS,
 	F_PHONET,
-	F_FFS
+	F_FFS,
+	USBG_FUNCTION_TYPE_MAX,
 } usbg_function_type;
 
 /**
