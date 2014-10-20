@@ -1106,6 +1106,39 @@ static void test_set_specific_gadget_attr(void **state)
 }
 
 /**
+ * @brief Tests getting udc from state
+ * @param[in] state Pointer to correctly initialized test_state structure
+ **/
+void test_get_udc(void **state)
+{
+	struct test_state *ts;
+	char **tu;
+	struct test_gadget *tg;
+	usbg_state *s = NULL;
+	usbg_udc *u = NULL;
+	usbg_gadget *g = NULL;
+
+	ts = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(ts, &s);
+	*state = s;
+
+	for (tu = ts->udcs; *tu; tu++) {
+		u = usbg_get_udc(s, *tu);
+		assert_non_null(u);
+		assert_string_equal(*tu, u->name);
+		assert_int_equal(s, u->parent);
+	}
+
+	for (tg = ts->gadgets; tg->name; tg++) {
+		u = usbg_get_udc(s, tg->udc);
+		g = usbg_get_gadget(s, tg->name);
+		assert_int_equal(u->gadget, g);
+	}
+}
+
+/**
  * @brief cleanup usbg state
  */
 static void teardown_state(void **state)
@@ -1418,6 +1451,22 @@ static UnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_set_specific_gadget_attr_simple",
 		     test_set_specific_gadget_attr, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_udc_simple,
+	 * Get udc name from state,
+	 * usbg_get_udc}
+	 */
+	USBG_TEST_TS("test_get_udc_simple",
+		     test_get_udc, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_udc_long,
+	 * Get udc name witch very long name,
+	 * usbg_get_udc}
+	 */
+	USBG_TEST_TS("test_get_udc_long",
+		     test_get_udc, setup_long_udc_state),
 
 #ifndef DOXYGEN
 };
