@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <dirent.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -6,6 +7,11 @@
 #include <string.h>
 #include <stddef.h>
 #include <cmocka.h>
+#include <dlfcn.h>
+
+typedef int (*fputs_f_type)(const char *, FILE *);
+typedef int (*fflush_f_type)(FILE *);
+typedef fflush_f_type ferror_f_type;
 
 /**
  * @brief Simulates opening file
@@ -146,9 +152,10 @@ int fputs(const char *s, FILE *stream)
 {
 	/* Cmocka (or anything else) may want to print some errors.
 	 * Especially when running fputs itself */
-	if (stream == stderr) {
-		printf("%s", s);
-		return 0;
+	if (stream == stderr || stream == stdout) {
+		fputs_f_type orig_fputs;
+		orig_fputs = (fputs_f_type)dlsym(RTLD_NEXT, "fputs");
+		return orig_fputs(s, stream);
 	}
 
 	check_expected(stream);
@@ -161,10 +168,22 @@ int fputs(const char *s, FILE *stream)
  */
 int fflush(FILE *stream)
 {
+	if (stream == stderr || stream == stdout) {
+		fflush_f_type orig_fflush;
+		orig_fflush = (fflush_f_type)dlsym(RTLD_NEXT, "fflush");
+		return orig_fflush(stream);
+	}
+
 	return 0;
 }
 
 int ferror(FILE *stream)
 {
+	if (stream == stderr || stream == stdout) {
+		ferror_f_type orig_ferror;
+		orig_ferror = (ferror_f_type)dlsym(RTLD_NEXT, "ferror");
+		return orig_ferror(stream);
+	}
+
 	return 0;
 }
