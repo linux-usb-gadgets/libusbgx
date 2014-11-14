@@ -5,6 +5,10 @@
 #include <cmocka.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <libconfig.h>
 
 #include "usbg-test.h"
 
@@ -451,47 +455,280 @@ void teardown_state(void **state)
 #define USBG_TEST_TS(name, test, setup) \
 	USBG_TEST(name, test, setup, teardown_state)
 
-int main(void)
+static UnitTest tests[] = {
+	/* Check if init was successfull on simple configfs state */
+	USBG_TEST_TS("test_init_simple",
+		     test_init, setup_simple_state),
+
+	/* Check if init was successfull when all avaible functions
+	 * are present in configfs */
+	USBG_TEST_TS("test_init_all_funcs",
+		     test_init, setup_all_funcs_state),
+
+	/* Check if simple gadget will be correcty returned */
+	USBG_TEST_TS("test_get_gadget_simple",
+		     test_get_gadget, setup_simple_state),
+
+	/* Check if getting non-existing and wrong gadgets cause
+	 * expected failure and error codes are correct */
+	USBG_TEST_TS("test_get_gadget_fail_simple",
+		     test_get_gadget_fail, setup_simple_state),
+
+	/* Check if gadget returned by get_first_gadget
+	 * is actually first one */
+	USBG_TEST_TS("test_get_first_gadget_simple",
+		     test_get_first_gadget, setup_simple_state),
+
+	/* Check if getting first gadget from state returns NULL when
+	 * invalid parameters are passed */
+	unit_test(test_get_first_gadget_fail),
+
+	/* Check if returned gadget name matches expected value */
+	USBG_TEST_TS("test_get_gadget_name_simple",
+		     test_get_gadget_name, setup_simple_state),
+
+	/* Check if returned simple gadget name length matches expected value */
+	USBG_TEST_TS("test_get_gadget_name_len_simple",
+		     test_get_gadget_name_len, setup_simple_state),
+
+	/* Check if trying to get name of invalid gadget
+	 * cause expected failure (name is null) */
+	unit_test(test_get_gadget_name_fail),
+
+	/* Check if getting simple gadget name into buffer work as expected*/
+	USBG_TEST_TS("test_cpy_gadget_name_simple",
+		     test_cpy_gadget_name, setup_simple_state),
+
+	/* Check if writting gadget name into buffer fail when
+	 * invalid parameters are passed */
+	USBG_TEST_TS("test_cpy_gadget_name_fail_simple",
+		     test_cpy_gadget_name_fail, setup_simple_state),
+};
+
+#define TESTS_TAG "tests"
+
+int gen_test_config(FILE *output)
 {
-	const UnitTest tests[] = {
-		/* Check if init was successfull on simple configfs state */
-		USBG_TEST("test_init_simple",
-			test_init, setup_simple_state),
-		/* Check if init was successfull when all avaible functions
-		 * are present in configfs */
-		USBG_TEST("test_init_all_funcs",
-			test_init, setup_all_funcs_state),
-		/* Check if simple gadget will be correcty returned */
-		USBG_TEST("test_get_gadget_simple",
-			test_get_gadget, setup_simple_state),
-		/* Check if getting non-existing and wrong gadgets cause
-		 * expected failure and error codes are correct */
-		USBG_TEST("test_get_gadget_fail_simple",
-			test_get_gadget_fail, setup_simple_state),
-		/* Check if gadget returned by get_first_gadget
-		 * is actually first one */
-		USBG_TEST("test_get_first_gadget_simple",
-			test_get_first_gadget, setup_simple_state),
-		/* Check if getting first gadget from state returns NULL when
-		 * invalid parameters are passed */
-		unit_test(test_get_first_gadget_fail),
-		/* Check if returned gadget name matches expected value */
-		USBG_TEST("test_get_gadget_name_simple",
-			test_get_gadget_name, setup_simple_state),
-		/* Check if returned simple gadget name length matches expected value */
-		USBG_TEST("test_get_gadget_name_len_simple",
-			test_get_gadget_name_len, setup_simple_state),
-		/* Check if trying to get name of invalid gadget
-		 * cause expected failure (name is null) */
-		unit_test(test_get_gadget_name_fail),
-		/* Check if getting simple gadget name into buffer work as expected*/
-		USBG_TEST("test_cpy_gadget_name_simple",
-			test_cpy_gadget_name, setup_simple_state),
-		/* Check if writting gadget name into buffer fail when
-		 * invalid parameters are passed */
-		USBG_TEST("test_cpy_gadget_name_fail_simple",
-			test_cpy_gadget_name_fail, setup_simple_state),
+	config_t cfg;
+	config_setting_t *root;
+	config_setting_t *tests_node, *node;
+	int i;
+	int ret = 0, cfg_ret = 0;
+
+	config_init(&cfg);
+	config_set_tab_width(&cfg, 4);
+
+	root = config_root_setting(&cfg);
+	tests_node = config_setting_add(root, TESTS_TAG, CONFIG_TYPE_LIST);
+	if (!tests_node) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(tests); ++i) {
+		if (tests[i].function_type != UNIT_TEST_FUNCTION_TYPE_TEST)
+			continue;
+
+		node = config_setting_add(tests_node, NULL, CONFIG_TYPE_STRING);
+		if (!node) {
+			ret = -ENOMEM;
+			goto out;
+		}
+
+		cfg_ret = config_setting_set_string(node, tests[i].name);
+		if (cfg_ret != CONFIG_TRUE) {
+			ret = -EINVAL;
+			goto out;
+		}
+	}
+
+	config_write(&cfg, output);
+out:
+	config_destroy(&cfg);
+	return ret;
+}
+
+int lookup_test(const char *name)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(tests); ++i)
+		if (tests[i].function_type == UNIT_TEST_FUNCTION_TYPE_TEST &&
+		    !strcmp(name, tests[i].name))
+			return i;
+
+	return -1;
+}
+
+int apply_test_config(FILE *input)
+{
+	config_t cfg;
+	config_setting_t *root;
+	config_setting_t *tests_node, *node;
+	int i, count, ind;
+	int ret = 0, cfg_ret = 0;
+	const char *test_name;
+	char selected[ARRAY_SIZE(tests)];
+
+	for (i = 0; i < ARRAY_SIZE(selected); ++i)
+		selected[i] = 0;
+
+	config_init(&cfg);
+
+	cfg_ret = config_read(&cfg, input);
+	if (cfg_ret != CONFIG_TRUE) {
+		fprintf(stderr, "Wrong config format\n");
+		ret = -EINVAL;
+		goto out;
+	}
+
+	root = config_root_setting(&cfg);
+	tests_node = config_setting_get_member(root, TESTS_TAG);
+	if (!tests_node || !config_setting_is_list(tests_node)) {
+		fprintf(stderr, "Missing or incorrect tests list\n");
+		ret = -EINVAL;
+		goto out;
+	}
+
+	count = config_setting_length(tests_node);
+	for (i = 0; i < count; ++i) {
+		node = config_setting_get_elem(tests_node, i);
+		if (!node) {
+			ret = -EINVAL;
+			goto out;
+		}
+
+		test_name = config_setting_get_string(node);
+		if (!test_name) {
+			fprintf(stderr, "Incorrect tests list. Element %d\n", i);
+			ret = -EINVAL;
+			goto out;
+		}
+
+		ind = lookup_test(test_name);
+		if (ind < 0) {
+			fprintf(stderr, "Test %s not found.\n", test_name);
+			ret = -EINVAL;
+			goto out;
+		}
+
+		selected[ind] = 1;
+	}
+
+	/* Structures with NULL function are skipped by cmocka*/
+	for (i = 0; i < ARRAY_SIZE(selected); ++i) {
+		if (selected[i] ||
+		    tests[i].function_type != UNIT_TEST_FUNCTION_TYPE_TEST)
+			continue;
+
+		if (i - 1 >= 0 && tests[i - 1].function_type ==
+		    UNIT_TEST_FUNCTION_TYPE_SETUP)
+			tests[i - 1].function = NULL;
+
+		tests[i].function = NULL;
+
+		if (i + 1 < ARRAY_SIZE(tests) && tests[i + 1].function_type ==
+		    UNIT_TEST_FUNCTION_TYPE_TEARDOWN)
+			tests[i + 1].function = NULL;
+	}
+out:
+	config_destroy(&cfg);
+	return ret;
+}
+
+void print_skipped_tests(FILE *stream)
+{
+	int i = 0, nmb_skipped = 0;
+
+	for (i = 0; i < ARRAY_SIZE(tests); ++i) {
+		if (tests[i].function ||
+		    tests[i].function_type != UNIT_TEST_FUNCTION_TYPE_TEST)
+			continue;
+		++nmb_skipped;
+	}
+
+	if (nmb_skipped == 0)
+		return;
+
+	fprintf(stream, "[==========] %d test(s) skipped.\n",
+		nmb_skipped);
+
+	for (i = 0; i < ARRAY_SIZE(tests); ++i) {
+		if (tests[i].function ||
+		    tests[i].function_type != UNIT_TEST_FUNCTION_TYPE_TEST)
+			continue;
+
+		fprintf(stream, "[ SKIPPED  ] %s\n", tests[i].name);
+	}
+}
+
+void print_help()
+{
+	fprintf(stderr,
+		"libusbgx test suit:\n"
+		"    --generate-config - generates config to stdout and exit\n"
+		"    --use-config - runs test suit using config from stdin\n"
+		"    -h --help - print this message\n"
+		);
+}
+
+int main(int argc, char **argv)
+{
+	enum {
+		GENERATE_CONFIG = 0x01,
+		USE_CONFIG = 0x02,
 	};
 
-	return run_tests(tests);
+	int options = 0;
+	int opt;
+	int ret = -EINVAL;
+
+	static struct option long_options[] = {
+		{"generate-config", no_argument, 0, 1},
+		{"use-config", no_argument, 0, 2},
+		{"help", no_argument, 0, 'h'},
+		{NULL, 0, 0, 0}
+	};
+
+	while (1) {
+		opt = getopt_long(argc, argv, "h", long_options, NULL);
+		if (opt < 0)
+			break;
+
+		switch (opt) {
+		case 1:
+			options |= GENERATE_CONFIG;
+			break;
+		case 2:
+			options |= USE_CONFIG;
+			break;
+		case 'h':
+		default:
+			print_help();
+			goto out;
+		}
+	}
+
+	if (optind < argc ||
+	    ((options & GENERATE_CONFIG) &&
+	     (options & USE_CONFIG))) {
+		print_help();
+		goto out;
+	}
+
+	if (options & GENERATE_CONFIG) {
+		ret = gen_test_config(stdout);
+		goto out;
+	}
+
+	if (options & USE_CONFIG) {
+		ret = apply_test_config(stdin);
+		if (ret)
+			goto out;
+	}
+
+	ret = run_tests(tests);
+	print_skipped_tests(stderr);
+
+out:
+	return ret;
 }
