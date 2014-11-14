@@ -335,3 +335,51 @@ void push_init(struct test_state *state)
 	for (g = state->gadgets; g->name; g++)
 		push_gadget(g);
 }
+
+void assert_func_equal(usbg_function *f, struct test_function *expected)
+{
+	assert_string_equal(f->instance, expected->instance);
+	assert_int_equal(f->type, expected->type);
+	assert_string_equal(f->path, expected->path);
+}
+
+void assert_config_equal(usbg_config *c, struct test_config *expected)
+{
+	int i = 0;
+	usbg_binding *b;
+
+	assert_int_equal(c->id, expected->id);
+	assert_string_equal(c->label, expected->label);
+	assert_string_equal(c->path, expected->path);
+	usbg_for_each_binding(b, c)
+		assert_func_equal(b->target, &expected->bindings[i++]);
+}
+
+void assert_gadget_equal(usbg_gadget *g, struct test_gadget *expected)
+{
+	usbg_config *c;
+	usbg_function *f;
+	int i;
+
+	assert_string_equal(g->name, expected->name);
+	assert_string_equal(g->path, expected->path);
+
+	i = 0;
+	usbg_for_each_function(f, g)
+		assert_func_equal(f, &expected->functions[i++]);
+
+	i = 0;
+	usbg_for_each_config(c, g)
+		assert_config_equal(c, &expected->configs[i++]);
+}
+
+void assert_state_equal(usbg_state *s, struct test_state *expected)
+{
+	usbg_gadget *g;
+	int i = 0;
+
+	assert_string_equal(s->path, expected->path);
+
+	usbg_for_each_gadget(g, s)
+		assert_gadget_equal(g, &expected->gadgets[i++]);
+}

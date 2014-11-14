@@ -1,6 +1,7 @@
 #include <usbg/usbg.h>
 #include <libconfig.h>
 #include <sys/queue.h>
+#include "usbg/usbg_internal.h"
 
 /* Simple structures for defining gadgets. All arrays should be null-terminated.*/
 
@@ -114,3 +115,31 @@ void free_later(void *ptr);
  * test case, in most cases)
  */
 void cleanup_stack();
+
+/**
+ * @brief Assert that given usbg function matches given test function
+ * @param[in] f Pointer to usbg function struct
+ * @param[in] expected Pointer to test function struct with expected values
+ */
+void assert_func_equal(usbg_function *f, struct test_function *expected);
+
+/**
+ * @brief Assert that given usbg config matches given test config
+ * @param[in] c Pointer to usbg config struct
+ * @param[in] expected Pointer to test config struct with expected values
+ */
+void assert_config_equal(usbg_config *c, struct test_config *expected);
+
+/**
+ * @brief Assert that given usbg gadget matches given test gadget
+ * @param[in] g Pointer to usbg gadget struct
+ * @param[in] expected Pointer to test gadget struct with expected values
+ */
+void assert_gadget_equal(usbg_gadget *g, struct test_gadget *expected);
+
+/**
+ * @brief Assert that given usbg state matches given test state
+ * @param[in] s Pointer to usbg state struct
+ * @param[in] expected Pointer to test state struct with expected values
+ */
+void assert_state_equal(usbg_state *s, struct test_state *expected);
