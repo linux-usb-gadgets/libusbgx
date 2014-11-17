@@ -686,6 +686,72 @@ static void test_get_function_instance_len(void **state)
 }
 
 /**
+ * @brief Tests getting configfs path from usbg state
+ * @param[in,out] state Pointer to pointer to correctly initialized test state.
+ * When finished, it contains pointer to usbg_state which should be cleaned.
+ */
+static void test_get_configfs_path(void **state)
+{
+	usbg_state *s = NULL;
+	struct test_state *st;
+	const char *path;
+
+	st = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(st, &s);
+	*state = s;
+
+	path = usbg_get_configfs_path(s);
+	assert_path_equal(path, st->configfs_path);
+}
+
+/**
+ * @brief Tests getting configfs path length from usbg state
+ * @param[in,out] state Pointer to pointer to correctly initialized test state.
+ * When finished, it contains pointer to usbg_state which should be cleaned.
+ */
+static void test_get_configfs_path_len(void **state)
+{
+	usbg_state *s = NULL;
+	struct test_state *st;
+	int ret, len;
+
+	st = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(st, &s);
+	*state = s;
+
+	ret = usbg_get_configfs_path_len(s);
+	len = strlen(st->configfs_path);
+	assert_int_equal(ret, len);
+}
+
+/**
+ * @brief Tests copying configfs path into buffer
+ * @param[in,out] state Pointer to pointer to correctly initialized test state.
+ * When finished, it contains pointer to usbg_state which should be cleaned.
+ */
+static void test_cpy_configfs_path(void **state)
+{
+	usbg_state *s = NULL;
+	struct test_state *st;
+	char path[PATH_MAX];
+	int ret;
+
+	st = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(st, &s);
+	*state = s;
+
+	ret = usbg_cpy_configfs_path(s, path, PATH_MAX);
+	assert_int_equal(ret, USBG_SUCCESS);
+	assert_path_equal(path, st->configfs_path);
+}
+
+/**
  * @brief cleanup usbg state
  */
 static void teardown_state(void **state)
@@ -893,6 +959,30 @@ static UnitTest tests[] = {
 	 * usbg_get_function_type_str}
 	 */
 	unit_test(test_get_function_type_str_fail),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_configfs_path_simple,
+	 * heck if simple configfs path was returned correctly,
+	 * usbg_get_configfs_path}
+	 */
+	USBG_TEST_TS("test_get_configfs_path_simple",
+		     test_get_configfs_path, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_configfs_path_len,
+	 * Check if configfs path length is correctly calculated,
+	 * usbg_get_configfs_path_len}
+	 */
+	USBG_TEST_TS("test_get_configfs_path_len_simple",
+		     test_get_configfs_path_len, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_cpy_configfs_path_simple,
+	 * Copy simple configfs path into buffer and compare with original,
+	 * usbg_cpy_configfs_path}
+	 */
+	USBG_TEST_TS("test_cpy_configfs_path_simple",
+		     test_cpy_configfs_path, setup_simple_state),
 
 #ifndef DOXYGEN
 };
