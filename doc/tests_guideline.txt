@@ -1,0 +1,149 @@
+Libusbg testing guideline
+-------------------------
+
+Libusbg tests use cmocka library to simulate fake configfs filesystem,
+by wrapping input/output functions.
+
+## Building and running tests
+
+# Requirements
+Building libusbg tests requires cmocka library.
+
+# Building
+In order to build tests run inside 'tests' directory:
+
+	$ make
+
+# Running
+After successfull compilation you can run all defined test cases:
+
+	$ ./test.sh
+
+This should produce report on standart output. It contains list of all
+test cases and its status - OK or FAILED. At the end of report number of
+passed/failed tests is written and then all failed test cases are listed.
+
+It's also possible to pass custom configuration file to testing environment.
+Currently it's used only for skipping tests. Use --generate-config and
+--use-config options of test.sh to generate default config and read config
+from file. Run ./test.sh --help for more help.
+
+# Tests skipping
+When you want to skip a test case, generate config file by --generate-config option,
+delete test from generated file and use it by --use-config option.
+
+
+## Writting tests
+
+Before starting your own tests implementation, become familiar with cmocka
+library (cmocka.org).
+
+test.c file contains tests implementation. Test cases are stored in
+UnitTest structures (from cmocka) and run by run_tests macro.
+
+In cmocka each test case can be composed of three parts: setup, test and
+teardown.
+
+# Setup functions
+In setup input data must be initialized and assigned to pointer given as
+argument.
+
+Libusbg requires initialized usbg_state structure for most of it's api
+functions. In most cases we define initial state in test_* strutures and
+pass it to test function, in order to run usbg_init. Each test_state
+can be defined quite simply by listing gadgets, its configs and functions
+(using gcc extenstion), e.g.:
+
+	static struct test_state simple_state = {
+		.path = "config",
+		.gadgets = simple_gadgets,
+		.udcs = simple_udcs
+	};
+
+test_state structure (or other structure, if neccessary for test case)
+is casted to void * in setup function. Note, that when using test_state
+you must sort its content and fill additional fields (i.e. pathes strings).
+It can be done by calling prepare_state before test.
+
+# Test functions
+Test functions contain libusbg functions calls, preparations for them and
+checking results.
+
+When calling usbg function which operates on filesystem proper preparation
+is needed. Usbg-test framework provides functions which tell cmocka what
+operations are expected from corresponding usbg function (push_* and pull_*
+functions).
+
+E.g., in most cases you want correctly initialized usbg_state. It can be done
+by preparing filesystem by push_init and running usbg_init after that:
+
+	push_init(in);
+	usbg_ret = usbg_init(in->path, out);
+
+init_with_state function does that and checks results.
+
+When tested usbg function was run, you can check results by cmocka assert
+macros. Usbg-test also provides set of assert functions for usbg structures.
+
+# Teardown functions
+When test was run, you can define teardown function, which can do the cleanup.
+Argument is passed same way as before, by assigning it to cmocka state pointer
+in test function and receiving it in teardown function.
+
+In most cases you will just want to cleanup after initializing state and running
+some usbg functions. To do that teardown_state can be used as teardown function.
+You can write custom teardown for other cases.
+
+Note that in preparation for test some memory is allocated. All allocated
+pointers are stored on global stack and should be freed by calling cleanup_stack
+after test is finished (in teardown function).
+
+Remember that teardown is called also when test failed. You should assign
+something correct (NULL for example) for your teardown function to test
+argument before running functions which may fail.
+
+# Composing test cases
+All test cases are defined in list of UnitTest structures. You can define test
+case by macros provided by cmocka or by USBG_TEST macro.
+
+USBG_TEST is similar to unit_test_setup_teardown from cmocka, but always uses
+the same teardown (teardown_state) and names test case with custom string.
+It combines setup function with test function, so one test function can be
+run with many different states.
+
+# Documenting test cases
+For tests documentation few doxygen macros are created.
+\usbg_test indicates that current comment block contains test case documentation.
+\test_desc{name, description, function} describe test with its name, function
+which is tested and short descripttion of what this test does.
+
+# Adding tests
+Simplest way to add more tests is defining test states and new setup functions,
+combining them with existing testing functions using USBG_TEST. You can also
+write own test function. When you have test and setup prepared, add
+
+	USBG_TEST("test_name", test_function, setup_function),
+
+at the end of tests[] array in main. Remember to add documentation to the case
+(see Documenting test cases).
+
+# Removing tests
+In order to remove test case just delete corresponding element on tests[] list
+(including documentation above it).
+
+# Modyfing tests
+When you want to change data using in test case, change corresponding test_*
+structures. Note, that single test state can be used in many test cases and
+modyfing it can effect them as well.
+You can also change test logic (by modifying test function used in case), as
+long as you know what you're doing.
+
+
+## Final notes
+
+Remember, that in test environment functions operating on files are replaced
+and operations on files cannot be performed. However, using standard input/output
+is possible.
+
+All test cases are run in single thread, so some failures on one test case
+(e.g. SIGSEGV) can cause crash on whole tests set.
