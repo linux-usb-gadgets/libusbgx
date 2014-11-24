@@ -119,7 +119,7 @@ argument before running functions which may fail.
 
 # Composing test cases
 All test cases are defined in list of UnitTest structures. You can define test
-case by macros provided by cmocka or by USBG_TEST macro.
+case by macros provided by cmocka or by USBG_TEST or USBG_TEST_TS macro.
 
 USBG_TEST is similar to unit_test_setup_teardown from cmocka, but always uses
 the same teardown (teardown_state) and names test case with custom string.
@@ -137,9 +137,11 @@ Simplest way to add more tests is defining test states and new setup functions,
 combining them with existing testing functions using USBG_TEST. You can also
 write own test function. When you have test and setup prepared, add
 
-	USBG_TEST("test_name", test_function, setup_function),
+	USBG_TEST_TS("test_name", test_function, setup_function),
+or
+	USBG_TEST("test_name", test_function, setup_function, teardown_function),
 
-at the end of tests[] array in main. Remember to add documentation to the case
+at the end of tests[] array. Remember to add documentation to the case
 (see Documenting test cases).
 
 # Removing tests
