@@ -1,3 +1,6 @@
+#ifndef USBG_TEST_H
+#define USBG_TEST_H
+
 #include <usbg/usbg.h>
 #include <sys/queue.h>
 #include "usbg/usbg_internal.h"
@@ -170,4 +173,7 @@ int path_equal_display_error(const LargestIntegralType actual, const LargestInte
  * @details Given pathes don't need to exist
  */
 void assert_path_equal(const char *actual, const char *expected);
+
+
+#endif /* USBG_TEST_H */
 
