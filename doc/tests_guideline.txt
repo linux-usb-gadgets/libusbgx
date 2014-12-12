@@ -7,30 +7,45 @@ by wrapping input/output functions.
 ## Building and running tests
 
 # Requirements
-Building libusbg tests requires cmocka library.
+Building libusbg tests requires:
+-CMocka unit testing framework in version >= 0.3
+-libconfig in version >= 1.4
 
-# Building
-In order to build tests run inside 'tests' directory:
+# Building and running
+Before testing make sure that you have successfully built libusbg (see INSTALL for
+more details). Tests must be enabled in configuration, do it by adding proper flag
+when configuring:
 
-	$ make
+	$ ./configure --enable-tests
 
-# Running
-After successfull compilation you can run all defined test cases:
+Then, to build and run all provided tests, run following command:
 
-	$ ./test.sh
+	$ make check
 
-This should produce report on standart output. It contains list of all
-test cases and its status - OK or FAILED. At the end of report number of
-passed/failed tests is written and then all failed test cases are listed.
+This should execute testing script and produce report on standart output.
+It contains list of all test cases and its status - OK, FAILED and SKIPPED. At the
+end of report number of passed/failed tests is written and then all failed test
+cases are listed. This report is also avaible in tests/test-suite.log file.
 
 It's also possible to pass custom configuration file to testing environment.
 Currently it's used only for skipping tests. Use --generate-config and
 --use-config options of test.sh to generate default config and read config
-from file. Run ./test.sh --help for more help.
+from file. Run ./test.sh --help for more help with testing environment.
 
 # Tests skipping
-When you want to skip a test case, generate config file by --generate-config option,
-delete test from generated file and use it by --use-config option.
+When you want to skip some test cases, use configuration files for test suite.
+To generate default config run:
+
+	$ make check GENERATE_CONFIG=[file_name]
+
+It will generate tests/[file_name] file with configuration for testing. You can
+remove test cases from 'tests' list to disable them. With custom configuration file
+run:
+
+	$make check USE_CONFIG=[file_name]
+
+Where file_name is name of previously generated configuration file. Test suite
+will skip tests not listed in config.
 
 
 ## Writting tests
