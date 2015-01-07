@@ -59,6 +59,10 @@ struct test_state
 		.functions = NULL, \
 	}
 
+#define expect_path(function, param, data) \
+	expect_check(function, param, \
+		     (CheckParameterValue)(path_equal_display_error), data)
+
 /**
  * @brief Prepare given state for using in tests
  * @details Generate full pathes to state elements and sort state's content.
@@ -145,4 +149,26 @@ void assert_gadget_equal(usbg_gadget *g, struct test_gadget *expected);
  * @param[in] expected Pointer to test state struct with expected values
  */
 void assert_state_equal(usbg_state *s, struct test_state *expected);
+
+/**
+ * @brief Compare path names
+ * @details Given pathes don't need to exist
+ * @return Integer less than, equal to, or greater than zero if a is (respectively)
+ * less than, equal to, or greater than b.
+ */
+int path_cmp(const char *a, const char *b);
+
+/**
+ * @brief Print error when given paths are not equal
+ * @return 1 if paths are equal, 0 otherwise
+ * @note Argument type is defined by cmocka. This specific function type is defined
+ * as custom comparing function in cmocka framework.
+ */
+int path_equal_display_error(const LargestIntegralType actual, const LargestIntegralType expected);
+
+/**
+ * @brief Assert that given path strings are equal
+ * @details Given pathes don't need to exist
+ */
+void assert_path_equal(const char *actual, const char *expected);
 

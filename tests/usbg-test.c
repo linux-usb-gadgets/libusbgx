@@ -49,7 +49,7 @@ static int dir_id = 0;
 
 #define PUSH_FILE(file, content) do {\
 	file_id++;\
-	expect_string(fopen, path, file);\
+	expect_path(fopen, path, file);\
 	will_return(fopen, file_id);\
 	expect_value(fgets, stream, file_id);\
 	will_return(fgets, content);\
@@ -73,14 +73,14 @@ static int dir_id = 0;
 
 #define EXPECT_OPENDIR(n) do {\
 	dir_id++;\
-	expect_string(opendir, name, n);\
+	expect_path(opendir, name, n);\
 	will_return(opendir, dir_id);\
 	expect_value(closedir, dirp, dir_id);\
 	will_return(closedir, 0);\
 } while(0)
 
 #define PUSH_DIR(p, c) do {\
-	expect_string(scandir, dirp, p);\
+	expect_path(scandir, dirp, p);\
 	will_return(scandir, c);\
 } while(0)
 
@@ -91,7 +91,7 @@ static int dir_id = 0;
 } while(0)
 
 #define PUSH_LINK(p, c, len) do {\
-	expect_string(readlink, path, p);\
+	expect_path(readlink, path, p);\
 	expect_in_range(readlink, bufsiz, len, INT_MAX);\
 	will_return(readlink, c);\
 } while(0)
@@ -346,7 +346,7 @@ void assert_func_equal(usbg_function *f, struct test_function *expected)
 {
 	assert_string_equal(f->instance, expected->instance);
 	assert_int_equal(f->type, expected->type);
-	assert_string_equal(f->path, expected->path);
+	assert_path_equal(f->path, expected->path);
 }
 
 void assert_config_equal(usbg_config *c, struct test_config *expected)
@@ -356,7 +356,7 @@ void assert_config_equal(usbg_config *c, struct test_config *expected)
 
 	assert_int_equal(c->id, expected->id);
 	assert_string_equal(c->label, expected->label);
-	assert_string_equal(c->path, expected->path);
+	assert_path_equal(c->path, expected->path);
 	usbg_for_each_binding(b, c)
 		assert_func_equal(b->target, &expected->bindings[i++]);
 }
@@ -368,7 +368,7 @@ void assert_gadget_equal(usbg_gadget *g, struct test_gadget *expected)
 	int i;
 
 	assert_string_equal(g->name, expected->name);
-	assert_string_equal(g->path, expected->path);
+	assert_path_equal(g->path, expected->path);
 
 	i = 0;
 	usbg_for_each_function(f, g)
@@ -384,9 +384,48 @@ void assert_state_equal(usbg_state *s, struct test_state *expected)
 	usbg_gadget *g;
 	int i = 0;
 
-	assert_string_equal(s->path, expected->path);
-	assert_string_equal(s->configfs_path, expected->configfs_path);
+	assert_path_equal(s->path, expected->path);
+	assert_path_equal(s->configfs_path, expected->configfs_path);
 
 	usbg_for_each_gadget(g, s)
 		assert_gadget_equal(g, &expected->gadgets[i++]);
 }
+
+#define SIGNUM(x) (((x) > 0) - ((x) < 0))
+
+int path_cmp(const char *actual, const char *expected)
+{
+	const char *a = actual;
+	const char *b = expected;
+
+	while (*a != '\0' && *b != '\0') {
+		if (*a != *b)
+			break;
+		do
+			++a;
+		while (*a == '/');
+
+		do
+			++b;
+		while (*b == '/');
+	}
+
+	return SIGNUM(*a - *b);
+}
+
+int path_equal_display_error(const LargestIntegralType actual, const LargestIntegralType expected)
+{
+	if (path_cmp((const char *)actual, (const char *)expected) == 0) {
+		return 1;
+	}
+
+	fprintf(stderr, "%s != %s\n", (const char *)actual, (const char *)expected);
+	return 0;
+}
+
+void assert_path_equal(const char *actual, const char *expected)
+{
+	if (path_equal_display_error((const LargestIntegralType)actual, (const LargestIntegralType)expected) == 0)
+		fail();
+}
+
