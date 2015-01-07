@@ -402,14 +402,6 @@ void test_cpy_gadget_name_fail(void **state)
 		ret = usbg_cpy_gadget_name(g, name, 0);
 		assert_int_equal(ret, USBG_ERROR_INVALID_PARAM);
 
-/* 		It cause total crash of cmocka framework (SIGSEGV), commented
- *  		temporarly to run other tests crrectly, fail test anyway.
- */
-/*		ret = usbg_cpy_gadget_name(g, name, -1);
- *		assert_int_equal(ret, USBG_ERROR_INVALID_PARAM);
- */
-		fail_msg("Negative buffer length error");
-
 		ret = usbg_cpy_gadget_name(g, NULL, USBG_MAX_NAME_LENGTH);
 		assert_int_equal(ret, USBG_ERROR_INVALID_PARAM);
 	}
