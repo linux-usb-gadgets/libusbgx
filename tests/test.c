@@ -161,7 +161,7 @@ static struct test_gadget all_funcs_gadgets[] = {
  * @brief Simple state
  */
 static struct test_state simple_state = {
-	.path = "config",
+	.configfs_path = "config",
 	.gadgets = simple_gadgets,
 	.udcs = simple_udcs
 };
@@ -179,7 +179,7 @@ void setup_simple_state(void **state)
  * @brief State with all functions avaible
  */
 static struct test_state all_funcs_state = {
-	.path = "all_funcs_configfs",
+	.configfs_path = "all_funcs_configfs",
 	.gadgets = all_funcs_gadgets,
         .udcs = simple_udcs
 };
@@ -201,7 +201,7 @@ void init_with_state(struct test_state *in, usbg_state **out)
 	int usbg_ret;
 
 	push_init(in);
-	usbg_ret = usbg_init(in->path, out);
+	usbg_ret = usbg_init(in->configfs_path, out);
 	assert_int_equal(usbg_ret, USBG_SUCCESS);
 }
 

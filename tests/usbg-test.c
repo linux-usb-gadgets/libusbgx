@@ -169,8 +169,8 @@ void prepare_gadget(struct test_state *state, struct test_gadget *g)
 	int tmp;
 	int count;
 
-	tmp = asprintf(&g->path, "%s/usb_gadget", state->path);
-	if (tmp < 0)
+	g->path = strdup(state->path);
+	if (!g->path)
 		fail();
 
 	free_later(g->path);
@@ -217,6 +217,13 @@ void prepare_state(struct test_state *state)
 {
 	struct test_gadget *g;
 	int count = 0;
+	int tmp;
+
+	tmp = asprintf(&(state->path), "%s/usb_gadget", state->configfs_path);
+	if (tmp < 0)
+		fail();
+	free_later(state->path);
+
 
 	for (g = state->gadgets; g->name; g++) {
 		prepare_gadget(state, g);
@@ -309,17 +316,11 @@ static void push_gadget(struct test_gadget *g)
 void push_init(struct test_state *state)
 {
 	char **udc;
-	char *path;
 	struct test_gadget *g;
 	int count = 0;
 	int tmp;
 
-	tmp = asprintf(&path, "%s/usb_gadget", state->path);
-	if (tmp < 0)
-		fail();
-	free_later(path);
-
-	EXPECT_OPENDIR(path);
+	EXPECT_OPENDIR(state->path);
 
 	for (udc = state->udcs; *udc; udc++)
 		count++;
@@ -332,7 +333,7 @@ void push_init(struct test_state *state)
 	for (g = state->gadgets; g->name; g++)
 		count++;
 
-	PUSH_DIR(path, count);
+	PUSH_DIR(state->path, count);
 	for (g = state->gadgets; g->name; g++) {
 		PUSH_DIR_ENTRY(g->name, DT_DIR);
 	}
@@ -384,6 +385,7 @@ void assert_state_equal(usbg_state *s, struct test_state *expected)
 	int i = 0;
 
 	assert_string_equal(s->path, expected->path);
+	assert_string_equal(s->configfs_path, expected->configfs_path);
 
 	usbg_for_each_gadget(g, s)
 		assert_gadget_equal(g, &expected->gadgets[i++]);

@@ -36,6 +36,8 @@ struct test_gadget
 
 struct test_state
 {
+	char *configfs_path;
+	/* filled by prepare_state() */
 	char *path;
 	struct test_gadget *gadgets;
 	char **udcs;
@@ -143,3 +145,4 @@ void assert_gadget_equal(usbg_gadget *g, struct test_gadget *expected);
  * @param[in] expected Pointer to test state struct with expected values
  */
 void assert_state_equal(usbg_state *s, struct test_state *expected);
+
