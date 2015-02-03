@@ -24,6 +24,7 @@
 struct usbg_state
 {
 	char *path;
+	char *configfs_path;
 
 	TAILQ_HEAD(ghead, usbg_gadget) gadgets;
 	TAILQ_HEAD(uhead, usbg_udc) udcs;
@@ -134,6 +135,7 @@ struct usbg_udc
 #define STRINGS_DIR "strings"
 #define CONFIGS_DIR "configs"
 #define FUNCTIONS_DIR "functions"
+#define GADGETS_DIR "usb_gadget"
 
 static inline int file_select(const struct dirent *dent)
 {

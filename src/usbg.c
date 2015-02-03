@@ -552,6 +552,7 @@ static void usbg_free_state(usbg_state *s)
 	}
 
 	free(s->path);
+	free(s->configfs_path);
 	free(s);
 }
 
@@ -1257,9 +1258,17 @@ out:
 	return ret;
 }
 
-static int usbg_init_state(char *path, usbg_state *s)
+static usbg_state *usbg_allocate_state(const char *configfs_path, char *path)
 {
-	int ret = USBG_SUCCESS;
+	usbg_state *s;
+
+	s = malloc(sizeof(*s));
+	if (!s)
+		goto err;
+
+	s->configfs_path = strdup(configfs_path);
+	if (!s->configfs_path)
+		goto cpath_failed;
 
 	/* State takes the ownership of path and should free it */
 	s->path = path;
@@ -1267,15 +1276,27 @@ static int usbg_init_state(char *path, usbg_state *s)
 	TAILQ_INIT(&s->gadgets);
 	TAILQ_INIT(&s->udcs);
 
+	return s;
+
+cpath_failed:
+	free(s);
+err:
+	return NULL;
+}
+
+static int usbg_parse_state(usbg_state *s)
+{
+	int ret = USBG_SUCCESS;
+
 	ret = usbg_parse_udcs(s);
 	if (ret != USBG_SUCCESS) {
 		ERROR("Unable to parse udcs");
 		goto out;
 	}
 
-	ret = usbg_parse_gadgets(path, s);
+	ret = usbg_parse_gadgets(s->path, s);
 	if (ret != USBG_SUCCESS)
-		ERROR("unable to parse %s\n", path);
+		ERROR("unable to parse %s\n", s->path);
 
 out:
 	return ret;
@@ -1292,7 +1313,7 @@ int usbg_init(const char *configfs_path, usbg_state **state)
 	char *path;
 	usbg_state *s;
 
-	ret = asprintf(&path, "%s/usb_gadget", configfs_path);
+	ret = asprintf(&path, "%s/" GADGETS_DIR, configfs_path);
 	if (ret < 0)
 		return USBG_ERROR_NO_MEM;
 	else
@@ -1307,13 +1328,13 @@ int usbg_init(const char *configfs_path, usbg_state **state)
 	}
 
 	closedir(dir);
-	s = malloc(sizeof(usbg_state));
+	s = usbg_allocate_state(configfs_path, path);
 	if (!s) {
 		ret = USBG_ERROR_NO_MEM;
 		goto err;
 	}
 
-	ret = usbg_init_state(path, s);
+	ret = usbg_parse_state(s);
 	if (ret != USBG_SUCCESS) {
 		ERROR("couldn't init gadget state\n");
 		usbg_free_state(s);
@@ -1337,12 +1358,12 @@ void usbg_cleanup(usbg_state *s)
 
 const char *usbg_get_configfs_path(usbg_state *s)
 {
-	return s ? s->path : NULL;
+	return s ? s->configfs_path : NULL;
 }
 
 size_t usbg_get_configfs_path_len(usbg_state *s)
 {
-	return s ? strlen(s->path) : USBG_ERROR_INVALID_PARAM;
+	return s ? strlen(s->configfs_path) : USBG_ERROR_INVALID_PARAM;
 }
 
 int usbg_cpy_configfs_path(usbg_state *s, char *buf, size_t len)
@@ -1351,7 +1372,7 @@ int usbg_cpy_configfs_path(usbg_state *s, char *buf, size_t len)
 		return USBG_ERROR_INVALID_PARAM;
 
 	buf[--len] = '\0';
-	strncpy(buf, s->path, len);
+	strncpy(buf, s->configfs_path, len);
 
 	return USBG_SUCCESS;
 }
