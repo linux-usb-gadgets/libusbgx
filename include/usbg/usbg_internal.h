@@ -10,6 +10,9 @@
  * Lesser General Public License for more details.
  */
 
+#ifndef USBG_INTERNAL_H
+#define USBG_INTERNAL_H
+
 #include <sys/queue.h>
 #include <string.h>
 #include <usbg/usbg.h>
@@ -146,4 +149,7 @@ static inline int file_select(const struct dirent *dent)
 }
 
 int usbg_translate_error(int error);
+
+
+#endif /* USBG_INTERNAL_H */
 
