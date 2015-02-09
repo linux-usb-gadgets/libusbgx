@@ -159,7 +159,6 @@ void prepare_gadget(struct test_state *state, struct test_gadget *g)
 {
 	struct test_config *c;
 	struct test_function *f;
-	struct test_binding *b;
 	char *path;
 	int tmp;
 	int count;
@@ -255,7 +254,6 @@ static void push_config(struct test_config *c)
 {
 	struct test_function *b;
 	int count = 0;
-	char *func_name;
 	int tmp;
 	char *path;
 
@@ -313,7 +311,6 @@ void push_init(struct test_state *state)
 	char **udc;
 	struct test_gadget *g;
 	int count = 0;
-	int tmp;
 
 	EXPECT_OPENDIR(state->path);
 
