@@ -129,6 +129,11 @@ void free_later(void *ptr);
 void cleanup_stack();
 
 /**
+ * @brief init usbg with given test state
+ */
+void init_with_state(struct test_state *in, usbg_state **out);
+
+/**
  * @brief Assert that given usbg function matches given test function
  * @param[in] f Pointer to usbg function struct
  * @param[in] expected Pointer to test function struct with expected values

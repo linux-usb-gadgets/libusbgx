@@ -169,15 +169,6 @@ static struct test_state simple_state = {
 };
 
 /**
- * @brief Setup simple state with some gadgets, configs and functions
- */
-void setup_simple_state(void **state)
-{
-	prepare_state(&simple_state);
-	*state = &simple_state;
-}
-
-/**
  * @brief State with all functions avaible
  */
 static struct test_state all_funcs_state = {
@@ -187,31 +178,28 @@ static struct test_state all_funcs_state = {
 };
 
 /**
+ * @brief Setup simple state with some gadgets, configs and functions
+ */
+static void setup_simple_state(void **state)
+{
+	prepare_state(&simple_state);
+	*state = &simple_state;
+}
+
+/**
  * @brief Setup state with all avaible functions
  */
-void setup_all_funcs_state(void **state)
+static void setup_all_funcs_state(void **state)
 {
 	prepare_state(&all_funcs_state);
 	*state = &all_funcs_state;
 }
 
 /**
- * @brief init usbg with given test state
- */
-void init_with_state(struct test_state *in, usbg_state **out)
-{
-	int usbg_ret;
-
-	push_init(in);
-	usbg_ret = usbg_init(in->configfs_path, out);
-	assert_int_equal(usbg_ret, USBG_SUCCESS);
-}
-
-/**
  * @brief Tests usbg_get_gadget function with given state
  * @details Check if gadgets are returned correctly
  */
-void test_get_gadget(void **state)
+static void test_get_gadget(void **state)
 {
 	usbg_gadget *g = NULL;
 	usbg_state *s = NULL;
@@ -236,7 +224,7 @@ void test_get_gadget(void **state)
  * @details Check if get_gadget will not find non-existing gadgets and
  * will not cause crash.
  */
-void test_get_gadget_fail(void **state)
+static void test_get_gadget_fail(void **state)
 {
 	usbg_gadget *g = NULL;
 	usbg_state *s = NULL;
@@ -256,7 +244,7 @@ void test_get_gadget_fail(void **state)
  * @brief Tests usbg_get_first_gadget function
  * @details Check if gadget returned by get_first_gadget is actually first one
  */
-void test_get_first_gadget(void **state)
+static void test_get_first_gadget(void **state)
 {
 	usbg_gadget *g = NULL;
 	usbg_state *s = NULL;
@@ -276,7 +264,7 @@ void test_get_first_gadget(void **state)
 /**
  * @brief Tests get_first_gadget with invalid arguments
  */
-void test_get_first_gadget_fail(void **state)
+static void test_get_first_gadget_fail(void **state)
 {
 	usbg_gadget *g;
 
@@ -288,7 +276,7 @@ void test_get_first_gadget_fail(void **state)
  * @brief Tests getting name of gadget
  * @details Check if gadget name is returned correctly
  */
-void test_get_gadget_name(void **state)
+static void test_get_gadget_name(void **state)
 {
 	usbg_gadget *g = NULL;
 	usbg_state *s = NULL;
@@ -314,7 +302,7 @@ void test_get_gadget_name(void **state)
  * @brief Tests getting name length of gadget
  * @details Check if returned name length is equal original
  */
-void test_get_gadget_name_len(void **state)
+static void test_get_gadget_name_len(void **state)
 {
 	usbg_gadget *g = NULL;
 	usbg_state *s = NULL;
@@ -344,7 +332,7 @@ void test_get_gadget_name_len(void **state)
  * @details Check if trying to get name of wrong (non-existing) gadget
  * will not cause crash, but return NULL as expected.
  */
-void test_get_gadget_name_fail(void **state)
+static void test_get_gadget_name_fail(void **state)
 {
 	const char *name;
 
@@ -356,7 +344,7 @@ void test_get_gadget_name_fail(void **state)
  * @brief Tests copying gadget's name
  * @details Check if copying gadget name copy actual name correctly
  */
-void test_cpy_gadget_name(void **state)
+static void test_cpy_gadget_name(void **state)
 {
 	usbg_gadget *g = NULL;
 	usbg_state *s = NULL;
@@ -387,7 +375,7 @@ void test_cpy_gadget_name(void **state)
  * or give invalid buffer length, or invalid gadget will be handled by library
  * and return correct error codes
  */
-void test_cpy_gadget_name_fail(void **state)
+static void test_cpy_gadget_name_fail(void **state)
 {
 	usbg_gadget *g = NULL;
 	usbg_state *s = NULL;
@@ -422,7 +410,7 @@ void test_cpy_gadget_name_fail(void **state)
  * @details Check if usbg state after init match given state and
  * if init returned success code
  */
-void test_init(void **state)
+static void test_init(void **state)
 {
 	usbg_state *s = NULL;
 	struct test_state *st;
@@ -439,7 +427,7 @@ void test_init(void **state)
 /**
  * @brief cleanup usbg state
  */
-void teardown_state(void **state)
+static void teardown_state(void **state)
 {
 	usbg_state *s = NULL;
 
@@ -572,7 +560,7 @@ static UnitTest tests[] = {
 
 #ifdef HAS_LIBCONFIG
 
-int gen_test_config(FILE *output)
+static int gen_test_config(FILE *output)
 {
 	config_t cfg;
 	config_setting_t *root;
@@ -615,7 +603,7 @@ out:
 
 #else
 
-int gen_test_config(FILE *output)
+static int gen_test_config(FILE *output)
 {
 	fprintf(stderr, "Libconfig is not supported\n");
 	return -ENOTSUP;
@@ -623,7 +611,7 @@ int gen_test_config(FILE *output)
 
 #endif /* HAS_LIBCONFIG */
 
-int lookup_test(const char *name)
+static int lookup_test(const char *name)
 {
 	int i;
 	for (i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -635,7 +623,7 @@ int lookup_test(const char *name)
 }
 
 #ifdef HAS_LIBCONFIG
-int apply_test_config(FILE *input)
+static int apply_test_config(FILE *input)
 {
 	config_t cfg;
 	config_setting_t *root;
@@ -713,7 +701,7 @@ out:
 
 #else
 
-int apply_test_config(FILE *input)
+static int apply_test_config(FILE *input)
 {
 	fprintf(stderr, "Libconfig is not supported\n");
 	return -ENOTSUP;
@@ -721,7 +709,7 @@ int apply_test_config(FILE *input)
 
 #endif /* HAS_LIBCONFIG */
 
-void print_skipped_tests(FILE *stream)
+static void print_skipped_tests(FILE *stream)
 {
 	int i = 0, nmb_skipped = 0;
 
@@ -747,7 +735,7 @@ void print_skipped_tests(FILE *stream)
 	}
 }
 
-void print_help()
+static void print_help()
 {
 	fprintf(stderr,
 		"libusbgx test suit:\n"

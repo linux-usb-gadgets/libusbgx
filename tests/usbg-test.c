@@ -334,6 +334,15 @@ void push_init(struct test_state *state)
 		push_gadget(g);
 }
 
+void init_with_state(struct test_state *in, usbg_state **out)
+{
+	int usbg_ret;
+
+	push_init(in);
+	usbg_ret = usbg_init(in->configfs_path, out);
+	assert_int_equal(usbg_ret, USBG_SUCCESS);
+}
+
 void assert_func_equal(usbg_function *f, struct test_function *expected)
 {
 	assert_string_equal(f->instance, expected->instance);
@@ -420,4 +429,3 @@ void assert_path_equal(const char *actual, const char *expected)
 	if (path_equal_display_error((const LargestIntegralType)actual, (const LargestIntegralType)expected) == 0)
 		fail();
 }
-
