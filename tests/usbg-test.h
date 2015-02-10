@@ -195,4 +195,16 @@ typedef void (*FunctionTest)(usbg_function *f, struct test_function *tf);
  */
 void for_each_test_function(void **state, FunctionTest fun);
 
+/**
+ * @brief Function that performs some test on given usbg config
+*/
+typedef void (*ConfigTest)(usbg_config *c, struct test_config *tc);
+
+/**
+ * @brief Call given function for all usb configs present in given state
+ * @param[in] state Properly prepared state to be tested
+ * @param[in] fun Function to be called on each usb function in state
+ */
+void for_each_test_config(void **state, ConfigTest fun);
+
 #endif /* USBG_TEST_H */

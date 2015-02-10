@@ -752,6 +752,120 @@ static void test_cpy_configfs_path(void **state)
 }
 
 /**
+ * @brief Tests getting config by name
+ * @param[in,out] state Pointer to pointer to correctly initialized test state.
+ * When finished, it contains pointer to usbg_state which should be cleaned.
+ */
+static void test_get_config(void **state)
+{
+	for_each_test_config(state, assert_config_equal);
+}
+
+static void test_get_config_without_label(void **state)
+{
+	usbg_state *s = NULL;
+	usbg_gadget *g = NULL;
+	usbg_config *c = NULL;
+	struct test_state *ts;
+	struct test_gadget *tg;
+	struct test_config *tc;
+
+	ts = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(ts, &s);
+	*state = s;
+
+	for (tg = ts->gadgets; tg->name; tg++) {
+		g = usbg_get_gadget(s, tg->name);
+		assert_non_null(g);
+		for (tc = tg->configs; tc->label; tc++) {
+			c = usbg_get_config(g, tc->id, NULL);
+			assert_non_null(c);
+			assert_config_equal(c, tc);
+		}
+	}
+}
+
+/**
+ * @bried Tests getting non-existing config
+ * @param[in,out] state Pointer to pointer to correctly initialized test state.
+ * When finished, it contains pointer to usbg_state which should be cleaned.
+ */
+static void test_get_config_fail(void **state)
+{
+	usbg_state *s = NULL;
+	usbg_gadget *g = NULL;
+	usbg_config *c = NULL;
+	struct test_state *ts;
+	struct test_gadget *tg;
+
+	ts = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(ts, &s);
+	*state = s;
+
+	for (tg = ts->gadgets; tg->name; tg++) {
+		g = usbg_get_gadget(s, tg->name);
+		assert_non_null(g);
+
+		c = usbg_get_config(g, 0, "non-existing-config");
+		assert_null(c);
+
+		c = usbg_get_config(g, -9001, "c");
+		assert_null(c);
+
+		c = usbg_get_config(g, -9001, NULL);
+		assert_null(c);
+	}
+}
+
+/**
+ * @brief Get config label and check it
+ * @param[in] c Usbg config
+ * @param[in] tc Test config which should match c
+ */
+static void try_get_config_label(usbg_config *c, struct test_config *tc)
+{
+	const char *label;
+	label = usbg_get_config_label(c);
+	assert_string_equal(label, tc->label);
+}
+
+/**
+ * @brief Tests getting config label
+ * @param[in,out] state Pointer to pointer to correctly initialized test state.
+ * When finished, it contains pointer to usbg_state which should be cleaned.
+ */
+static void test_get_config_label(void **state)
+{
+	for_each_test_config(state, try_get_config_label);
+}
+
+/**
+ * @brief Check config id with test structure
+ * @param[in] c Usbg config
+ * @param[in] tc Test config which should match c
+ */
+static void try_get_config_id(usbg_config *c, struct test_config *tc)
+{
+	int id;
+	id = usbg_get_config_id(c);
+	assert_int_equal(id, tc->id);
+}
+
+/**
+ * @brief Tests getting config id
+ * @param[in,out] state Pointer to pointer to correctly initialized test state.
+ * When finished, it contains pointer to usbg_state which should be cleaned.
+ */
+static void test_get_config_id(void **state)
+{
+	for_each_test_config(state, try_get_config_id);
+}
+
+/**
  * @brief cleanup usbg state
  */
 static void teardown_state(void **state)
@@ -983,6 +1097,46 @@ static UnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_cpy_configfs_path_simple",
 		     test_cpy_configfs_path, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_config_simple,
+	 * Check if returned simple config matches original one,
+	 * usbg_get_config}
+	 */
+	USBG_TEST_TS("test_get_config_simple",
+		     test_get_config, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_config_without_label_simple,
+	 * Check if returned simple config matches original one,
+	 * usbg_get_config}
+	 */
+	USBG_TEST_TS("test_get_config_without_label_simple",
+		     test_get_config_without_label, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_config_fail,
+	 * Check if trying to get non-existing or invalid config
+	 * fails as expected,
+	 * usbg_get_config}*/
+	USBG_TEST_TS("test_get_config_fail",
+		     test_get_config_fail, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_config_label_simple,
+	 * Check if returned simple config label matches original one,
+	 * usbg_get_config_label}
+	 */
+	USBG_TEST_TS("test_get_config_label_simple",
+		     test_get_config_label, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_config_id_simple,
+	 * Check if returned simple config id matches original one,
+	 * usbg_get_config_id}
+	 */
+	USBG_TEST_TS("test_get_config_id_simple",
+		     test_get_config_id, setup_simple_state),
 
 #ifndef DOXYGEN
 };

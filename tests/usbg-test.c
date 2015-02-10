@@ -456,3 +456,28 @@ void for_each_test_function(void **state, FunctionTest fun)
 		}
 	}
 }
+
+void for_each_test_config(void **state, ConfigTest fun)
+{
+	usbg_state *s = NULL;
+	usbg_gadget *g = NULL;
+	usbg_config *c = NULL;
+	struct test_state *ts;
+	struct test_gadget *tg;
+	struct test_config *tc;
+
+	ts = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(ts, &s);
+	*state = s;
+
+	for (tg = ts->gadgets; tg->name; tg++) {
+		g = usbg_get_gadget(s, tg->name);
+		assert_non_null(g);
+		for (tc = tg->configs; tc->label; tc++) {
+			c = usbg_get_config(g, tc->id, tc->label);
+			fun(c, tc);
+		}
+	}
+}
