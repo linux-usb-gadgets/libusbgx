@@ -58,34 +58,49 @@ static struct test_function simple_funcs[] = {
 static struct test_function all_funcs[] = {
 	{
 		.type = F_SERIAL,
-		.instance = "0"
+		.instance = "serial_instance0"
 	}, {
 		.type = F_ACM,
-		.instance = "0"
+		.instance = "acm_instance0"
 	}, {
 		.type = F_OBEX,
-		.instance = "0"
+		.instance = "obex_instance0"
 	}, {
 		.type = F_ECM,
-		.instance = "0"
+		.instance = "ecm_instance0"
 	}, {
 		.type = F_SUBSET,
-		.instance = "0"
+		.instance = "subset_instance0"
 	}, {
 		.type = F_NCM,
-		.instance = "0"
+		.instance = "ncm_instance0"
 	}, {
 		.type = F_EEM,
-		.instance = "0"
+		.instance = "eem_instance0"
 	}, {
 		.type = F_RNDIS,
-		.instance = "0"
+		.instance = "rndis_instance0"
 	}, {
 		.type = F_PHONET,
-		.instance = "0"
+		.instance = "phonet_instance0"
 	}, {
 		.type = F_FFS,
+		.instance = "ffs_instance0"
+	},
+
+	TEST_FUNCTION_LIST_END
+};
+
+static struct test_function same_type_funcs[] = {
+	{
+		.type = F_SERIAL,
 		.instance = "0"
+	}, {
+		.type = F_SERIAL,
+		.instance = "1"
+	}, {
+		.type = F_SERIAL,
+		.instance = "2"
 	},
 
 	TEST_FUNCTION_LIST_END
@@ -178,6 +193,57 @@ static struct test_state all_funcs_state = {
 };
 
 /**
+ * @brief Prepare test_state with one gadget containing given function list
+ * @details For testing only functions. We put them in a gadget as simply
+ * as possible.
+ * @param[in] func Pointer to list of functions
+ * @return Pointer to test state with given functions
+ */
+static struct test_state *put_func_in_state(struct test_function *func)
+{
+	struct test_state *st;
+	struct test_gadget *g;
+	struct test_config *c;
+	char **udcs;
+
+	st = malloc(sizeof(*st));
+	if (st == NULL)
+		fail();
+	free_later(st);
+
+	/* Do not need config */
+	c = calloc(1, sizeof(*c));
+	if (c == NULL)
+		fail();
+	free_later(c);
+
+	g = calloc(2, sizeof(*g));
+	if (g == NULL)
+		fail();
+	free_later(g);
+
+	udcs = calloc(2, sizeof(*udcs));
+	if (udcs == NULL)
+		fail();
+	free_later(udcs);
+
+	g[0].name = "g1";
+	g[0].udc = "UDC1";
+	g[0].configs = c;
+	g[0].functions = func;
+
+	udcs[0] = "UDC1";
+
+	st->configfs_path = "config";
+	st->gadgets = g;
+	st->udcs = udcs;
+
+	prepare_state(st);
+
+	return st;
+}
+
+/**
  * @brief Setup simple state with some gadgets, configs and functions
  */
 static void setup_simple_state(void **state)
@@ -193,6 +259,14 @@ static void setup_all_funcs_state(void **state)
 {
 	prepare_state(&all_funcs_state);
 	*state = &all_funcs_state;
+}
+
+/**
+ * @brief Setup state with few functions of the same type
+ */
+static void setup_same_type_funcs_state(void **state)
+{
+	*state = put_func_in_state(same_type_funcs);
 }
 
 /**
@@ -425,6 +499,193 @@ static void test_init(void **state)
 }
 
 /**
+ * @brief Test getting function by name
+ * @param[in] state Pointer to pointer to correctly initialized test_state structure
+ */
+static void test_get_function(void **state)
+{
+	for_each_test_function(state, assert_func_equal);
+}
+
+/**
+ * @brief Tests usbg_get_function with some non-existing functions
+ * @details Check if get function will return NULL, when invalid
+ * functions names and types are passed as arguments and will not cause crash.
+ * @param[in] state Pointer to pointer to correctly initialized test_state structure
+ */
+static void test_get_function_fail(void **state)
+{
+	usbg_state *s = NULL;
+	usbg_gadget *g = NULL;
+	usbg_function *f = NULL;
+	struct test_state *st;
+
+	st = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(st, &s);
+	*state = s;
+
+	g = usbg_get_first_gadget(s);
+	assert_non_null(g);
+
+	f = usbg_get_function(g, F_ACM, "non-existing-instance");
+	assert_null(f);
+
+	f = usbg_get_function(g, 9001, "0");
+	assert_null(f);
+}
+
+
+/**
+ * @brief Tests function type translation to string
+ * @param[in] state Pointer to pointer to correctly initialized test_state structure
+ * @details Check if get_function_type_str returns proper strings for all types.
+ */
+static void test_get_function_type_str(void **state)
+{
+	struct {
+		usbg_function_type type;
+		const char *str;
+	} types[] = {
+		{F_SERIAL, "gser"},
+		{F_ACM, "acm"},
+		{F_OBEX, "obex"},
+		{F_ECM, "ecm"},
+		{F_SUBSET, "geth"},
+		{F_NCM, "ncm"},
+		{F_EEM, "eem"},
+		{F_RNDIS, "rndis"},
+		{F_PHONET, "phonet"},
+		{F_FFS, "ffs"}
+	};
+
+	const char *str;
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(types); i++) {
+		str = usbg_get_function_type_str(types[i].type);
+		assert_non_null(str);
+		assert_string_equal(str, types[i].str);
+	}
+}
+
+/**
+ * @brief Tests function type translation to string with unknown funcs
+ * @param[in] state Not used parameter
+ * @details Check if get_function_type_str returns NULL, when given
+ * function type is unknown.
+ */
+static void test_get_function_type_str_fail(void **state)
+{
+	const char *str;
+
+	str = usbg_get_function_type_str(-1);
+	assert_null(str);
+}
+
+/**
+ * @brief Get instance of given function and check it
+ * @param[in] f Usbg function
+ * @param[in] tf Test function which should match f
+ */
+static void try_get_function_instance(usbg_function *f, struct test_function *tf)
+{
+	const char *str;
+
+	str = usbg_get_function_instance(f);
+	assert_string_equal(str, tf->instance);
+}
+
+/**
+ * @brief Tests getting function instance from usbg_function structure
+ * @param[in] state Pointer to pointer to correctly initialized test_state structure
+ * @details Check if returned instance name is correct.
+ */
+static void test_get_function_instance(void **state)
+{
+	for_each_test_function(state, try_get_function_instance);
+}
+
+/**
+ * @brief Cpy instance of given usbg function and check it
+ * @param[in] f Usbg function
+ * @param[in] tf Test function which should match f
+ */
+static void try_cpy_function_instance(usbg_function *f, struct test_function *tf)
+{
+	char str[USBG_MAX_NAME_LENGTH];
+	int ret;
+	int small_len = 2;
+
+	ret = usbg_cpy_function_instance(f, str, USBG_MAX_NAME_LENGTH);
+	assert_int_equal(ret, USBG_SUCCESS);
+	assert_string_equal(str, tf->instance);
+
+	ret = usbg_cpy_function_instance(f, str, small_len);
+	assert_int_equal(ret, USBG_SUCCESS);
+	assert_memory_equal(str, tf->instance, small_len - 1);
+	assert_int_equal(str[small_len - 1], '\0');
+}
+
+/**
+ * @brief Tests copying function instance from usbg_function structure into buffer
+ * @param[in] state Pointer to pointer to correctly initialized state
+ * @details Check if buffer contains expected string
+ */
+static void test_cpy_function_instance(void **state)
+{
+	for_each_test_function(state, try_cpy_function_instance);
+}
+
+/**
+ * @brief Get function type and check it
+ * @param[in] f Usbg function
+ * @param[in] tf Test function which should match f by type
+ */
+static void try_get_function_type(usbg_function *f, struct test_function *tf)
+{
+	usbg_function_type type;
+
+	type = usbg_get_function_type(f);
+	assert_int_equal(type, tf->type);
+}
+
+/**
+ * @brief Tests getting function type
+ * @details Check if getting function type returns what was expected.
+ * State must be proper (init must end with success).
+ * @param[in] state Pointer to pointer to correctly initialized state
+ */
+static void test_get_function_type(void **state)
+{
+	for_each_test_function(state, try_get_function_type);
+}
+
+/**
+ * @brief Check if function instance length is correct
+ * @param[in] f Usbg function
+ * @param[in] tf Test function which should match f
+ */
+static void try_get_function_instance_len(usbg_function *f, struct test_function *tf)
+{
+	size_t len;
+	len = usbg_get_function_instance_len(f);
+	assert_int_equal(len, strlen(tf->instance));
+}
+
+/**
+ * @brief Tests getting length of function instance name
+ * @details Check if returned instance name length matches
+ * actual length of instance name
+ * @param[in] state Pointer to pointer to correctly initialized state
+ */
+static void test_get_function_instance_len(void **state)
+{
+	for_each_test_function(state, try_get_function_instance_len);
+}
+
+/**
  * @brief cleanup usbg state
  */
 static void teardown_state(void **state)
@@ -544,6 +805,94 @@ static UnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_cpy_gadget_name_fail_simple",
 		     test_cpy_gadget_name_fail, setup_simple_state),
+	/**
+	* @usbg_test
+	 * @test_desc{test_get_function_simple,
+	 * Check if function can be correctly get from simple state,
+	 * usbg_get_function}
+	 */
+	USBG_TEST_TS("test_get_function_simple",
+		     test_get_function, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_function_all_funcs,
+	 * Check if getting function work on all function types,
+	 * usbg_get_function}
+	 */
+	USBG_TEST_TS("test_get_function_all_funcs",
+		     test_get_function, setup_all_funcs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_function_same_type_funcs,
+	 * Check if having multiple functions with the same type does not
+	 * cause failure
+	 * usbg_get_function}
+	 */
+	USBG_TEST_TS("test_get_function_same_type_funcs",
+		     test_get_function, setup_same_type_funcs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_function_fail_simple,
+	 * Check if trying to get invalid function's name ends
+	 * with expected error,
+	 * usbg_get_function}
+	 */
+	USBG_TEST_TS("test_get_function_fail_simple",
+		     test_get_function_fail, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_function_instance_simple,
+	 * Check if getting simple instance returns what expected,
+	 * usbg_get_function_instance}
+	 */
+	USBG_TEST_TS("test_get_function_instance_simple",
+		     test_get_function_instance, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_cpy_function_instance_simple,
+	 * Check if copying simple instance into buffer returns what expected,
+	 * usbg_cpy_function_instance}
+	 */
+	USBG_TEST_TS("test_cpy_function_instance_simple",
+		     test_cpy_function_instance, setup_all_funcs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_function_type_simple,
+	 * Check if function type is returned correctly,
+	 * usbg_get_function_type}
+	 */
+	USBG_TEST_TS("test_get_function_type_simple",
+		     test_get_function_type, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_function_type_all_funcs,
+	 * Check if all function types are returned correctly,
+	 * usbg_get_function_type}
+	 */
+	USBG_TEST_TS("test_get_function_type_all_funcs",
+		     test_get_function_type, setup_all_funcs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_function_instance_len_simple,
+	 * Check if function instance length is returned correctly,
+	 * usbg_get_function_instance_len}
+	 */
+	USBG_TEST_TS("test_get_function_instance_len_simple",
+		     test_get_function_instance_len, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_function_type_str,
+	 * Compare returned function types strings with expected values,
+	 * usbg_get_function_type_str}
+	 */
+	unit_test(test_get_function_type_str),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_function_type_str_fail,
+	 * Try to get type string of unknown type,
+	 * usbg_get_function_type_str}
+	 */
+	unit_test(test_get_function_type_str_fail),
 
 #ifndef DOXYGEN
 };

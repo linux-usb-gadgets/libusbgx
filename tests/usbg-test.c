@@ -431,3 +431,28 @@ void assert_path_equal(const char *actual, const char *expected)
 		    cast_to_largest_integral_type(expected)) == 0)
 		fail();
 }
+
+void for_each_test_function(void **state, FunctionTest fun)
+{
+	usbg_state *s = NULL;
+	struct test_state *ts;
+	struct test_gadget *tg;
+	struct test_function *tf;
+	usbg_gadget *g = NULL;
+	usbg_function *f = NULL;
+
+	ts = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(ts, &s);
+	*state = s;
+
+	for (tg = ts->gadgets; tg->name; ++tg) {
+		g = usbg_get_gadget(s, tg->name);
+		assert_non_null(g);
+		for (tf = tg->functions; tf->instance; ++tf) {
+			f = usbg_get_function(g, tf->type, tf->instance);
+			fun(f, tf);
+		}
+	}
+}

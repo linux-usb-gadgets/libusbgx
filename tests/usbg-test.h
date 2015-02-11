@@ -183,6 +183,16 @@ int path_equal_display_error(const LargestIntegralType actual, const LargestInte
  */
 void assert_path_equal(const char *actual, const char *expected);
 
+/**
+ * @brief Function that performs some test on given usbg function
+*/
+typedef void (*FunctionTest)(usbg_function *f, struct test_function *tf);
+
+/**
+ * @brief Call given function for all usb functions present in given state
+ * @param[in] state Properly prepared state to be tested
+ * @param[in] fun Function to be called on each usb function in state
+ */
+void for_each_test_function(void **state, FunctionTest fun);
 
 #endif /* USBG_TEST_H */
-
