@@ -251,6 +251,14 @@ int hex_str_equal_display_error(const LargestIntegralType actual, const LargestI
 void assert_path_equal(const char *actual, const char *expected);
 
 /**
+ * @brief Assert that given usbg gadget attributes sets are equal
+ * @param[in] actual Pointer to actual gadget attributes structure
+ * @param[in] expected Pointer to expeced gadget attributes structure
+ */
+void assert_gadget_attrs_equal(usbg_gadget_attrs *actual,
+		usbg_gadget_attrs *expected);
+
+/**
  * @brief Function that performs some test on given usbg function
 */
 typedef void (*FunctionTest)(usbg_function *f, struct test_function *tf);

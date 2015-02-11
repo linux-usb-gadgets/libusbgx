@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <time.h>
 
 #ifdef HAS_LIBCONFIG
 #include <libconfig.h>
@@ -23,6 +24,28 @@
 	{"setup "#test, setup, UNIT_TEST_FUNCTION_TYPE_SETUP}, \
 	{name, test, UNIT_TEST_FUNCTION_TYPE_TEST}, \
 	{"teardown "#test, teardown, UNIT_TEST_FUNCTION_TYPE_TEARDOWN}
+
+static usbg_gadget_attrs min_gadget_attrs = {
+	.bcdUSB = 0x0000,
+	.bDeviceClass = 0x0,
+	.bDeviceSubClass = 0x0,
+	.bDeviceProtocol = 0x0,
+	.bMaxPacketSize0 = 0x0,
+	.idVendor = 0x0000,
+	.idProduct = 0x0000,
+	.bcdDevice = 0x0000
+};
+
+static usbg_gadget_attrs max_gadget_attrs = {
+	.bcdUSB = 0xffff,
+	.bDeviceClass = 0xff,
+	.bDeviceSubClass = 0xff,
+	.bDeviceProtocol = 0xff,
+	.bMaxPacketSize0 = 0xff,
+	.idVendor = 0xffff,
+	.idProduct = 0xffff,
+	.bcdDevice = 0xffff
+};
 
 /**
  * @brief Simplest udcs names
@@ -191,6 +214,28 @@ static struct test_state all_funcs_state = {
 	.gadgets = all_funcs_gadgets,
         .udcs = simple_udcs
 };
+
+static usbg_gadget_attrs *get_random_gadget_attrs()
+{
+	usbg_gadget_attrs *ret;
+
+	ret = malloc(sizeof(*ret));
+	if (ret == NULL)
+		fail();
+	free_later(ret);
+
+	srand(time(NULL));
+	ret->bcdUSB = rand() % max_gadget_attrs.bcdUSB;
+	ret->bDeviceClass = rand() % max_gadget_attrs.bDeviceClass;
+	ret->bDeviceSubClass = rand() % max_gadget_attrs.bDeviceSubClass;
+	ret->bDeviceProtocol = rand() % max_gadget_attrs.bDeviceProtocol;
+	ret->bMaxPacketSize0 = rand() % max_gadget_attrs.bMaxPacketSize0;
+	ret->idVendor = rand() % max_gadget_attrs.idVendor;
+	ret->idProduct = rand() % max_gadget_attrs.idProduct;
+	ret->bcdDevice = rand() % max_gadget_attrs.bcdDevice;
+
+	return ret;
+}
 
 /**
  * @brief Prepare test_state with one gadget containing given function list
@@ -866,6 +911,145 @@ static void test_get_config_id(void **state)
 }
 
 /**
+ * @brief Test getting given attributes from gadgets present in state
+ * @param[in] s Pointer to usbg state
+ * @param[in] ts Pointer to test state matching given usbg state
+ * @param[in] attrs Pointer to gadget attributes which should be put in
+ * virtual filesystem for writting by usbg
+ */
+static void try_get_gadget_attrs(usbg_state *s, struct test_state *ts,
+		usbg_gadget_attrs *attrs)
+{
+	usbg_gadget *g = NULL;
+	usbg_gadget_attrs actual;
+	struct test_gadget *tg;
+	int ret;
+
+	for (tg = ts->gadgets; tg->name; tg++) {
+		g = usbg_get_gadget(s, tg->name);
+		assert_non_null(g);
+
+		push_gadget_attrs(tg, attrs);
+		ret = usbg_get_gadget_attrs(g, &actual);
+
+		assert_int_equal(ret, 0);
+		assert_gadget_attrs_equal(&actual, attrs);
+	}
+}
+
+/**
+ * @brief Tests getting gadget attributes
+ * @param[in] state Pointer to correctly initialized test_state structure
+ **/
+static void test_get_gadget_attrs(void **state)
+{
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	ts = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(ts, &s);
+	*state = s;
+
+	try_get_gadget_attrs(s, ts, &min_gadget_attrs);
+	try_get_gadget_attrs(s, ts, &max_gadget_attrs);
+	try_get_gadget_attrs(s, ts, get_random_gadget_attrs());
+}
+
+/**
+ * @brief Test setting given attributes on gadgets present in state
+ * @param[in] s Pointer to usbg state
+ * @param[in] ts Pointer to test state matching given usbg state
+ * @param[in] attrs Pointer to gadget attributes to be set
+ */
+static void try_set_gadget_attrs(usbg_state *s, struct test_state *ts,
+		usbg_gadget_attrs *attrs)
+{
+	usbg_gadget *g = NULL;
+	struct test_gadget *tg;
+	int ret;
+
+	for (tg = ts->gadgets; tg->name; tg++) {
+		g = usbg_get_gadget(s, tg->name);
+		assert_non_null(g);
+
+		pull_gadget_attrs(tg, attrs);
+		ret = usbg_set_gadget_attrs(g, attrs);
+
+		assert_int_equal(ret, 0);
+	}
+}
+/**
+ * @brief Tests setting gadget attributes
+ * @param[in] state Pointer to correctly initialized test_state structure
+ **/
+static void test_set_gadget_attrs(void **state)
+{
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	ts = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(ts, &s);
+	*state = s;
+
+	try_set_gadget_attrs(s, ts, &min_gadget_attrs);
+	try_set_gadget_attrs(s, ts, &max_gadget_attrs);
+	try_set_gadget_attrs(s, ts, get_random_gadget_attrs());
+}
+
+/**
+ * @brief Test setting given attributes on gadgets present in state one by one,
+ * using functions specific for each attribute
+ * @param[in] s Pointer to usbg state
+ * @param[in] ts Pointer to test state matching given usbg state
+ * @param[in] attrs Pointer to gadget attributes to be set
+ */
+static void try_set_specific_gadget_attr(usbg_state *s, struct test_state *ts,
+		usbg_gadget_attrs *attrs)
+{
+	usbg_gadget *g = NULL;
+	struct test_gadget *tg;
+	int ret;
+	int i;
+	int attr;
+
+	for (tg = ts->gadgets; tg->name; tg++) {
+		g = usbg_get_gadget(s, tg->name);
+		assert_non_null(g);
+
+		for (i = USBG_GADGET_ATTR_MIN; i < USBG_GADGET_ATTR_MAX; i++) {
+			attr = get_gadget_attr(attrs, i);
+			pull_gadget_attribute(tg, i, attr);
+			usbg_set_gadget_attr(g, i, attr);
+			assert_int_equal(ret, 0);
+		}
+	}
+}
+
+/**
+ * @brief Tests setting gadget attributes one by one
+ * @param[in] state Pointer to correctly initialized test_state structure
+ **/
+static void test_set_specific_gadget_attr(void **state)
+{
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	ts = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(ts, &s);
+	*state = s;
+
+	try_set_specific_gadget_attr(s, ts, &min_gadget_attrs);
+	try_set_specific_gadget_attr(s, ts, &max_gadget_attrs);
+	try_set_specific_gadget_attr(s, ts, get_random_gadget_attrs());
+}
+
+/**
  * @brief cleanup usbg state
  */
 static void teardown_state(void **state)
@@ -1137,6 +1321,31 @@ static UnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_get_config_id_simple",
 		     test_get_config_id, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_gadget_attrs_simple,
+	 * Get gadget attributes list and compare them with original,
+	 * usbg_get_gadget_attrs}
+	 */
+	USBG_TEST_TS("test_get_gadget_attrs_simple",
+		     test_get_gadget_attrs, setup_simple_state),
+	/**
+	 * @usbg_tets
+	 * @test_desc{test_set_gadget_attrs_simple,
+	 * Set gadget attributes list\, check if everything is wrote
+	 * as expected,
+	 * usbg_set_gadget_attrs}
+	 */
+	USBG_TEST_TS("test_set_gadget_attrs_simple",
+		     test_set_gadget_attrs, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_set_specific_gadget_attr_simple,
+	 * Set gadget attributes one by one,
+	 * usbg_set_gadget_attrs}
+	 */
+	USBG_TEST_TS("test_set_specific_gadget_attr_simple",
+		     test_set_specific_gadget_attr, setup_simple_state),
 
 #ifndef DOXYGEN
 };

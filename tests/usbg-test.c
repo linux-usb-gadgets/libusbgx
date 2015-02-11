@@ -555,6 +555,15 @@ int hex_str_equal_display_error(const LargestIntegralType actual, const LargestI
 	return 0;
 }
 
+void assert_gadget_attrs_equal(usbg_gadget_attrs *actual,
+		usbg_gadget_attrs *expected)
+{
+	int i;
+
+	for (i = USBG_GADGET_ATTR_MIN; i < USBG_GADGET_ATTR_MAX; i++)
+		assert_int_equal(get_gadget_attr(actual, i), get_gadget_attr(expected, i));
+}
+
 void for_each_test_function(void **state, FunctionTest fun)
 {
 	usbg_state *s = NULL;
