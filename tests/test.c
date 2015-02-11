@@ -25,6 +25,9 @@
 	{name, test, UNIT_TEST_FUNCTION_TYPE_TEST}, \
 	{"teardown "#test, teardown, UNIT_TEST_FUNCTION_TYPE_TEARDOWN}
 
+#define FILLED_STR(len, c) \
+	{ [0 ... len - 2] = c, [len - 1] = '\0' }
+
 static usbg_gadget_attrs min_gadget_attrs = {
 	.bcdUSB = 0x0000,
 	.bDeviceClass = 0x0,
@@ -47,6 +50,13 @@ static usbg_gadget_attrs max_gadget_attrs = {
 	.bcdDevice = 0xffff
 };
 
+/* PATH_MAX is limit for path length */
+#define LONG_PATH_LEN PATH_MAX/2
+static char long_path_str[] = FILLED_STR(LONG_PATH_LEN, 'x');
+
+/* NAME_MAX is limit for filename length */
+static char long_usbg_string[] = FILLED_STR(NAME_MAX, 'x');
+
 /**
  * @brief Simplest udcs names
  * @details Used to go through init when testing other things
@@ -54,6 +64,12 @@ static usbg_gadget_attrs max_gadget_attrs = {
 static char *simple_udcs[] = {
 	"UDC1",
 	"UDC2",
+	NULL
+};
+
+static char *long_udcs[] = {
+	long_usbg_string,
+	"UDC1",
 	NULL
 };
 
@@ -197,6 +213,16 @@ static struct test_gadget all_funcs_gadgets[] = {
 	TEST_GADGET_LIST_END
 };
 
+static struct test_gadget long_udc_gadgets[] = {
+	{
+		.name = "long_udc_gadgets",
+		.udc = long_usbg_string,
+		.configs = simple_confs,
+		.functions = simple_funcs
+	},
+
+	TEST_GADGET_LIST_END
+};
 /**
  * @brief Simple state
  */
@@ -213,6 +239,18 @@ static struct test_state all_funcs_state = {
 	.configfs_path = "all_funcs_configfs",
 	.gadgets = all_funcs_gadgets,
         .udcs = simple_udcs
+};
+
+static struct test_state long_path_state = {
+	.configfs_path = long_path_str,
+	.gadgets = simple_gadgets,
+        .udcs = simple_udcs
+};
+
+static struct test_state long_udc_state = {
+	.configfs_path = "simple_path",
+	.gadgets = long_udc_gadgets,
+	.udcs = long_udcs
 };
 
 static usbg_gadget_attrs *get_random_gadget_attrs()
@@ -312,6 +350,24 @@ static void setup_all_funcs_state(void **state)
 static void setup_same_type_funcs_state(void **state)
 {
 	*state = put_func_in_state(same_type_funcs);
+}
+
+/**
+ * @brief Setup state with very long path name
+ */
+static void setup_long_path_state(void **state)
+{
+	prepare_state(&long_path_state);
+	*state = &long_path_state;
+}
+
+/**
+ * @brief Setup state with long udc name
+ */
+static void setup_long_udc_state(void **state)
+{
+	prepare_state(&long_udc_state);
+	*state = &long_udc_state;
 }
 
 /**
@@ -1094,6 +1150,22 @@ static UnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_init_all_funcs",
 		     test_init, setup_all_funcs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_init_long_path,
+	 * Try to initialize libusbg with long configfs path,
+	 * usbg_init}
+	 */
+	USBG_TEST_TS("test_init_long_path",
+		     test_init, setup_long_path_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_init_long_udc,
+	 * Try to initialize libusbg with long udc name,
+	 * usbg_init}
+	 */
+	USBG_TEST_TS("test_init_long_udc",
+		     test_init, setup_long_udc_state),
 	/**
 	 * @usbg_test
 	 * @test_desc{test_get_gadget_simple,
