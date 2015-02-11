@@ -426,6 +426,8 @@ int path_equal_display_error(const LargestIntegralType actual, const LargestInte
 
 void assert_path_equal(const char *actual, const char *expected)
 {
-	if (path_equal_display_error((const LargestIntegralType)actual, (const LargestIntegralType)expected) == 0)
+	if (path_equal_display_error(
+		    cast_to_largest_integral_type(actual),
+		    cast_to_largest_integral_type(expected)) == 0)
 		fail();
 }
