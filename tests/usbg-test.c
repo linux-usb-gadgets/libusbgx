@@ -91,6 +91,28 @@ static int dir_id = 0;
 	will_return(readlink, c);\
 } while(0)
 
+#define EXPECT_WRITE(file, content) do {\
+	file_id++;\
+	expect_path(fopen, path, file);\
+	will_return(fopen, file_id);\
+	expect_value(fputs, stream, file_id);\
+	expect_string(fputs, s, content);\
+	will_return(fputs, 0);\
+	expect_value(fclose, fp, file_id);\
+	will_return(fclose, 0);\
+} while(0)
+
+#define EXPECT_HEX_WRITE(file, content) do {\
+	file_id++;\
+	expect_path(fopen, path, file);\
+	will_return(fopen, file_id);\
+	expect_value(fputs, stream, file_id);\
+	expect_check(fputs, s, hex_str_equal_display_error, content);\
+	will_return(fputs, 0);\
+	expect_value(fclose, fp, file_id);\
+	will_return(fclose, 0);\
+} while(0)
+
 /**
  * @brief Compare test gadgets' names
  */
@@ -334,6 +356,87 @@ void push_init(struct test_state *state)
 		push_gadget(g);
 }
 
+int get_gadget_attr(usbg_gadget_attrs *attrs, usbg_gadget_attr attr) {
+	switch (attr) {
+	case BCD_USB:
+		return attrs->bcdUSB;
+	case B_DEVICE_CLASS:
+		return attrs->bDeviceClass;
+	case B_DEVICE_SUB_CLASS:
+		return attrs->bDeviceSubClass;
+	case B_DEVICE_PROTOCOL:
+		return attrs->bDeviceProtocol;
+	case B_MAX_PACKET_SIZE_0:
+		return attrs->bMaxPacketSize0;
+	case ID_VENDOR:
+		return attrs->idVendor;
+	case ID_PRODUCT:
+		return attrs->idProduct;
+	case BCD_DEVICE:
+		return attrs->bcdDevice;
+	default:
+		return -1;
+	}
+}
+
+void pull_gadget_attribute(struct test_gadget *gadget,
+		usbg_gadget_attr attr, int value)
+{
+	char *path;
+	char *content;
+	int tmp;
+
+	tmp = asprintf(&path, "%s/%s/%s",
+			gadget->path, gadget->name, gadget_attr_names[attr]);
+	if (tmp >= USBG_MAX_PATH_LENGTH)
+		fail();
+	free_later(path);
+
+	tmp = asprintf(&content, "0x%x\n", value);
+	if (tmp < 0)
+		fail();
+	free_later(content);
+
+	EXPECT_HEX_WRITE(path, content);
+}
+
+void push_gadget_attribute(struct test_gadget *gadget,
+		usbg_gadget_attr attr, int value)
+{
+	char *path;
+	char *content;
+	int tmp;
+
+	tmp = asprintf(&path, "%s/%s/%s",
+			gadget->path, gadget->name, gadget_attr_names[attr]);
+	if (tmp < 0)
+		fail();
+	free_later(path);
+
+	tmp = asprintf(&content, "0x%x\n", value);
+	if (tmp < 0)
+		fail();
+	free_later(content);
+
+	PUSH_FILE(path, content);
+}
+
+void push_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs)
+{
+	int i;
+
+	for (i = USBG_GADGET_ATTR_MIN; i < USBG_GADGET_ATTR_MAX; i++)
+		push_gadget_attribute(gadget, i, get_gadget_attr(attrs, i));
+}
+
+void pull_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs)
+{
+	int i;
+
+	for (i = USBG_GADGET_ATTR_MIN; i < USBG_GADGET_ATTR_MAX; i++)
+		pull_gadget_attribute(gadget, i, get_gadget_attr(attrs, i));
+}
+
 void init_with_state(struct test_state *in, usbg_state **out)
 {
 	int usbg_ret;
@@ -430,6 +533,26 @@ void assert_path_equal(const char *actual, const char *expected)
 		    cast_to_largest_integral_type(actual),
 		    cast_to_largest_integral_type(expected)) == 0)
 		fail();
+}
+
+int hex_str_cmp(const char *actual, const char *expected)
+{
+	int a, b;
+
+	sscanf(actual, "%x", &a);
+	sscanf(expected, "%x", &b);
+
+	return SIGNUM(a - b);
+}
+
+int hex_str_equal_display_error(const LargestIntegralType actual, const LargestIntegralType expected)
+{
+	if (hex_str_cmp((const char *)actual, (const char *)expected) == 0) {
+		return 1;
+	}
+
+	fprintf(stderr, "%s != %s\n", (const char *)actual, (const char *)expected);
+	return 0;
 }
 
 void for_each_test_function(void **state, FunctionTest fun)

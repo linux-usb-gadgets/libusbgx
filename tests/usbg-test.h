@@ -113,6 +113,58 @@ void prepare_gadget(struct test_state *state, struct test_gadget *g);
 void push_init(struct test_state *state);
 
 /**
+ * Prepare specific attributes writting/reading
+ **/
+
+/**
+ * @brief Get gadget attribute
+ * @param[in] attrs
+ * @param[in] attr
+ */
+int get_gadget_attr(usbg_gadget_attrs *attrs, usbg_gadget_attr attr);
+
+/**
+ * @brief Prepare to write given attribute by libusbg
+ * @param[in] gadget Test gadget related to given attribute
+ * @param[in] attr Attribute
+ * @param[in] value Attributes value
+ **/
+void push_gadget_attribute(struct test_gadget *gadget,
+		usbg_gadget_attr attr, int value);
+
+/**
+ * @brief Prepare to read given attribute by libusbg
+ * @param[in] gadget Test gadget related to given attribute
+ * @param[in] attr Attribute
+ * @param[in] value Attributes value
+ **/
+void pull_gadget_attribute(struct test_gadget *gadget,
+		usbg_gadget_attr attr, int value);
+
+/**
+ * @brief Prepare fake filesystem to get given gadget attributes
+ * @details Prepare queue of values passed to wrapped i/o functions,
+ * all values got from given attributes structure.
+ * @param[in] gadget Pointer to gadget
+ * @param[in] attrs Pointer to attributes which gadget should have
+ * @warning Calling usbg_get_gadget_attrs function whithout this
+ * preparation and with wrapped i/o may fail.
+ */
+void push_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs);
+
+/**
+ * @brief Prepare fake filesystem for attributes setting attempt.
+ * @details Prepare queue of values passed to wrapped i/o functions,
+ * corresponding to functions called on attributes setting
+ * @param[in] gadget Pointer to gadget
+ * @param[in] attrs Pointer to expected attributes
+ * @warning Calling usbg_get_gadget_attrs function whithout this
+ * preparation and with wrapped i/o may fail.
+ */
+void pull_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs);
+
+
+/**
  * @brief Store given pointer on cleanup stack
  * @details All stacked pointers will be freed by calling cleanup_queue.
  * This can be used to manage memory needed for single test casees.
@@ -176,6 +228,21 @@ int path_cmp(const char *a, const char *b);
  * as custom comparing function in cmocka framework.
  */
 int path_equal_display_error(const LargestIntegralType actual, const LargestIntegralType expected);
+
+/**
+ * @brief Compare attributes (as strings)
+ * @return Integer less than, equal to, or greater than zero if a is (respectively)
+ * less than, equal to, or greater than b.
+ */
+int hex_str_cmp(const char *actual, const char *expected);
+
+/**
+ * @brief Print error when given attributes are not equal
+ * @return 1 if attributes are equal, 0 otherwise
+ * @note Argument type is defined by cmocka. This specific function type is defined
+ * as custom comparing function in cmocka framework.
+ */
+int hex_str_equal_display_error(const LargestIntegralType actual, const LargestIntegralType expected);
 
 /**
  * @brief Assert that given path strings are equal
