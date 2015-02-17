@@ -223,6 +223,12 @@ static struct test_gadget long_udc_gadgets[] = {
 
 	TEST_GADGET_LIST_END
 };
+
+struct test_gadget_strs_data {
+	struct test_state *state;
+	usbg_gadget_strs *strs;
+};
+
 /**
  * @brief Simple state
  */
@@ -368,6 +374,40 @@ static void setup_long_udc_state(void **state)
 {
 	prepare_state(&long_udc_state);
 	*state = &long_udc_state;
+}
+
+/**
+ * @brief Setup state with gadget strings of random length
+ * @param[out] state Pointer to pointer to test_gadget_strs_data structure
+ * with initialized state and strings
+ */
+static void setup_random_len_gadget_strs_data(void **state)
+{
+	usbg_gadget_strs *strs;
+	struct test_gadget_strs_data *data;
+
+	/* will fill memory with zeros */
+	strs = calloc(1, sizeof(*strs));
+	if (strs == NULL)
+		fail();
+	free_later(strs);
+
+	data = malloc(sizeof(*data));
+	if (data == NULL)
+		fail();
+	free_later(data);
+
+	srand(time(NULL));
+
+	memset(strs->str_ser, 'x', rand() % USBG_MAX_STR_LENGTH);
+	memset(strs->str_mnf, 'x', rand() % USBG_MAX_STR_LENGTH);
+	memset(strs->str_prd, 'x', rand() % USBG_MAX_STR_LENGTH);
+
+	data->state = &simple_state;
+	data->strs = strs;
+
+	prepare_state(data->state);
+	*state = data;
 }
 
 /**
@@ -1190,6 +1230,47 @@ static void test_get_gadget_attr_str_fail(void **state)
 }
 
 /**
+ * @brief set gadget strings
+ * @details Also do it one by one
+ * @param[in] data Pointer to correctly initialized test_gadget_strs_data structure
+ */
+static void test_set_gadget_strs(void **data)
+{
+	struct test_gadget_strs_data *ts;
+	struct test_gadget *tg;
+	usbg_state *s = NULL;
+	usbg_gadget *g = NULL;
+	int i;
+	int ret;
+
+	ts = (struct test_gadget_strs_data *)(*data);
+	*data = NULL;
+
+	init_with_state(ts->state, &s);
+	*data = s;
+
+	for (tg = ts->state->gadgets; tg->name; tg++) {
+		g = usbg_get_gadget(s, tg->name);
+
+		pull_gadget_strs(tg, LANG_US_ENG, ts->strs);
+		ret = usbg_set_gadget_strs(g, LANG_US_ENG, ts->strs);
+		assert_int_equal(ret, 0);
+
+		for (i = 0; i < GADGET_STR_MAX; i++)
+			pull_gadget_string(tg, LANG_US_ENG, i, get_gadget_str(ts->strs, i));
+
+		ret = usbg_set_gadget_serial_number(g, LANG_US_ENG, ts->strs->str_ser);
+		assert_int_equal(ret, 0);
+
+		ret = usbg_set_gadget_manufacturer(g, LANG_US_ENG, ts->strs->str_mnf);
+		assert_int_equal(ret, 0);
+
+		ret = usbg_set_gadget_product(g, LANG_US_ENG, ts->strs->str_prd);
+		assert_int_equal(ret, 0);
+	}
+}
+
+/**
  * @brief cleanup usbg state
  */
 static void teardown_state(void **state)
@@ -1532,6 +1613,14 @@ static UnitTest tests[] = {
 	 * usbg_get_gadget_attr_str}
 	 */
 	unit_test(test_get_gadget_attr_str_fail),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_set_gadget_strs_random,
+	 * Set gadget strings of random length,
+	 * usbg_set_gadget_strs}
+	 */
+	USBG_TEST_TS("test_set_gadget_strs_random",
+		     test_set_gadget_strs, setup_random_len_gadget_strs_data),
 
 #ifndef DOXYGEN
 };
