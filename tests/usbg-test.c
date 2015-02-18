@@ -554,6 +554,42 @@ void pull_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *st
 		pull_gadget_str(gadget, gadget_str_names[i], lang, get_gadget_str(strs, i));
 }
 
+static void push_gadget_str_dir(struct test_gadget *gadget, int lang)
+{
+	char *dir;
+	int tmp;
+	tmp = asprintf(&dir, "%s/%s/strings/0x%x",
+			gadget->path, gadget->name, lang);
+	if (tmp < 0)
+		fail();
+	free_later(dir);
+
+	EXPECT_OPENDIR(dir);
+}
+
+static void push_gadget_str(struct test_gadget *gadget, const char *attr_name,
+		int lang, const char *content)
+{
+	char *path;
+	int tmp;
+
+	tmp = asprintf(&path, "%s/%s/strings/0x%x/%s",
+			gadget->path, gadget->name, lang, attr_name);
+	if (tmp < 0)
+		fail();
+	free_later(path);
+	PUSH_FILE(path, content);
+}
+
+void push_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *strs)
+{
+	int i;
+
+	push_gadget_str_dir(gadget, lang);
+	for (i = 0; i < GADGET_STR_MAX; i++)
+		push_gadget_str(gadget, gadget_str_names[i], lang, get_gadget_str(strs, i));
+}
+
 void assert_func_equal(usbg_function *f, struct test_function *expected)
 {
 	assert_string_equal(f->instance, expected->instance);
@@ -670,6 +706,13 @@ void assert_gadget_attrs_equal(usbg_gadget_attrs *actual,
 
 	for (i = USBG_GADGET_ATTR_MIN; i < USBG_GADGET_ATTR_MAX; i++)
 		assert_int_equal(get_gadget_attr(actual, i), get_gadget_attr(expected, i));
+}
+
+void assert_gadget_strs_equal(usbg_gadget_strs *actual, usbg_gadget_strs *expected)
+{
+	int i;
+	for (i = 0; i < GADGET_STR_MAX; i++)
+		assert_string_equal(get_gadget_str(actual, i), get_gadget_str(expected, i));
 }
 
 void for_each_test_function(void **state, FunctionTest fun)

@@ -197,6 +197,11 @@ void pull_gadget_string(struct test_gadget *gadget, int lang,
 void pull_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *strs);
 
 /**
+ * @brief prepare for reading gadget's strings
+ */
+void push_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *strs);
+
+/**
  * @brief Store given pointer on cleanup stack
  * @details All stacked pointers will be freed by calling cleanup_queue.
  * This can be used to manage memory needed for single test casees.
@@ -289,6 +294,11 @@ void assert_path_equal(const char *actual, const char *expected);
  */
 void assert_gadget_attrs_equal(usbg_gadget_attrs *actual,
 		usbg_gadget_attrs *expected);
+
+/**
+ * @brief Assert that given gadget strings are equal
+ */
+void assert_gadget_strs_equal(usbg_gadget_strs *actual, usbg_gadget_strs *expected);
 
 /**
  * @brief Function that performs some test on given usbg function
