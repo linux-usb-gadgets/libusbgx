@@ -61,6 +61,16 @@ static usbg_config_strs simple_config_strs= {
 	.configuration = "configuration string"
 };
 
+static usbg_config_attrs max_config_attrs = {
+	.bmAttributes = 0xff,
+	.bMaxPower = 0xff
+};
+
+static usbg_config_attrs min_config_attrs = {
+	.bmAttributes = 0x00,
+	.bMaxPower = 0x00
+};
+
 /**
  * @brief Simplest udcs names
  * @details Used to go through init when testing other things
@@ -268,6 +278,22 @@ static struct test_state long_udc_state = {
 	.udcs = long_udcs
 };
 
+static usbg_config_attrs *get_random_config_attrs()
+{
+	usbg_config_attrs *ret;
+
+	ret = malloc(sizeof(*ret));
+	if (ret == NULL)
+		fail();
+	free_later(ret);
+
+	srand(time(NULL));
+	ret->bmAttributes = rand() % max_config_attrs.bmAttributes;
+	ret->bMaxPower = rand() % max_config_attrs.bMaxPower;
+
+	return ret;
+}
+
 static usbg_gadget_attrs *get_random_gadget_attrs()
 {
 	usbg_gadget_attrs *ret;
@@ -288,6 +314,39 @@ static usbg_gadget_attrs *get_random_gadget_attrs()
 	ret->bcdDevice = rand() % max_gadget_attrs.bcdDevice;
 
 	return ret;
+}
+
+/**
+ * @brief Add given attributes to all configs in state
+ * @return Prepared state where configs has given attributes
+ */
+static void *prepare_state_with_config_attrs(struct test_state *state,
+		usbg_config_attrs *attrs)
+{
+	struct test_gadget *tg;
+	struct test_config *tc;
+
+	for (tg = state->gadgets; tg->name; ++tg)
+		for (tc = tg->configs; tc->label; ++tc)
+			tc->attrs = attrs;
+
+	state = prepare_state(state);
+	return state;
+}
+
+static void setup_max_config_attrs_state(void **state)
+{
+	*state = prepare_state_with_config_attrs(&simple_state, &max_config_attrs);
+}
+
+static void setup_min_config_attrs_state(void **state)
+{
+	*state = prepare_state_with_config_attrs(&simple_state, &min_config_attrs);
+}
+
+static void setup_random_config_attrs_state(void **state)
+{
+	*state = prepare_state_with_config_attrs(&simple_state, get_random_config_attrs());
 }
 
 static void setup_simple_config_strs_state(void **state)
@@ -1459,6 +1518,56 @@ static void test_get_config_strs(void **state)
 }
 
 /**
+ * @brief Get config attributes
+ * @details Assume that attributes which will be returned are the same as
+ * given test state contains.
+ * @param[in] c Usbg config
+ * @param[in] tc Test config with set attributes
+ */
+static void try_get_config_attrs(usbg_config *c, struct test_config *tc)
+{
+	usbg_config_attrs attrs;
+
+	push_config_attrs(tc, tc->attrs);
+	usbg_get_config_attrs(c, &attrs);
+	assert_config_attrs_equal(tc->attrs, &attrs);
+}
+
+/**
+ * @brief Test getting config attributes
+ * @details Get config attributes on all configfs in state
+ * @param[in, out] state Pointer to pointer to correctly initialized test state,
+ * will point to usbg state when finished.
+ */
+static void test_get_config_attrs(void **state)
+{
+	for_each_test_config(state, try_get_config_attrs);
+}
+
+/**
+ * @brief Set config attributes in given config
+ * @param[in] c Usbg config
+ * @param[in] tc Test config with attributes which will be set
+ */
+static void try_set_config_attrs(usbg_config *c, struct test_config *tc)
+{
+	pull_config_attrs(tc, tc->attrs);
+	usbg_set_config_attrs(c, tc->attrs);
+}
+
+/**
+ * @brief Test setting config attributes
+ * @details Set config attributes on all configs in state
+ * @param[in, out] state Pointer to pointer to correctly initialized test state,
+ * will point to usbg state when finished.
+ */
+static void test_set_config_attrs(void **state)
+{
+	for_each_test_config(state, try_set_config_attrs);
+}
+
+/**
+ *
  * @brief cleanup usbg state
  */
 static void teardown_state(void **state)
@@ -1865,6 +1974,54 @@ static UnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_get_config_strs_simple",
 		     test_get_config_strs, setup_simple_config_strs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_config_attrs_max,
+	 * Get config attributes with max values,
+	 * usbg_get_config_attrs}
+	 */
+	USBG_TEST_TS("test_get_config_attrs_max",
+		     test_get_config_attrs, setup_max_config_attrs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_config_attrs_min,
+	 * Get config attributes with minimum values,
+	 * usbg_get_config_attrs}
+	 */
+	USBG_TEST_TS("test_get_config_attrs_min",
+		     test_get_config_attrs, setup_min_config_attrs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_config_attrs_random,
+	 * Get config attributes with random values,
+	 * usbg_get_config_attrs}
+	 */
+	USBG_TEST_TS("test_get_config_attrs_random",
+		     test_get_config_attrs, setup_random_config_attrs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_set_config_attrs_max,
+	 * Set config attributes with max values,
+	 * usbg_set_config_attrs}
+	 */
+	USBG_TEST_TS("test_set_config_attrs_max",
+		     test_set_config_attrs, setup_max_config_attrs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_set_config_attrs_min,
+	 * Set config attributes with minimum values,
+	 * usbg_set_config_attrs}
+	 */
+	USBG_TEST_TS("test_set_config_attrs_min",
+		     test_set_config_attrs, setup_min_config_attrs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_set_config_attrs_random,
+	 * Set config attributes with random values,
+	 * usbg_set_config_attrs}
+	 */
+	USBG_TEST_TS("test_set_config_attrs_random",
+		     test_set_config_attrs, setup_random_config_attrs_state),
 
 #ifndef DOXYGEN
 };
