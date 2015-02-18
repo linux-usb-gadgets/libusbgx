@@ -23,6 +23,16 @@ static const char *gadget_str_names[] = {
 	"product"
 };
 
+static const char *config_attr_names[] = {
+	"MaxPower",
+	"bmAttributes"
+};
+
+static attr_format config_attr_format[] = {
+	[MAX_POWER] = FORMAT_DEC,
+	[BM_ATTRIBUTES] = FORMAT_HEX
+};
+
 void free_later(void *ptr)
 {
 	struct simple_stack *t;
@@ -44,7 +54,6 @@ void cleanup_stack()
 		cleanup_top = t;
 	}
 }
-
 
 /* Represent last file/dir opened, next should have bigger numbers.*/
 static int file_id = 0;
@@ -399,6 +408,7 @@ static void cpy_test_config(struct test_config *to,
 	to->label = from->label;
 	to->id = from->id;
 	to->strs = from->strs;
+	to->attrs = from->attrs;
 
 	if (from->bound_funcs) {
 		/* If at least one function is not writable
@@ -794,6 +804,105 @@ void init_with_state(struct test_state *in, usbg_state **out)
 	assert_int_equal(usbg_ret, USBG_SUCCESS);
 }
 
+static int get_config_attr(usbg_config_attrs *attrs, config_attr attr)
+{
+	int ret;
+
+	switch (attr) {
+	case MAX_POWER:
+		ret = attrs->bMaxPower;
+		break;
+	case BM_ATTRIBUTES:
+		ret = attrs->bmAttributes;
+		break;
+	default:
+		ret = -1;
+		break;
+	}
+
+	return ret;
+}
+
+void push_config_attribute(struct test_config *config, config_attr attr,
+			   int value)
+{
+	char *path;
+	char *content;
+	int tmp;
+
+	tmp = asprintf(&path, "%s/%s/%s", config->path, config->name, config_attr_names[attr]);
+	if (tmp < 0)
+		fail();
+	free_later(path);
+
+	switch (config_attr_format[attr]) {
+	case FORMAT_HEX:
+		tmp = asprintf(&content, "0x%x\n", value);
+		break;
+	case FORMAT_DEC:
+		tmp = asprintf(&content, "%d\n", value);
+		break;
+	}
+
+	if (tmp < 0)
+		fail();
+	free_later(content);
+
+	PUSH_FILE(path, content);
+}
+
+
+void push_config_attrs(struct test_config *config, usbg_config_attrs *attrs)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_ATTR_MAX; ++i)
+		push_config_attribute(config, i, get_config_attr(attrs, i));
+}
+
+void pull_config_attribute(struct test_config *config, config_attr attr,
+			   int value)
+{
+	char *path;
+	char *content;
+	int tmp;
+
+	tmp = asprintf(&path, "%s/%s/%s", config->path, config->name, config_attr_names[attr]);
+	if (tmp < 0)
+		fail();
+	free_later(path);
+
+	switch (config_attr_format[attr]) {
+	case FORMAT_HEX:
+		tmp = asprintf(&content, "0x%x\n", value);
+		break;
+	case FORMAT_DEC:
+		tmp = asprintf(&content, "%d\n", value);
+		break;
+	}
+
+	if (tmp < 0)
+		fail();
+	free_later(content);
+
+	switch (config_attr_format[attr]) {
+	case FORMAT_HEX:
+		EXPECT_HEX_WRITE(path, content);
+		break;
+	case FORMAT_DEC:
+		EXPECT_WRITE(path, content);
+		break;
+	}
+}
+
+void pull_config_attrs(struct test_config *config, usbg_config_attrs *attrs)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_ATTR_MAX; ++i)
+		pull_config_attribute(config, i, get_config_attr(attrs, i));
+}
+
 const char *get_gadget_str(usbg_gadget_strs *strs, gadget_str str)
 {
 	const char *ret = NULL;
@@ -963,6 +1072,12 @@ void push_config_string(struct test_config *config, int lang, const char *str)
 void push_config_strs(struct test_config *config, int lang, usbg_config_strs *strs)
 {
 	push_config_string(config, lang, strs->configuration);
+}
+
+void assert_config_attrs_equal(usbg_config_attrs *actual, usbg_config_attrs *expected)
+{
+	assert_int_equal(actual->bmAttributes, expected->bmAttributes);
+	assert_int_equal(actual->bMaxPower, expected->bMaxPower);
 }
 
 void assert_func_equal(usbg_function *f, struct test_function *expected)

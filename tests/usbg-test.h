@@ -39,6 +39,7 @@ struct test_config
 	char *name;
 	int writable;
 	usbg_config_strs *strs;
+	usbg_config_attrs *attrs;
 };
 
 struct test_gadget
@@ -68,6 +69,17 @@ typedef enum {
 	STR_PRD,
 	GADGET_STR_MAX
 } gadget_str;
+
+typedef enum {
+	MAX_POWER = 0,
+	BM_ATTRIBUTES,
+	CONFIG_ATTR_MAX
+} config_attr;
+
+typedef enum {
+	FORMAT_HEX,
+	FORMAT_DEC
+} attr_format;
 
 #define TEST_FUNCTION_LIST_END { \
 		.instance = NULL, \
@@ -149,6 +161,20 @@ void push_init(struct test_state *state);
 /**
  * Prepare specific attributes writting/reading
  **/
+
+/**
+ * @brief Prepare for getting config attributes
+ * @param[in] config Configuration from which attributes will be get
+ * @param[in] attrs Attributes which will be present in virtual filesystem
+ */
+void push_config_attrs(struct test_config *config, usbg_config_attrs *attrs);
+
+/**
+ * @brief Preapre for setting config attributes
+ * @param[in] config Configuration on which attributes will be set
+ * @param[in] attrs Attributes which will be set on given config
+ */
+void pull_config_attrs(struct test_config *config, usbg_config_attrs *attrs);
 
 /**
  * @brief Get gadget attribute
@@ -282,6 +308,11 @@ void cleanup_stack();
  * @brief init usbg with given test state
  */
 void init_with_state(struct test_state *in, usbg_state **out);
+
+/**
+ * @brief Assert that given config attributes are equal
+ */
+void assert_config_attrs_equal(usbg_config_attrs *actual, usbg_config_attrs *expected);
 
 /**
  * @brief Assert that given usbg binding matches given test binding
