@@ -1300,6 +1300,80 @@ static void test_get_gadget_strs(void **data)
 }
 
 /**
+ * @brief Get binding target
+ * @details Check if given function is target of given binding
+ * @param[in] tb Test function
+ * @param[in] b Binding
+ */
+static void try_get_binding_target(struct test_binding *tb, usbg_binding *b)
+{
+	usbg_function *f;
+
+	f = usbg_get_binding_target(b);
+	assert_non_null(f);
+	assert_func_equal(f, tb->target);
+}
+
+/**
+ * @brief Test get binding target
+ * @details Test all bindings present in given state
+ * @param[in, out] state Pointer to pointer to correctly initialized test state,
+ * will point to usbg state when finished.
+ */
+static void test_get_binding_target(void **state)
+{
+	for_each_binding(state, try_get_binding_target);
+}
+
+/**
+ * @brief Get binding name
+ * @details Check if name of given binding is equal name of given function
+ * @param[in] tb Test function
+ * @param[in] b Binding
+ */
+static void try_get_binding_name(struct test_binding *tb, usbg_binding *b)
+{
+	const char *s;
+
+	s = usbg_get_binding_name(b);
+	assert_non_null(s);
+	assert_string_equal(s, tb->name);
+}
+
+/**
+ * @brief Test get bindig name from all binding present in state
+ * @param[in, out] state Pointer to pointer to correctly initialized test state,
+ * will point to usbg state when finished.
+ */
+static void test_get_binding_name(void **state)
+{
+	for_each_binding(state, try_get_binding_name);
+}
+
+/**
+ * @brief Get binding name length
+ * @param[in] tb Test function
+ * @param[in] b Binding
+ */
+static void try_get_binding_name_len(struct test_binding *tb, usbg_binding *b)
+{
+	int n;
+
+	n = usbg_get_binding_name_len(b);
+	assert_int_equal(n, strlen(tb->name));
+}
+
+/**
+ * @brief Test get binding name length from all bindings present in state
+ * @param[in, out] state Pointer to pointer to correctly initialized test state,
+ * will point to usbg state when finished.
+ */
+static void test_get_binding_name_len(void **state)
+{
+	for_each_binding(state, try_get_binding_name_len);
+}
+
+/**
  * @brief cleanup usbg state
  */
 static void teardown_state(void **state)
@@ -1658,6 +1732,30 @@ static UnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_get_gadget_strs_random",
 		     test_get_gadget_strs, setup_random_len_gadget_strs_data),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_binding_target_simple,
+	 * Get binding target,
+	 * usbg_get_binding_target}
+	 */
+	USBG_TEST_TS("test_get_binding_target_simple",
+		     test_get_binding_target, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_binding_name_simple,
+	 * Get binding name,
+	 * usbg_get_binding_name}
+	 */
+	USBG_TEST_TS("test_get_binding_name_simple",
+		     test_get_binding_name, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_binding_name_len_simple,
+	 * Get binding name length,
+	 * usbg_get_binding_name_len}
+	 */
+	USBG_TEST_TS("test_get_binding_name_len_simple",
+		     test_get_binding_name_len, setup_simple_state),
 
 #ifndef DOXYGEN
 };
