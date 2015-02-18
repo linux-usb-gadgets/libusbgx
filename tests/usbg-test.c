@@ -1082,3 +1082,37 @@ void for_each_test_config(void **state, ConfigTest fun)
 		}
 	}
 }
+
+void for_each_binding(void **state, BindingTestFunc fun)
+{
+	struct test_state *ts;
+	struct test_gadget *tg;
+	struct test_config *tc;
+	struct test_binding *tb;
+	usbg_state *s = NULL;
+	usbg_gadget *g = NULL;
+	usbg_config *c = NULL;
+	usbg_binding *b = NULL;
+
+	ts = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(ts, &s);
+	*state = s;
+
+	for (tg = ts->gadgets; tg->name; tg++) {
+		g = usbg_get_gadget(s, tg->name);
+		assert_non_null(g);
+		for (tc = tg->configs; tc->label; tc++) {
+			c = usbg_get_config(g, tc->id, tc->label);
+			assert_non_null(c);
+
+			b = usbg_get_first_binding(c);
+			for (tb = tc->bindings; tb->name; ++tb) {
+				assert_non_null(b);
+				fun(tb, b);
+				b = usbg_get_next_binding(b);
+			}
+		}
+	}
+}

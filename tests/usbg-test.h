@@ -357,4 +357,16 @@ typedef void (*ConfigTest)(usbg_config *c, struct test_config *tc);
  */
 void for_each_test_config(void **state, ConfigTest fun);
 
+/**
+ * @brief Function that performs test on given usbg binding
+ */
+typedef void (*BindingTestFunc)(struct test_binding *tb, usbg_binding *b);
+
+/**
+ * @brief Call given function for all usb bindings present in given state
+ * @param[in] state Properly prepared state to be tested
+ * @param[in] fun Function to be called on each usb binding in state
+ */
+void for_each_binding(void **state, BindingTestFunc fun);
+
 #endif /* USBG_TEST_H */
