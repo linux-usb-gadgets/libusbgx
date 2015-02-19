@@ -289,6 +289,19 @@ void push_config_string(struct test_config *config, int lang, const char *str);
 void push_config_strs(struct test_config *config, int lang, usbg_config_strs *strs);
 
 /**
+ * @brief Prepare for creating config
+ * @param[in] tc Test config to be created
+ */
+void pull_create_config(struct test_config *tc);
+
+/**
+ * @brief Copy state without configs and functions
+ * @param[in] ts State to bo copied
+ * @return State with empty gadgets
+ */
+struct test_state *build_empty_gadget_state(struct test_state *ts);
+
+/**
  * @brief Store given pointer on cleanup stack
  * @details All stacked pointers will be freed by calling cleanup_queue.
  * This can be used to manage memory needed for single test casees.

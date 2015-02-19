@@ -549,6 +549,30 @@ struct test_state *prepare_state(struct test_state *state)
 	return new_state;
 }
 
+struct test_state *build_empty_gadget_state(struct test_state *ts)
+{
+	struct test_state *ret;
+	struct test_gadget *tg;
+	int count = 0;
+
+	ret = safe_malloc(sizeof(*ret));
+	ret->udcs = ts->udcs;
+	ret->configfs_path = ts->configfs_path;
+
+	for (tg = ts->gadgets; tg->name; ++tg)
+		count++;
+
+	ret->gadgets = safe_calloc(count+1, sizeof(*ts->gadgets));
+	memcpy(ret->gadgets, ts->gadgets, count*sizeof(*ts->gadgets));
+
+	for (tg = ret->gadgets; tg->name; ++tg) {
+		tg->configs = safe_calloc(1, sizeof(*tg->configs));
+		tg->functions = safe_calloc(1, sizeof(*tg->functions));
+	}
+
+	return prepare_state(ret);
+}
+
 /* Simulation of configfs for init */
 
 static void push_binding(struct test_config *conf, struct test_binding *binding)
@@ -967,6 +991,19 @@ void assert_config_attrs_equal(usbg_config_attrs *actual, usbg_config_attrs *exp
 {
 	assert_int_equal(actual->bmAttributes, expected->bmAttributes);
 	assert_int_equal(actual->bMaxPower, expected->bMaxPower);
+}
+
+void pull_create_config(struct test_config *tc)
+{
+	char *path;
+
+	safe_asprintf(&path, "%s/%s", tc->path, tc->name);
+	EXPECT_MKDIR(path);
+
+	if (tc->attrs)
+		pull_config_attrs(tc, tc->attrs);
+	if (tc->strs)
+		pull_config_strs(tc, LANG_US_ENG, tc->strs);
 }
 
 void assert_func_equal(usbg_function *f, struct test_function *expected)
