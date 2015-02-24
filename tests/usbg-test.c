@@ -7,6 +7,8 @@
 #include <string.h>
 #include <stddef.h>
 #include <limits.h>
+#include <errno.h>
+#include <time.h>
 
 #include "usbg-test.h"
 
@@ -14,6 +16,12 @@ static struct simple_stack{
 	void *ptr;
 	struct simple_stack *next;
 } *cleanup_top = NULL;
+
+static const char *gadget_str_names[] = {
+	"serialnumber",
+	"manufacturer",
+	"product"
+};
 
 void free_later(void *ptr)
 {
@@ -69,9 +77,16 @@ static int dir_id = 0;
 #define EXPECT_OPENDIR(n) do {\
 	dir_id++;\
 	expect_path(opendir, name, n);\
+	will_return(opendir, 0);\
 	will_return(opendir, dir_id);\
 	expect_value(closedir, dirp, dir_id);\
 	will_return(closedir, 0);\
+} while(0)
+
+#define EXPECT_OPENDIR_ERROR(n, e) do {\
+	expect_path(opendir, name, n);\
+	will_return(opendir, e);\
+	will_return(opendir, NULL);\
 } while(0)
 
 #define PUSH_DIR(p, c) do {\
@@ -111,6 +126,12 @@ static int dir_id = 0;
 	will_return(fputs, 0);\
 	expect_value(fclose, fp, file_id);\
 	will_return(fclose, 0);\
+} while(0)
+
+#define EXPECT_MKDIR(p) do {\
+	expect_path(mkdir, pathname, p);\
+	expect_value(mkdir, mode, 00777);\
+	will_return(mkdir, 0);\
 } while(0)
 
 /**
@@ -444,6 +465,71 @@ void init_with_state(struct test_state *in, usbg_state **out)
 	push_init(in);
 	usbg_ret = usbg_init(in->configfs_path, out);
 	assert_int_equal(usbg_ret, USBG_SUCCESS);
+}
+
+const char *get_gadget_str(usbg_gadget_strs *strs, gadget_str str)
+{
+	switch (str) {
+	case STR_SER:
+		return strs->str_ser;
+	case STR_MNF:
+		return strs->str_mnf;
+	case STR_PRD:
+		return strs->str_prd;
+	default:
+		return NULL;
+	}
+}
+
+static void pull_gadget_str_dir(struct test_gadget *gadget, int lang)
+{
+	char *dir;
+	int tmp;
+	tmp = asprintf(&dir, "%s/%s/strings/0x%x",
+			gadget->path, gadget->name, lang);
+	if (tmp < 0)
+		fail();
+	free_later(dir);
+
+	srand(time(NULL));
+	tmp = rand() % 2;
+
+	if (tmp) {
+		EXPECT_OPENDIR(dir);
+	} else {
+		EXPECT_OPENDIR_ERROR(dir, ENOENT);
+		EXPECT_MKDIR(dir);
+	}
+}
+
+static void pull_gadget_str(struct test_gadget *gadget, const char *attr_name,
+		int lang, const char *content)
+{
+	char *path;
+	int tmp;
+
+	tmp = asprintf(&path, "%s/%s/strings/0x%x/%s",
+			gadget->path, gadget->name, lang, attr_name);
+	if (tmp < 0)
+		fail();
+	free_later(path);
+	EXPECT_WRITE(path, content);
+}
+
+void pull_gadget_string(struct test_gadget *gadget, int lang,
+		gadget_str str, const char *content)
+{
+	pull_gadget_str_dir(gadget, lang);
+	pull_gadget_str(gadget, gadget_str_names[str], lang, content);
+}
+
+void pull_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *strs)
+{
+	int i;
+
+	pull_gadget_str_dir(gadget, lang);
+	for (i = 0; i < GADGET_STR_MAX; i++)
+		pull_gadget_str(gadget, gadget_str_names[i], lang, get_gadget_str(strs, i));
 }
 
 void assert_func_equal(usbg_function *f, struct test_function *expected)

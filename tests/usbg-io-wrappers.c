@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <cmocka.h>
 #include <dlfcn.h>
+#include <errno.h>
 
 typedef int (*fputs_f_type)(const char *, FILE *);
 typedef int (*fflush_f_type)(FILE *);
@@ -53,7 +54,13 @@ char *fgets(char *s, int size, FILE *stream)
  */
 DIR *opendir(const char *name)
 {
+	int err;
+
 	check_expected(name);
+	err = mock_type(int);
+	if (err)
+		errno = err;
+
 	return mock_ptr_type(DIR *);
 }
 
@@ -160,6 +167,13 @@ int fputs(const char *s, FILE *stream)
 
 	check_expected(stream);
 	check_expected(s);
+	return mock_type(int);
+}
+
+int mkdir(const char *pathname, mode_t mode)
+{
+	check_expected(pathname);
+	check_expected(mode);
 	return mock_type(int);
 }
 

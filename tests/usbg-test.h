@@ -49,6 +49,13 @@ struct test_state
 	char **udcs;
 };
 
+typedef enum {
+	STR_SER = 0,
+	STR_MNF,
+	STR_PRD,
+	GADGET_STR_MAX
+} gadget_str;
+
 #define TEST_FUNCTION_LIST_END { \
 		.instance = NULL, \
 	}
@@ -163,6 +170,31 @@ void push_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs);
  */
 void pull_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs);
 
+/**
+ * @brief Get gadget string
+ * @param[in] strs Set of gadget strings
+ * @param[in] str Identifier of string which should be returned
+ * @return Selected string from given set of strings
+ */
+const char *get_gadget_str(usbg_gadget_strs *strs, gadget_str str);
+
+/**
+ * @brief Prepare filesystem to set selected gadget string
+ * @param[in] gadget Gadget on which str will be set
+ * @param[in] lang Language of string
+ * @param[in] str String identifier
+ * @param[in] content String expected to be set
+ */
+void pull_gadget_string(struct test_gadget *gadget, int lang,
+		gadget_str str, const char *content);
+
+/**
+ * @brief Prepare filesystem to set given gadget strings
+ * @param[in] gadget Gadget on which strings will be set
+ * @param[in] lang Language of strings
+ * @param[in] strs Strings expected to be set
+ */
+void pull_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *strs);
 
 /**
  * @brief Store given pointer on cleanup stack
