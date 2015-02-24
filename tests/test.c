@@ -1271,6 +1271,32 @@ static void test_set_gadget_strs(void **data)
 }
 
 /**
+ * @brief get gadget strings
+ * @param[in] data Pointer to correctly initialized test_gadget_strs_data structure
+ */
+static void test_get_gadget_strs(void **data)
+{
+	struct test_gadget_strs_data *ts;
+	struct test_gadget *tg;
+	usbg_state *s = NULL;
+	usbg_gadget *g = NULL;
+	usbg_gadget_strs strs;
+
+	ts = (struct test_gadget_strs_data *)(*data);
+	*data = NULL;
+
+	init_with_state(ts->state, &s);
+	*data = s;
+
+	for (tg = ts->state->gadgets; tg->name; tg++) {
+		g = usbg_get_gadget(s, tg->name);
+		push_gadget_strs(tg, LANG_US_ENG, ts->strs);
+		usbg_get_gadget_strs(g, LANG_US_ENG, &strs);
+		assert_gadget_strs_equal(&strs, ts->strs);
+	}
+}
+
+/**
  * @brief cleanup usbg state
  */
 static void teardown_state(void **state)
@@ -1621,6 +1647,14 @@ static UnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_set_gadget_strs_random",
 		     test_set_gadget_strs, setup_random_len_gadget_strs_data),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_gadget_strs_random,
+	 * Get gadget strings,
+	 * usbg_get_gadget_strs}
+	 */
+	USBG_TEST_TS("test_get_gadget_strs_random",
+		     test_get_gadget_strs, setup_random_len_gadget_strs_data),
 
 #ifndef DOXYGEN
 };
