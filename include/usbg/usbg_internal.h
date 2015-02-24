@@ -155,10 +155,5 @@ static inline int file_select(const struct dirent *dent)
 
 int usbg_translate_error(int error);
 
-/**
- * @brief Names of gadget attributes
- */
-extern const char *gadget_attr_names[];
-
 #endif /* USBG_INTERNAL_H */
 

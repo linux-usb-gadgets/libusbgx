@@ -387,7 +387,7 @@ void pull_gadget_attribute(struct test_gadget *gadget,
 	int tmp;
 
 	tmp = asprintf(&path, "%s/%s/%s",
-			gadget->path, gadget->name, gadget_attr_names[attr]);
+			gadget->path, gadget->name, usbg_get_gadget_attr_str(attr));
 	if (tmp >= USBG_MAX_PATH_LENGTH)
 		fail();
 	free_later(path);
@@ -408,7 +408,7 @@ void push_gadget_attribute(struct test_gadget *gadget,
 	int tmp;
 
 	tmp = asprintf(&path, "%s/%s/%s",
-			gadget->path, gadget->name, gadget_attr_names[attr]);
+			gadget->path, gadget->name, usbg_get_gadget_attr_str(attr));
 	if (tmp < 0)
 		fail();
 	free_later(path);
