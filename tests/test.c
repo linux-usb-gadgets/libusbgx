@@ -1138,6 +1138,43 @@ void test_get_udc(void **state)
 	}
 }
 
+static void test_get_gadget_attr_str(void **state)
+{
+	struct {
+		usbg_gadget_attr attr;
+		const char *str;
+	} attrs[] = {
+		{BCD_USB, "bcdUSB"},
+		{B_DEVICE_CLASS, "bDeviceClass"},
+		{B_DEVICE_SUB_CLASS, "bDeviceSubClass"},
+		{B_DEVICE_PROTOCOL, "bDeviceProtocol"},
+		{B_MAX_PACKET_SIZE_0, "bMaxPacketSize0"},
+		{ID_VENDOR, "idVendor"},
+		{ID_PRODUCT, "idProduct"},
+		{BCD_DEVICE, "bcdDevice"},
+	};
+
+	const char *str;
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(attrs); i++) {
+		str = usbg_get_gadget_attr_str(attrs[i].attr);
+		assert_non_null(str);
+		assert_string_equal(str, attrs[i].str);
+	}
+}
+
+static void test_get_gadget_attr_str_fail(void **state)
+{
+	const char *str;
+
+	str = usbg_get_gadget_attr_str(USBG_GADGET_ATTR_MIN - 1);
+	assert_null(str);
+
+	str = usbg_get_gadget_attr_str(USBG_GADGET_ATTR_MAX);
+	assert_null(str);
+}
+
 /**
  * @brief cleanup usbg state
  */
@@ -1467,6 +1504,20 @@ static UnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_get_udc_long",
 		     test_get_udc, setup_long_udc_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_gadget_attr_str,
+	 * Compare returned gadget attribute strings witch expected values
+	 * usbg_get_gadget_attr_str}
+	 */
+	unit_test(test_get_gadget_attr_str),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_gadget_attr_str_fail,
+	 * Check returned gadget attribute strings for invalid arguments
+	 * usbg_get_gadget_attr_str}
+	 */
+	unit_test(test_get_gadget_attr_str_fail),
 
 #ifndef DOXYGEN
 };
