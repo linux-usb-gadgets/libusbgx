@@ -1155,12 +1155,26 @@ static void test_get_gadget_attr_str(void **state)
 	};
 
 	const char *str;
-	int i;
+	int i, j;
 
 	for (i = 0; i < ARRAY_SIZE(attrs); i++) {
 		str = usbg_get_gadget_attr_str(attrs[i].attr);
 		assert_non_null(str);
 		assert_string_equal(str, attrs[i].str);
+	}
+
+	/* Check if iteration over values works */
+	for (i = USBG_GADGET_ATTR_MIN; i < USBG_GADGET_ATTR_MAX; ++i) {
+		str = usbg_get_gadget_attr_str(i);
+		assert_non_null(str);
+
+		for (j = 0; j < ARRAY_SIZE(attrs); ++j)
+			if (attrs[j].attr == i) {
+				assert_string_equal(str, attrs[j].str);
+				break;
+			}
+
+		assert_int_not_equal(j, ARRAY_SIZE(attrs));
 	}
 }
 
