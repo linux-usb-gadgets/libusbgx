@@ -377,27 +377,41 @@ void push_init(struct test_state *state)
 		push_gadget(g);
 }
 
-int get_gadget_attr(usbg_gadget_attrs *attrs, usbg_gadget_attr attr) {
+int get_gadget_attr(usbg_gadget_attrs *attrs, usbg_gadget_attr attr)
+{
+	int ret = -1;
+
 	switch (attr) {
 	case BCD_USB:
-		return attrs->bcdUSB;
+		ret = attrs->bcdUSB;
+		break;
 	case B_DEVICE_CLASS:
-		return attrs->bDeviceClass;
+		ret = attrs->bDeviceClass;
+		break;
 	case B_DEVICE_SUB_CLASS:
-		return attrs->bDeviceSubClass;
+		ret = attrs->bDeviceSubClass;
+		break;
 	case B_DEVICE_PROTOCOL:
-		return attrs->bDeviceProtocol;
+		ret = attrs->bDeviceProtocol;
+		break;
 	case B_MAX_PACKET_SIZE_0:
-		return attrs->bMaxPacketSize0;
+		ret = attrs->bMaxPacketSize0;
+		break;
 	case ID_VENDOR:
-		return attrs->idVendor;
+		ret = attrs->idVendor;
+		break;
 	case ID_PRODUCT:
-		return attrs->idProduct;
+		ret = attrs->idProduct;
+		break;
 	case BCD_DEVICE:
-		return attrs->bcdDevice;
+		ret = attrs->bcdDevice;
+		break;
 	default:
-		return -1;
+		ret = -1;
+		break;
 	}
+
+	return ret;
 }
 
 void pull_gadget_attribute(struct test_gadget *gadget,
@@ -469,16 +483,24 @@ void init_with_state(struct test_state *in, usbg_state **out)
 
 const char *get_gadget_str(usbg_gadget_strs *strs, gadget_str str)
 {
+	const char *ret = NULL;
+
 	switch (str) {
 	case STR_SER:
-		return strs->str_ser;
+		ret = strs->str_ser;
+		break;
 	case STR_MNF:
-		return strs->str_mnf;
+		ret = strs->str_mnf;
+		break;
 	case STR_PRD:
-		return strs->str_prd;
+		ret = strs->str_prd;
+		break;
 	default:
-		return NULL;
+		ret = NULL;
+		break;
 	}
+
+	return ret;
 }
 
 static void pull_gadget_str_dir(struct test_gadget *gadget, int lang)
