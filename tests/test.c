@@ -162,7 +162,7 @@ static struct test_config simple_confs[] = {
 	{
 		.label = "c",
 		.id = 1,
-		.bindings = simple_funcs
+		.bound_funcs = simple_funcs
 	},
 
 	TEST_CONFIG_LIST_END
@@ -175,11 +175,11 @@ static struct test_config all_bindings_confs[] = {
 	{
 		.label = "c",
 		.id = 2,
-		.bindings = no_funcs
+		.bound_funcs = no_funcs
 	}, {
 		.label = "c",
 		.id = 4,
-		.bindings = all_funcs
+		.bound_funcs = all_funcs
 	},
 
 	TEST_CONFIG_LIST_END

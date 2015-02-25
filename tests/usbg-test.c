@@ -151,6 +151,14 @@ static int test_function_cmp(struct test_function *a, struct test_function *b)
 }
 
 /**
+ * @brief Compare test bindings' names
+ */
+static int test_binding_cmp(struct test_binding *a, struct test_binding *b)
+{
+	return strcoll(a->name, b->name);
+}
+
+/**
  * @brief Compare test configs' names
  */
 static int test_config_cmp(struct test_config *a, struct test_config *b)
@@ -158,11 +166,22 @@ static int test_config_cmp(struct test_config *a, struct test_config *b)
 	return strcoll(a->name, b->name);
 }
 
+void prepare_binding(struct test_binding *b, struct test_function *f)
+{
+	b->name = strdup(f->name);
+	if (b->name == NULL)
+		fail();
+	free_later(b->name);
+
+	b->target = f;
+}
+
 void prepare_config(struct test_config *c, char *path)
 {
 	int tmp;
 	int count = 0;
-	struct test_function *b;
+	struct test_function *f;
+	int i;
 
 	tmp = asprintf(&c->name, "%s.%d",
 			c->label, c->id);
@@ -172,11 +191,19 @@ void prepare_config(struct test_config *c, char *path)
 
 	c->path = path;
 
-	for (b = c->bindings; b->instance; b++)
+	for (f = c->bound_funcs; f->instance; f++)
 		count++;
 
+	c->bindings = calloc(count + 1, sizeof(*c->bindings));
+	if (c->bindings == NULL)
+		fail();
+	free_later(c->bindings);
+
+	for (i = 0; i < count; i++)
+		prepare_binding(&c->bindings[i], &c->bound_funcs[i]);
+
 	qsort(c->bindings, count, sizeof(*c->bindings),
-		(int (*)(const void *, const void *))test_function_cmp);
+		(int (*)(const void *, const void *))test_binding_cmp);
 
 }
 
@@ -274,7 +301,7 @@ void prepare_state(struct test_state *state)
 
 /* Simulation of configfs for init */
 
-static void push_binding(struct test_config *conf, struct test_function *binding)
+static void push_binding(struct test_config *conf, struct test_binding *binding)
 {
 	int tmp;
 	char *s_path;
@@ -285,7 +312,7 @@ static void push_binding(struct test_config *conf, struct test_function *binding
 		fail();
 	free_later(s_path);
 
-	tmp = asprintf(&d_path, "%s/%s", binding->path, binding->name);
+	tmp = asprintf(&d_path, "%s/%s", binding->target->path, binding->target->name);
 	if (tmp < 0)
 		fail();
 	free_later(d_path);
@@ -295,7 +322,7 @@ static void push_binding(struct test_config *conf, struct test_function *binding
 
 static void push_config(struct test_config *c)
 {
-	struct test_function *b;
+	struct test_binding *b;
 	int count = 0;
 	int tmp;
 	char *path;
@@ -305,11 +332,11 @@ static void push_config(struct test_config *c)
 		fail();
 	free_later(path);
 
-	for (b = c->bindings; b->instance; b++)
+	for (b = c->bindings; b->name; b++)
 		count++;
 
 	PUSH_DIR(path, count);
-	for (b = c->bindings; b->instance; b++) {
+	for (b = c->bindings; b->name; b++) {
 		PUSH_DIR_ENTRY(b->name, DT_LNK);
 		push_binding(c, b);
 	}
@@ -597,6 +624,12 @@ void assert_func_equal(usbg_function *f, struct test_function *expected)
 	assert_path_equal(f->path, expected->path);
 }
 
+void assert_binding_equal(usbg_binding *b, struct test_binding *expected)
+{
+	assert_string_equal(b->name, expected->name);
+	assert_func_equal(b->target, expected->target);
+}
+
 void assert_config_equal(usbg_config *c, struct test_config *expected)
 {
 	int i = 0;
@@ -606,7 +639,7 @@ void assert_config_equal(usbg_config *c, struct test_config *expected)
 	assert_string_equal(c->label, expected->label);
 	assert_path_equal(c->path, expected->path);
 	usbg_for_each_binding(b, c)
-		assert_func_equal(b->target, &expected->bindings[i++]);
+		assert_binding_equal(b, &expected->bindings[i++]);
 }
 
 void assert_gadget_equal(usbg_gadget *g, struct test_gadget *expected)

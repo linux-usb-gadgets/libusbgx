@@ -20,12 +20,19 @@ struct test_function
 	char *name;
 };
 
+struct test_binding
+{
+	struct test_function *target;
+	char *name;
+};
+
 struct test_config
 {
 	char *label;
 	int id;
-	struct test_function *bindings;
+	struct test_function *bound_funcs;
 
+	struct test_binding *bindings;
 	char *path;
 	char *name;
 };
@@ -109,6 +116,14 @@ void prepare_function(struct test_function *f, char *path);
  * @param[in] g Gadget to be filled out
  */
 void prepare_gadget(struct test_state *state, struct test_gadget *g);
+
+/**
+ * @brief Fill given binding with required values
+ * @details Make given binding point to a function
+ * @param[in] b Test binding to be prepared
+ * @param[in] f Function to which binding will point
+ */
+void prepare_binding(struct test_binding *b, struct test_function *f);
 
 /**
  * @brief Prepare fake filesystem to init usbg with given test state
@@ -221,6 +236,13 @@ void cleanup_stack();
  * @brief init usbg with given test state
  */
 void init_with_state(struct test_state *in, usbg_state **out);
+
+/**
+ * @brief Assert that given usbg binding matches given test binding
+ * @param[in] f Pointer to usbg binding struct
+ * @param[in] expected Pointer to test binding struct with expected values
+ */
+void assert_binding_equal(usbg_binding *b, struct test_binding *expected);
 
 /**
  * @brief Assert that given usbg function matches given test function
