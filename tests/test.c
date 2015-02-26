@@ -224,6 +224,11 @@ static struct test_gadget long_udc_gadgets[] = {
 	TEST_GADGET_LIST_END
 };
 
+struct test_data {
+	struct test_state *state;
+	struct usbg_state *usbg_state;
+};
+
 struct test_gadget_strs_data {
 	struct test_state *state;
 	usbg_gadget_strs *strs;
@@ -320,12 +325,15 @@ static struct test_state *put_func_in_state(struct test_function *func)
 	g[0].udc = "UDC1";
 	g[0].configs = c;
 	g[0].functions = func;
+	g[0].writable = 1;
 
 	udcs[0] = "UDC1";
+	g[0].writable = 1;
 
 	st->configfs_path = "config";
 	st->gadgets = g;
 	st->udcs = udcs;
+	st->writable = 1;
 
 	prepare_state(st);
 

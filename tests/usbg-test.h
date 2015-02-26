@@ -18,12 +18,14 @@ struct test_function
 
 	char *path;
 	char *name;
+	int writable;
 };
 
 struct test_binding
 {
 	struct test_function *target;
 	char *name;
+	int writable;
 };
 
 struct test_config
@@ -35,6 +37,7 @@ struct test_config
 	struct test_binding *bindings;
 	char *path;
 	char *name;
+	int writable;
 };
 
 struct test_gadget
@@ -45,6 +48,7 @@ struct test_gadget
 	struct test_function *functions;
 
 	char *path;
+	int writable;
 };
 
 struct test_state
@@ -54,6 +58,7 @@ struct test_state
 	char *path;
 	struct test_gadget *gadgets;
 	char **udcs;
+	int writable;
 };
 
 typedef enum {
