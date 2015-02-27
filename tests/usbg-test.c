@@ -166,8 +166,11 @@ static int test_config_cmp(struct test_config *a, struct test_config *b)
 	return strcoll(a->name, b->name);
 }
 
-void prepare_binding(struct test_binding *b, struct test_function *f)
+void prepare_binding(struct test_binding *b, struct test_function *f, char *fpath)
 {
+	if (!f->name)
+		prepare_function(f, fpath);
+
 	b->name = strdup(f->name);
 	if (b->name == NULL)
 		fail();
@@ -176,7 +179,7 @@ void prepare_binding(struct test_binding *b, struct test_function *f)
 	b->target = f;
 }
 
-void prepare_config(struct test_config *c, char *path)
+void prepare_config(struct test_config *c, char *cpath, char *fpath)
 {
 	int tmp;
 	int count = 0;
@@ -189,7 +192,7 @@ void prepare_config(struct test_config *c, char *path)
 		fail();
 	free_later(c->name);
 
-	c->path = path;
+	c->path = cpath;
 
 	for (f = c->bound_funcs; f->instance; f++)
 		count++;
@@ -200,7 +203,7 @@ void prepare_config(struct test_config *c, char *path)
 	free_later(c->bindings);
 
 	for (i = 0; i < count; i++)
-		prepare_binding(&c->bindings[i], &c->bound_funcs[i]);
+		prepare_binding(&c->bindings[i], &c->bound_funcs[i], fpath);
 
 	qsort(c->bindings, count, sizeof(*c->bindings),
 		(int (*)(const void *, const void *))test_binding_cmp);
@@ -229,7 +232,8 @@ void prepare_gadget(struct test_state *state, struct test_gadget *g)
 {
 	struct test_config *c;
 	struct test_function *f;
-	char *path;
+	char *fpath;
+	char *cpath;
 	int tmp;
 	int count;
 
@@ -239,38 +243,38 @@ void prepare_gadget(struct test_state *state, struct test_gadget *g)
 
 	free_later(g->path);
 
-	tmp = asprintf(&path, "%s/%s/functions",
+	tmp = asprintf(&fpath, "%s/%s/functions",
 			g->path, g->name);
 	if (tmp < 0)
 		fail();
-	free_later(path);
+	free_later(fpath);
 
 	count = 0;
 	for (f = g->functions; f->instance; f++) {
-		prepare_function(f, path);
+		prepare_function(f, fpath);
 		count++;
 	}
 
 	/* Path needs to be known somehow when list is empty */
-	f->path = path;
+	f->path = fpath;
 
 	qsort(g->functions, count, sizeof(*g->functions),
 		(int (*)(const void *, const void *))test_function_cmp);
 
-	tmp = asprintf(&path, "%s/%s/configs",
+	tmp = asprintf(&cpath, "%s/%s/configs",
 			g->path, g->name);
 	if (tmp < 0)
 		fail();
-	free_later(path);
+	free_later(cpath);
 
 	count = 0;
 	for (c = g->configs; c->label; c++) {
-		prepare_config(c, path);
+		prepare_config(c, cpath, fpath);
 		count++;
 	}
 
 	/* Path needs to be known somehow when list is empty */
-	c->path = path;
+	c->path = cpath;
 
 	qsort(g->configs, count, sizeof(*g->configs),
 		(int (*)(const void *, const void *))test_config_cmp);

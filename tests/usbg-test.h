@@ -96,9 +96,10 @@ void prepare_state(struct test_state *state);
  * @details Generate required pathes for given config and sort content
  * (i.e. binding list)
  * @param[in] c Config to be filled out
- * @param[in] path Path to configs directory
+ * @param[in] cpath Path to configs directory
+ * @param[in] fpath Path to functions directory
  */
-void prepare_config(struct test_config *c, char *path);
+void prepare_config(struct test_config *c, char *cpath, char *fpath);
 
 /**
  * @brief Prepare given function for using in tests
@@ -122,8 +123,9 @@ void prepare_gadget(struct test_state *state, struct test_gadget *g);
  * @details Make given binding point to a function
  * @param[in] b Test binding to be prepared
  * @param[in] f Function to which binding will point
+ * @param[in] fpath Path to functions directory
  */
-void prepare_binding(struct test_binding *b, struct test_function *f);
+void prepare_binding(struct test_binding *b, struct test_function *f, char *fpath);
 
 /**
  * @brief Prepare fake filesystem to init usbg with given test state
