@@ -171,10 +171,12 @@ void prepare_binding(struct test_binding *b, struct test_function *f, char *fpat
 	if (!f->name)
 		prepare_function(f, fpath);
 
-	b->name = strdup(f->name);
-	if (b->name == NULL)
-		fail();
-	free_later(b->name);
+	if (!b->name) {
+		b->name = strdup(f->name);
+		if (b->name == NULL)
+			fail();
+		free_later(b->name);
+	}
 
 	b->target = f;
 }
@@ -184,6 +186,7 @@ void prepare_config(struct test_config *c, char *cpath, char *fpath)
 	int tmp;
 	int count = 0;
 	struct test_function *f;
+	struct test_binding *b;
 	int i;
 
 	tmp = asprintf(&c->name, "%s.%d",
@@ -194,13 +197,19 @@ void prepare_config(struct test_config *c, char *cpath, char *fpath)
 
 	c->path = cpath;
 
-	for (f = c->bound_funcs; f->instance; f++)
-		count++;
+	/* check if bindings has been already filled */
+	if (!c->bindings) {
+		for (f = c->bound_funcs; f->instance; f++)
+			count++;
 
-	c->bindings = calloc(count + 1, sizeof(*c->bindings));
-	if (c->bindings == NULL)
-		fail();
-	free_later(c->bindings);
+		c->bindings = calloc(count + 1, sizeof(*c->bindings));
+		if (c->bindings == NULL)
+			fail();
+		free_later(c->bindings);
+	} else {
+		for (b = c->bindings; b->name; b++)
+			count++;
+	}
 
 	for (i = 0; i < count; i++)
 		prepare_binding(&c->bindings[i], &c->bound_funcs[i], fpath);
