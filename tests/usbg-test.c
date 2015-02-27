@@ -281,26 +281,298 @@ void prepare_gadget(struct test_state *state, struct test_gadget *g)
 
 }
 
-void prepare_state(struct test_state *state)
+static void cpy_test_function(struct test_function *to,
+			       struct test_function *from)
+{
+	/* Reuse instance */
+	to->instance = from->instance;
+	to->type = from->type;
+        /* path and name is not being copied because
+	   it has not been allocated now */
+
+	to->writable = 1;
+}
+
+static struct test_function *dup_test_functions(struct test_function *functions)
+{
+	struct test_function *f, *nf, *new_functions;
+	int count = 0;
+
+	for (f = functions; f->instance; ++f)
+		++count;
+
+	new_functions = calloc(count + 1, sizeof(*f));
+	if (!new_functions)
+		fail();
+	free_later(new_functions);
+
+	for (f = functions, nf = new_functions; f->instance; ++f, ++nf)
+		cpy_test_function(nf, f);
+
+	return new_functions;
+}
+
+static struct test_function *get_new_binding_target(struct test_function *which,
+						    struct test_function *old,
+						    int count,
+						    struct test_function *new)
+{
+	struct test_function *ret = NULL;
+
+	/* Should duplicate function? */
+	if (which < old || ((which - old) > count)) {
+		/* We may need to do a deep copy */
+		if (!which->writable) {
+			ret = calloc(1, sizeof(*ret));
+			if (!ret)
+				fail();
+			free_later(ret);
+
+			cpy_test_function(ret, which);
+		} else {
+			ret = which;
+		}
+	} else if (old != new) {
+		/* Function has been copied in bound_funcs so just
+		   set new address */
+		ret = which - old + new;
+	} else {
+		/* Functions are reused so leave address as is */
+		ret = which;
+	}
+
+	return ret;
+}
+
+static void cpy_test_binding(struct test_binding *to,
+			     struct test_binding *from,
+			     struct test_function *old,
+			     int func_count,
+			     struct test_function *new)
+{
+	/* Reuse name */
+	to->name = from->name;
+	to->target = get_new_binding_target(from->target, old, func_count, new);
+
+	to->writable = 1;
+}
+
+static struct test_binding *dup_test_bindings(struct test_binding *bindings,
+					     struct test_function *old,
+					     int func_count,
+					     struct test_function *new)
+{
+	struct test_binding *b, *nb, *new_bindings;
+	int count = 0;
+
+	for (b = bindings; b->name; ++b)
+		++count;
+
+	new_bindings = calloc(count + 1, sizeof(*b));
+	if (!new_bindings)
+		fail();
+	free_later(new_bindings);
+
+	for (b = bindings, nb = new_bindings; b->name; ++b, ++nb)
+		cpy_test_binding(nb, b, old, func_count, new);
+
+	return new_bindings;
+}
+
+static void cpy_test_config(struct test_config *to,
+			    struct test_config *from)
+{
+	int func_count = 0;
+	struct test_function *f;
+	struct test_binding *b;
+
+	/* Reuse label */
+	to->label = from->label;
+	to->id = from->id;
+
+	if (from->bound_funcs) {
+		/* If at least one function is not writable
+		   we have to copy all of them */
+		for (f = from->bound_funcs; f->instance; ++f) {
+			++func_count;
+			if (!f->writable && !to->bound_funcs) {
+				to->bound_funcs =
+					dup_test_functions(from->bound_funcs);
+			}
+		}
+
+		if (!f->name && !to->bound_funcs)
+			to->bound_funcs = from->bound_funcs;
+	}
+
+	/* If bindings are set copy also them */
+	if (from->bindings) {
+		/* If at least one function is not writable
+		   we have to copy all of them */
+		for (b = from->bindings; b->name; ++b)
+			if (!b->writable)
+				to->bindings =
+					dup_test_bindings(from->bindings,
+							  from->bound_funcs,
+							  func_count,
+							  to->bound_funcs);
+
+		/* if we are reusing binding we have to translate target
+		   address to new one which is writable */
+		if (!b->name && !to->bindings) {
+			to->bindings = from->bindings;
+			for (b = from->bindings; b->name; ++b)
+				b->target =
+					get_new_binding_target(
+						b->target,
+						from->bound_funcs,
+						func_count,
+						to->bound_funcs);
+		}
+	}
+
+	to->writable = 1;
+}
+
+static struct test_config *dup_test_configs(struct test_config *configs)
+{
+	struct test_config *c, *nc, *new_configs;
+	int count = 0;
+
+	for (c = configs; c->label; ++c)
+		++count;
+
+	new_configs = calloc(count + 1, sizeof(*c));
+	if (!new_configs)
+		fail();
+	free_later(new_configs);
+
+	for (c = configs, nc = new_configs; c->label; ++c, ++nc)
+		cpy_test_config(nc, c);
+
+	return new_configs;
+}
+
+static void cpy_test_gadget(struct test_gadget *to, struct test_gadget *from)
+{
+	struct test_function *f;
+	struct test_config *c;
+
+	/* Reuse name and udc */
+	to->name = from->name;
+	to->udc = from->udc;
+        /* path is not being copied because it has not been allocated */
+
+	/* If at least one function is not writable
+	   we have to copy all of them */
+	for (f = from->functions; f->instance; ++f)
+		if (!f->writable) {
+			to->functions =
+				dup_test_functions(from->functions);
+			break;
+		}
+
+	if (!f->name && !to->functions)
+		to->functions = from->functions;
+
+
+	/* If at least one config is not writable
+	   we have to copy all of them */
+	for (c = from->configs; c->label; ++c)
+		if (!c->writable) {
+			to->configs = dup_test_configs(from->configs);
+			break;
+		}
+
+	if (!c->name && !to->configs)
+		to->configs = from->configs;
+
+	to->writable = 1;
+}
+
+static struct test_gadget *dup_test_gadgets(struct test_gadget *gadgets)
+{
+	struct test_gadget *g, *ng, *new_gadgets;
+	int count = 0;
+
+	for (g = gadgets; g->name; ++g)
+		++count;
+
+	new_gadgets = calloc(count + 1, sizeof(*g));
+	if (!new_gadgets)
+		fail();
+	free_later(new_gadgets);
+
+	for (g = gadgets, ng = new_gadgets; g->name; ++g, ++ng)
+		cpy_test_gadget(ng, g);
+
+	return new_gadgets;
+}
+
+static struct test_state *dup_test_state(struct test_state *state)
+{
+	struct test_state *new_state;
+	struct test_gadget *g;
+
+	new_state = calloc(1, sizeof(*new_state));
+	if (!new_state)
+		fail();
+	free_later(new_state);
+
+	/* We don't copy configfs path because it is never changed
+	 if you would like to free it before test end replace
+	 this code with strdup */
+	new_state->configfs_path = state->configfs_path;
+
+	/* path is not being copied because it has not been allocated */
+
+	/* If at least one gadget is not writable we have to copy all of them */
+	for (g = state->gadgets; g->name; ++g)
+		if (!g->writable) {
+			new_state->gadgets =
+				dup_test_gadgets(state->gadgets);
+			break;
+		}
+
+	if (!g->name && !new_state->gadgets)
+		new_state->gadgets = state->gadgets;
+
+	/* udcs are also never changed so leave them as they are */
+	new_state->udcs = state->udcs;
+
+	new_state->writable = 1;
+
+	return new_state;
+}
+
+struct test_state *prepare_state(struct test_state *state)
 {
 	struct test_gadget *g;
+	struct test_state *new_state;
 	int count = 0;
 	int tmp;
 
-	tmp = asprintf(&(state->path), "%s/usb_gadget", state->configfs_path);
+	if (!state->writable)
+		new_state = dup_test_state(state);
+	else
+		new_state = state;
+
+	tmp = asprintf(&(new_state->path), "%s/usb_gadget",
+		       new_state->configfs_path);
 	if (tmp < 0)
 		fail();
-	free_later(state->path);
+	free_later(new_state->path);
 
 
-	for (g = state->gadgets; g->name; g++) {
-		prepare_gadget(state, g);
+	for (g = new_state->gadgets; g->name; g++) {
+		prepare_gadget(new_state, g);
 		count++;
 	}
 
-	qsort(state->gadgets, count, sizeof(*state->gadgets),
+	qsort(new_state->gadgets, count, sizeof(*new_state->gadgets),
 		(int (*)(const void *, const void *))test_gadget_cmp);
 
+	return new_state;
 }
 
 /* Simulation of configfs for init */

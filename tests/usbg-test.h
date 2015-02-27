@@ -92,9 +92,13 @@ typedef enum {
  * @brief Prepare given state for using in tests
  * @details Generate full pathes to state elements and sort state's content.
  * Must be called before pasing state to push_* and pull_* functions.
- * @param[in] state Pointer to state which should be filled out
+ * @param[in] state State schema used to genrate test state
+ * @return Pointer to state which can be used for testing. Returned value is
+ * equal to #state if writable attribute has been set to 1 or pointer
+ * to newly allocated test_state filled with suitable values. All memory
+ * allocated in this function is scheduled to free using free_later().
  */
-void prepare_state(struct test_state *state);
+struct test_state *prepare_state(struct test_state *state);
 
 /**
  * @brief Prepare given config for using in tests

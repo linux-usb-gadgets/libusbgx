@@ -300,7 +300,7 @@ static struct test_state *put_func_in_state(struct test_function *func)
 	struct test_config *c;
 	char **udcs;
 
-	st = malloc(sizeof(*st));
+	st = calloc(1, sizeof(*st));
 	if (st == NULL)
 		fail();
 	free_later(st);
@@ -335,7 +335,7 @@ static struct test_state *put_func_in_state(struct test_function *func)
 	st->udcs = udcs;
 	st->writable = 1;
 
-	prepare_state(st);
+	st = prepare_state(st);
 
 	return st;
 }
@@ -345,8 +345,7 @@ static struct test_state *put_func_in_state(struct test_function *func)
  */
 static void setup_simple_state(void **state)
 {
-	prepare_state(&simple_state);
-	*state = &simple_state;
+	*state = prepare_state(&simple_state);
 }
 
 /**
@@ -354,8 +353,7 @@ static void setup_simple_state(void **state)
  */
 static void setup_all_funcs_state(void **state)
 {
-	prepare_state(&all_funcs_state);
-	*state = &all_funcs_state;
+	*state = prepare_state(&all_funcs_state);
 }
 
 /**
@@ -371,8 +369,7 @@ static void setup_same_type_funcs_state(void **state)
  */
 static void setup_long_path_state(void **state)
 {
-	prepare_state(&long_path_state);
-	*state = &long_path_state;
+	*state = prepare_state(&long_path_state);
 }
 
 /**
@@ -380,8 +377,7 @@ static void setup_long_path_state(void **state)
  */
 static void setup_long_udc_state(void **state)
 {
-	prepare_state(&long_udc_state);
-	*state = &long_udc_state;
+	*state = prepare_state(&long_udc_state);
 }
 
 /**
@@ -411,10 +407,9 @@ static void setup_random_len_gadget_strs_data(void **state)
 	memset(strs->str_mnf, 'x', rand() % USBG_MAX_STR_LENGTH);
 	memset(strs->str_prd, 'x', rand() % USBG_MAX_STR_LENGTH);
 
-	data->state = &simple_state;
 	data->strs = strs;
 
-	prepare_state(data->state);
+	data->state = prepare_state(&simple_state);
 	*state = data;
 }
 
