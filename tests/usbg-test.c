@@ -398,6 +398,7 @@ static void cpy_test_config(struct test_config *to,
 	/* Reuse label */
 	to->label = from->label;
 	to->id = from->id;
+	to->strs = from->strs;
 
 	if (from->bound_funcs) {
 		/* If at least one function is not writable
@@ -900,6 +901,68 @@ void push_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *st
 	push_gadget_str_dir(gadget, lang);
 	for (i = 0; i < GADGET_STR_MAX; i++)
 		push_gadget_str(gadget, gadget_str_names[i], lang, get_gadget_str(strs, i));
+}
+
+void pull_config_string(struct test_config *config, int lang, const char *str)
+{
+	char *path;
+	int tmp;
+
+
+	tmp = asprintf(&path, "%s/%s/strings/0x%x",
+			config->path, config->name, lang);
+	if (tmp < 0)
+		fail();
+	free_later(path);
+
+	srand(time(NULL));
+	tmp = rand() % 2;
+
+	if (tmp) {
+		EXPECT_OPENDIR(path);
+	} else {
+		EXPECT_OPENDIR_ERROR(path, ENOENT);
+		EXPECT_MKDIR(path);
+	}
+
+	tmp = asprintf(&path, "%s/configuration", path);
+	if (tmp < 0)
+		fail();
+	free_later(path);
+
+	EXPECT_WRITE(path, str);
+}
+
+void pull_config_strs(struct test_config *config, int lang, usbg_config_strs *strs)
+{
+	pull_config_string(config, lang, strs->configuration);
+}
+
+void push_config_string(struct test_config *config, int lang, const char *str)
+{
+	char *path;
+	int tmp;
+
+
+	tmp = asprintf(&path, "%s/%s/strings/0x%x",
+			config->path, config->name, lang);
+	if (tmp < 0)
+		fail();
+	free_later(path);
+
+	EXPECT_OPENDIR(path);
+
+	tmp = asprintf(&path, "%s/configuration", path);
+	if (tmp < 0)
+		fail();
+	free_later(path);
+
+	PUSH_FILE(path, str);
+}
+
+void push_config_strs(struct test_config *config, int lang, usbg_config_strs *strs)
+{
+	push_config_string(config, lang, strs->configuration);
 }
 
 void assert_func_equal(usbg_function *f, struct test_function *expected)

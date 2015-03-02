@@ -38,6 +38,7 @@ struct test_config
 	char *path;
 	char *name;
 	int writable;
+	usbg_config_strs *strs;
 };
 
 struct test_gadget
@@ -226,6 +227,40 @@ void pull_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *st
  * @brief prepare for reading gadget's strings
  */
 void push_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *strs);
+
+/**
+ * @brief Prepare for /ref usbg_set_config_string calling
+ * @details Expect setting the same string as given one
+ * @param[in] config on which strings will be set
+ * @param[in] lang Language of strings
+ * @param[in] str string to be set as configuration string
+ */
+void pull_config_string(struct test_config *config, int lang, const char *str);
+
+/**
+ * @brief Prepare for writting given config strings
+ * @param[in] config on which strings will be set
+ * @param[in] lang Language of strings
+ * @param[in] strs Strings expected to be set
+ */
+void pull_config_strs(struct test_config *config, int lang, usbg_config_strs *strs);
+
+/**
+ * @brief Prepare for /ref usbg_get_config_string calling
+ * @details Expect setting the same string as given one
+ * @param[in] config from which strings will be get
+ * @param[in] lang Language of strings
+ * @param[in] str string which should be returned as configuration string
+ */
+void push_config_string(struct test_config *config, int lang, const char *str);
+
+/**
+ * @brief Prepare for reading config strings
+ * @param[in] config from which strings will be get
+ * @param[in] lang Language of strings
+ * @param[in] strs Strings which should be returned
+ */
+void push_config_strs(struct test_config *config, int lang, usbg_config_strs *strs);
 
 /**
  * @brief Store given pointer on cleanup stack
