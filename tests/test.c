@@ -57,6 +57,10 @@ static char long_path_str[] = FILLED_STR(LONG_PATH_LEN, 'x');
 /* NAME_MAX is limit for filename length */
 static char long_usbg_string[] = FILLED_STR(NAME_MAX, 'x');
 
+static usbg_config_strs simple_config_strs= {
+	.configuration = "configuration string"
+};
+
 /**
  * @brief Simplest udcs names
  * @details Used to go through init when testing other things
@@ -284,6 +288,18 @@ static usbg_gadget_attrs *get_random_gadget_attrs()
 	ret->bcdDevice = rand() % max_gadget_attrs.bcdDevice;
 
 	return ret;
+}
+
+static void setup_simple_config_strs_state(void **state)
+{
+	struct test_gadget *tg;
+	struct test_config *tc;
+
+	for (tg = simple_state.gadgets; tg->name; ++tg)
+		for (tc = tg->configs; tc->label; ++tc)
+			tc->strs = &simple_config_strs;
+
+	*state = prepare_state(&simple_state);
 }
 
 /**
@@ -1374,6 +1390,75 @@ static void test_get_binding_name_len(void **state)
 }
 
 /**
+ * @brief Set config strings
+ * @param[in] c Config on which string should be set
+ * @param[in] tc Test config containing strings to be set
+ */
+static void try_set_config_strs(usbg_config *c, struct test_config *tc)
+{
+	pull_config_strs(tc, LANG_US_ENG, tc->strs);
+	usbg_set_config_strs(c, LANG_US_ENG, tc->strs);
+}
+
+/**
+ * @brief Test setting strings
+ * @details Set strings in all configs present in state
+ * @param[in, out] state Pointer to pointer to correctly initialized test state,
+ * will point to usbg state when finished.
+ */
+static void test_set_config_strs(void **state)
+{
+	for_each_test_config(state, try_set_config_strs);
+}
+
+/**
+ * @brief Set strings one by one on config
+ * @param[in] c Config on which string should be set
+ * @param[in] tc Test config containing strings to be set
+ */
+static void try_set_config_string(usbg_config *c, struct test_config *tc)
+{
+	pull_config_string(tc, LANG_US_ENG, tc->strs->configuration);
+	usbg_set_config_string(c, LANG_US_ENG, tc->strs->configuration);
+}
+
+/**
+ * @brief Test setting strings one by one
+ * @details Set strings on all configs present in given state
+ * @param[in, out] state Pointer to pointer to correctly initialized test state,
+ * will point to usbg state when finished.
+ */
+static void test_set_config_string(void **state)
+{
+	for_each_test_config(state, try_set_config_string);
+}
+
+/**
+ * @brief Get config strings
+ * @details Assume that given configs have the same strings
+ * @param[in] c Config from which strings should be get
+ * @param[in] tc Test config expected to have the same string as c
+ */
+static void try_get_config_strs(usbg_config *c, struct test_config *tc)
+{
+	usbg_config_strs strs;
+	push_config_strs(tc, LANG_US_ENG, tc->strs);
+	usbg_get_config_strs(c, LANG_US_ENG, &strs);
+	assert_string_equal(tc->strs->configuration, strs.configuration);
+}
+
+/**
+ * @brief Test getting congig strings
+ * @details Get config strings on all configs present in given state
+ * @param[in, out] state Pointer to pointer to correctly initialized test state,
+ * will point to usbg state when finished.
+ */
+static void test_get_config_strs(void **state)
+{
+	for_each_test_config(state, try_get_config_strs);
+}
+
+/**
  * @brief cleanup usbg state
  */
 static void teardown_state(void **state)
@@ -1756,6 +1841,30 @@ static UnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_get_binding_name_len_simple",
 		     test_get_binding_name_len, setup_simple_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_set_config_strs_simple,
+	 * Set simple strings in set of configurations,
+	 * usbg_set_config_strs}
+	 */
+	USBG_TEST_TS("test_set_config_strs_simple",
+		     test_set_config_strs, setup_simple_config_strs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_set_config_string_simple,
+	 * Set simple string in set of configurations,
+	 * usbg_set_config_string}
+	 */
+	USBG_TEST_TS("test_set_config_string_simple",
+		     test_set_config_string, setup_simple_config_strs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_config_strs_simple,
+	 * Get simple strings from set of configurations,
+	 * usbg_get_config_strs}
+	 */
+	USBG_TEST_TS("test_get_config_strs_simple",
+		     test_get_config_strs, setup_simple_config_strs_state),
 
 #ifndef DOXYGEN
 };
