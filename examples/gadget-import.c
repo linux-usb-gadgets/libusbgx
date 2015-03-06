@@ -30,7 +30,6 @@
 int main(int argc, char **argv)
 {
 	usbg_state *s;
-	usbg_gadget *g;
 	int ret = -EINVAL;
 	int usbg_ret;
 	FILE *input;

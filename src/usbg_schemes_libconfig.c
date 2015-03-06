@@ -1098,7 +1098,7 @@ static int usbg_import_config_strs_lang(config_setting_t *root, usbg_config *c)
 	config_setting_t *node;
 	int lang;
 	const char *str;
-	usbg_config_strs c_strs = {0};
+	usbg_config_strs c_strs = {{0}};
 	int ret = USBG_ERROR_INVALID_TYPE;
 
 	node = config_setting_get_member(root, USBG_LANG_TAG);
@@ -1389,7 +1389,7 @@ static int usbg_import_gadget_strs_lang(config_setting_t *root, usbg_gadget *g)
 	config_setting_t *node;
 	int lang;
 	const char *str;
-	usbg_gadget_strs g_strs = {0};
+	usbg_gadget_strs g_strs = {{0}};
 	int ret = USBG_ERROR_INVALID_TYPE;
 
 	node = config_setting_get_member(root, USBG_LANG_TAG);
