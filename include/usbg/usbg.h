@@ -24,6 +24,10 @@
 #include <limits.h>
 #include <stdio.h> /* For FILE * */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @file include/usbg/usbg.h
  * @todo Clean up static buffers in structures
@@ -1175,4 +1179,9 @@ extern int usbg_get_gadget_import_error_line(usbg_state *s);
 /**
  * @}
  */
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __USBG_H__ */
