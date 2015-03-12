@@ -1727,7 +1727,7 @@ int usbg_create_gadget_vid_pid(usbg_state *s, const char *name,
 }
 
 int usbg_create_gadget(usbg_state *s, const char *name,
-		       usbg_gadget_attrs *g_attrs, usbg_gadget_strs *g_strs,
+		       const usbg_gadget_attrs *g_attrs, const usbg_gadget_strs *g_strs,
 		       usbg_gadget **g)
 {
 	usbg_gadget *gad;
@@ -1908,7 +1908,7 @@ out:
 	return g;
 }
 
-int usbg_set_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs)
+int usbg_set_gadget_attrs(usbg_gadget *g, const usbg_gadget_attrs *g_attrs)
 {
 	int ret;
 	if (!g || !g_attrs)
@@ -2026,7 +2026,7 @@ static int usbg_check_dir(const char *path)
 }
 
 int usbg_set_gadget_strs(usbg_gadget *g, int lang,
-		usbg_gadget_strs *g_strs)
+		const usbg_gadget_strs *g_strs)
 {
 	char path[USBG_MAX_PATH_LENGTH];
 	int nmb;
@@ -2123,7 +2123,7 @@ int usbg_set_gadget_product(usbg_gadget *g, int lang, const char *prd)
 }
 
 int usbg_create_function(usbg_gadget *g, usbg_function_type type,
-			 const char *instance, usbg_function_attrs *f_attrs,
+			 const char *instance, const usbg_function_attrs *f_attrs,
 			 usbg_function **f)
 {
 	char fpath[USBG_MAX_PATH_LENGTH];
@@ -2192,7 +2192,8 @@ out:
 }
 
 int usbg_create_config(usbg_gadget *g, int id, const char *label,
-		usbg_config_attrs *c_attrs, usbg_config_strs *c_strs, usbg_config **c)
+		const usbg_config_attrs *c_attrs, const usbg_config_strs *c_strs,
+		usbg_config **c)
 {
 	char cpath[USBG_MAX_PATH_LENGTH];
 	usbg_config *conf = NULL;
@@ -2306,7 +2307,7 @@ int usbg_cpy_function_instance(usbg_function *f, char *buf, size_t len)
 	return USBG_SUCCESS;
 }
 
-int usbg_set_config_attrs(usbg_config *c, usbg_config_attrs *c_attrs)
+int usbg_set_config_attrs(usbg_config *c, const usbg_config_attrs *c_attrs)
 {
 	int ret = USBG_ERROR_INVALID_PARAM;
 
@@ -2346,7 +2347,7 @@ int usbg_get_config_strs(usbg_config *c, int lang, usbg_config_strs *c_strs)
 }
 
 int usbg_set_config_strs(usbg_config *c, int lang,
-		usbg_config_strs *c_strs)
+		const usbg_config_strs *c_strs)
 {
 	return usbg_set_config_string(c, lang, c_strs->configuration);
 }
@@ -2529,7 +2530,7 @@ int usbg_get_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
 			: USBG_ERROR_INVALID_PARAM;
 }
 
-int usbg_set_function_net_attrs(usbg_function *f, usbg_f_net_attrs *attrs)
+int usbg_set_function_net_attrs(usbg_function *f, const usbg_f_net_attrs *attrs)
 {
 	int ret = USBG_SUCCESS;
 	char addr_buf[USBG_MAX_STR_LENGTH];
@@ -2557,7 +2558,8 @@ out:
 	return ret;
 }
 
-int  usbg_set_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
+int usbg_set_function_attrs(usbg_function *f,
+		const usbg_function_attrs *f_attrs)
 {
 	int ret = USBG_ERROR_INVALID_PARAM;
 
