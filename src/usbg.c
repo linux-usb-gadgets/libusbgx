@@ -760,7 +760,7 @@ static int usbg_rm_all_dirs(const char *path)
 }
 
 static int usbg_parse_function_net_attrs(usbg_function *f,
-		usbg_function_attrs *f_attrs)
+		usbg_f_net_attrs *f_net_attrs)
 {
 	struct ether_addr *addr;
 	struct ether_addr addr_buf;
@@ -773,7 +773,7 @@ static int usbg_parse_function_net_attrs(usbg_function *f,
 
 	addr = ether_aton_r(str_addr, &addr_buf);
 	if (addr) {
-		f_attrs->net.dev_addr = *addr;
+		f_net_attrs->dev_addr = *addr;
 	} else {
 		ret = USBG_ERROR_IO;
 		goto out;
@@ -785,17 +785,17 @@ static int usbg_parse_function_net_attrs(usbg_function *f,
 
 	addr = ether_aton_r(str_addr, &addr_buf);
 	if (addr) {
-		f_attrs->net.host_addr = *addr;
+		f_net_attrs->host_addr = *addr;
 	} else {
 		ret = USBG_ERROR_IO;
 		goto out;
 	}
 
-	ret = usbg_read_string(f->path, f->name, "ifname", f_attrs->net.ifname);
+	ret = usbg_read_string(f->path, f->name, "ifname", f_net_attrs->ifname);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	ret = usbg_read_dec(f->path, f->name, "qmult", &(f_attrs->net.qmult));
+	ret = usbg_read_dec(f->path, f->name, "qmult", &(f_net_attrs->qmult));
 
 out:
 	return ret;
@@ -818,7 +818,7 @@ static int usbg_parse_function_attrs(usbg_function *f,
 	case F_NCM:
 	case F_EEM:
 	case F_RNDIS:
-		ret = usbg_parse_function_net_attrs(f, f_attrs);
+		ret = usbg_parse_function_net_attrs(f, &(f_attrs->net));
 		break;
 	case F_PHONET:
 		ret = usbg_read_string(f->path, f->name, "ifname",
