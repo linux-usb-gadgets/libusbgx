@@ -224,6 +224,36 @@ const char *usbg_strerror(usbg_error e)
 	return ret;
 }
 
+int usbg_lookup_function_attrs_type(int f_type)
+{
+	int ret;
+
+	switch (f_type) {
+	case F_SERIAL:
+	case F_ACM:
+	case F_OBEX:
+		ret = USBG_F_ATTRS_SERIAL;
+		break;
+	case F_ECM:
+	case F_SUBSET:
+	case F_NCM:
+	case F_EEM:
+	case F_RNDIS:
+		ret = USBG_F_ATTRS_NET;
+		break;
+	case F_PHONET:
+		ret = USBG_F_ATTRS_PHONET;
+		break;
+	case F_FFS:
+		ret = USBG_F_ATTRS_PHONET;
+		break;
+	default:
+		ret = USBG_ERROR_NOT_SUPPORTED;
+	}
+
+	return ret;
+}
+
 int usbg_lookup_function_type(const char *name)
 {
 	int i = USBG_FUNCTION_TYPE_MIN;

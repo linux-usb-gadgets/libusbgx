@@ -229,6 +229,13 @@ typedef union {
 	usbg_f_ffs_attrs ffs;
 } usbg_function_attrs;
 
+typedef enum {
+	USBG_F_ATTRS_SERIAL = 1,
+	USBG_F_ATTRS_NET,
+	USBG_F_ATTRS_PHONET,
+	USBG_F_ATTRS_FFS,
+} usbg_f_attrs_type;
+
 /* Error codes */
 
 /**
@@ -686,6 +693,13 @@ extern const char *usbg_get_function_type_str(usbg_function_type type);
  * @return Function type enum or negative error code
  */
 extern int usbg_lookup_function_type(const char *name);
+
+/**
+ * @brief Lookup attrs type for given type of function
+ * @param f_type type of functions
+ * @return Attributes type for this type of function
+ */
+extern int usbg_lookup_function_attrs_type(int f_type);
 
 /* USB configurations allocation and configuration */
 
