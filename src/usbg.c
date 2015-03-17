@@ -835,36 +835,49 @@ static int usbg_parse_function_attrs(usbg_function *f,
 		usbg_function_attrs *f_attrs)
 {
 	int ret;
+	int attrs_type;
 
-	switch (f->type) {
-	case F_SERIAL:
-	case F_ACM:
-	case F_OBEX:
+	attrs_type = usbg_lookup_function_attrs_type(f->type);
+	if (attrs_type < 0) {
+		ret = attrs_type;
+		goto out;
+	}
+
+	switch (attrs_type) {
+	case USBG_F_ATTRS_SERIAL:
+		f_attrs->header.attrs_type = USBG_F_ATTRS_SERIAL;
 		ret = usbg_read_dec(f->path, f->name, "port_num",
-				&(f_attrs->serial.port_num));
+				&(f_attrs->attrs.serial.port_num));
 		break;
-	case F_ECM:
-	case F_SUBSET:
-	case F_NCM:
-	case F_EEM:
-	case F_RNDIS:
-		ret = usbg_parse_function_net_attrs(f, &(f_attrs->net));
+
+	case USBG_F_ATTRS_NET:
+		f_attrs->header.attrs_type = USBG_F_ATTRS_NET;
+		ret = usbg_parse_function_net_attrs(f, &(f_attrs->attrs.net));
 		break;
-	case F_PHONET:
+
+	case USBG_F_ATTRS_PHONET:
+		f_attrs->header.attrs_type = USBG_F_ATTRS_PHONET;
 		ret = usbg_read_string(f->path, f->name, "ifname",
-				f_attrs->phonet.ifname);
+				f_attrs->attrs.phonet.ifname);
 		break;
-	case F_FFS:
-		strncpy(f_attrs->ffs.dev_name, f->instance,
-			sizeof(f_attrs->ffs.dev_name) - 1);
-		f_attrs->ffs.dev_name[sizeof(f_attrs->ffs.dev_name) - 1] = '\0';
+
+	case USBG_F_ATTRS_FFS:
+	{
+		usbg_f_ffs_attrs *ffs_attrs = &(f_attrs->attrs.ffs);
+
+		f_attrs->header.attrs_type = USBG_F_ATTRS_FFS;
+		strncpy(ffs_attrs->dev_name, f->instance,
+			sizeof(ffs_attrs->dev_name) - 1);
+		ffs_attrs->dev_name[sizeof(ffs_attrs->dev_name) - 1] = '\0';
 		ret = 0;
 		break;
+	}
 	default:
 		ERROR("Unsupported function type\n");
 		ret = USBG_ERROR_NOT_SUPPORTED;
+		break;
 	}
-
+out:
 	return ret;
 }
 
@@ -2164,11 +2177,19 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 	if (!g || !f)
 		return ret;
 
+	/* if attrs type is set, check if it has correct type */
+	if (f_attrs && f_attrs->header.attrs_type) {
+		int attrs_type;
+		attrs_type = usbg_lookup_function_attrs_type(type);
+		if (attrs_type < 0 || attrs_type != f_attrs->header.attrs_type)
+			return ret;
+	}
+
 	if (!instance) {
 		/* If someone creates ffs function and doesn't pass instance name
 		   this means that device name from attrs should be used */
 		if (type == F_FFS && f_attrs) {
-			instance = f_attrs->ffs.dev_name;
+			instance = f_attrs->attrs.ffs.dev_name;
 			f_attrs = NULL;
 		} else {
 			return ret;
@@ -2589,44 +2610,51 @@ out:
 }
 
 int usbg_set_function_attrs(usbg_function *f,
-		const usbg_function_attrs *f_attrs)
+			    const usbg_function_attrs *f_attrs)
 {
 	int ret = USBG_ERROR_INVALID_PARAM;
+	int attrs_type;
 
 	if (!f || !f_attrs)
-		return USBG_ERROR_INVALID_PARAM;
+		return ret;
 
-	switch (f->type) {
-	case F_SERIAL:
-	case F_ACM:
-	case F_OBEX:
+	attrs_type = usbg_lookup_function_attrs_type(f->type);
+	if (attrs_type < 0)
+		return ret;
+
+	/* if attrs type is set, check if it has correct type */
+	if (f_attrs->header.attrs_type && attrs_type != f_attrs->header.attrs_type)
+		return ret;
+
+	switch (attrs_type) {
+	case USBG_F_ATTRS_SERIAL:
 		/* port_num attribute is read only so we accept only 0
 		 * and do nothing with it */
-		ret = f_attrs->serial.port_num ? USBG_ERROR_INVALID_PARAM
+		ret = f_attrs->attrs.serial.port_num ? USBG_ERROR_INVALID_PARAM
 			: USBG_SUCCESS;
 		break;
-	case F_ECM:
-	case F_SUBSET:
-	case F_NCM:
-	case F_EEM:
-	case F_RNDIS:
-		ret = usbg_set_function_net_attrs(f, &f_attrs->net);
+
+	case USBG_F_ATTRS_NET:
+		ret = usbg_set_function_net_attrs(f, &f_attrs->attrs.net);
 		break;
-	case F_PHONET:
+
+	case USBG_F_ATTRS_PHONET:
 		/* ifname attribute is read only
 		 * so we accept only empty string */
-		ret = f_attrs->phonet.ifname[0] ? USBG_ERROR_INVALID_PARAM
+		ret = f_attrs->attrs.phonet.ifname[0] ? USBG_ERROR_INVALID_PARAM
 			: USBG_SUCCESS;
 		break;
-	case F_FFS:
+
+	case USBG_F_ATTRS_FFS:
 		/* dev_name is a virtual atribute so allow only to use empty
 		 * empty string which means nop */
-		ret = f_attrs->ffs.dev_name[0] ? USBG_ERROR_INVALID_PARAM
+		ret = f_attrs->attrs.ffs.dev_name[0] ? USBG_ERROR_INVALID_PARAM
 			: USBG_SUCCESS;
 		break;
 	default:
 		ERROR("Unsupported function type\n");
 		ret = USBG_ERROR_NOT_SUPPORTED;
+		break;
 	}
 
 	return ret;

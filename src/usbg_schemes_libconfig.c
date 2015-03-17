@@ -370,28 +370,24 @@ static int usbg_export_function_attrs(usbg_function *f, config_setting_t *root)
 		goto out;
 	}
 
-	switch (f->type) {
-	case F_SERIAL:
-	case F_ACM:
-	case F_OBEX:
+	switch (f_attrs.header.attrs_type) {
+	case USBG_F_ATTRS_SERIAL:
 		node = config_setting_add(root, "port_num", CONFIG_TYPE_INT);
 		if (!node)
 			goto out;
 
-		cfg_ret = config_setting_set_int(node, f_attrs.serial.port_num);
+		cfg_ret = config_setting_set_int(node, f_attrs.attrs.serial.port_num);
 		ret = cfg_ret == CONFIG_TRUE ? 0 : USBG_ERROR_OTHER_ERROR;
 		break;
-	case F_ECM:
-	case F_SUBSET:
-	case F_NCM:
-	case F_EEM:
-	case F_RNDIS:
-		ret = usbg_export_f_net_attrs(&f_attrs.net, root);
+
+	case USBG_F_ATTRS_NET:
+		ret = usbg_export_f_net_attrs(&f_attrs.attrs.net, root);
 		break;
-	case F_PHONET:
+
+	case USBG_F_ATTRS_PHONET:
 		/* Don't export ifname because it is read only */
 		break;
-	case F_FFS:
+	case USBG_F_ATTRS_FFS:
 		/* We don't need to export ffs attributes
 		 * due to instance name export */
 		ret = USBG_SUCCESS;
@@ -866,32 +862,38 @@ out:
 static int usbg_import_function_attrs(config_setting_t *root, usbg_function *f)
 {
 	int ret = USBG_SUCCESS;
+	int attrs_type;
 
-	switch (f->type) {
-	case F_SERIAL:
-	case F_ACM:
-	case F_OBEX:
-		/* Don't import port_num because it is read only */
+	attrs_type = usbg_lookup_function_attrs_type(f->type);
+	if (attrs_type < 0) {
+		ret = attrs_type;
+		goto out;
+	}
+
+	switch (attrs_type) {
+	case USBG_F_ATTRS_SERIAL:
+                /* Don't import port_num because it is read only */
 		break;
-	case F_ECM:
-	case F_SUBSET:
-	case F_NCM:
-	case F_EEM:
-	case F_RNDIS:
+
+	case USBG_F_ATTRS_NET:
 		ret = usbg_import_f_net_attrs(root, f);
 		break;
-	case F_PHONET:
+
+	case USBG_F_ATTRS_PHONET:
 		/* Don't import ifname because it is read only */
 		break;
-	case F_FFS:
-		/* We don't need to export ffs attributes
-		 * due to instance name export */
+
+	case USBG_F_ATTRS_FFS:
+		/* We don't need to import ffs attributes
+		 * due to instance name import */
 		break;
 	default:
 		ERROR("Unsupported function type\n");
 		ret = USBG_ERROR_NOT_SUPPORTED;
+		break;
 	}
 
+out:
 	return ret;
 }
 

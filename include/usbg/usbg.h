@@ -227,7 +227,7 @@ typedef union {
 	usbg_f_net_attrs net;
 	usbg_f_phonet_attrs phonet;
 	usbg_f_ffs_attrs ffs;
-} usbg_function_attrs;
+} usbg_f_attrs;
 
 typedef enum {
 	USBG_F_ATTRS_SERIAL = 1,
@@ -235,6 +235,15 @@ typedef enum {
 	USBG_F_ATTRS_PHONET,
 	USBG_F_ATTRS_FFS,
 } usbg_f_attrs_type;
+
+typedef struct {
+	int attrs_type;
+} usbg_f_attrs_header;
+
+typedef struct {
+	usbg_f_attrs_header header;
+	usbg_f_attrs attrs;
+} usbg_function_attrs;
 
 /* Error codes */
 

@@ -41,7 +41,7 @@ int main(void)
 	int ret = -EINVAL;
 	int usbg_ret;
 	usbg_function_attrs f_attrs = {
-		.ffs = {
+		.attrs.ffs = {
 			.dev_name = "my_awesome_dev_name",
 		},
 	};

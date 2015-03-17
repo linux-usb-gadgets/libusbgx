@@ -104,30 +104,30 @@ void show_function(usbg_function *f)
 
 	fprintf(stdout, "  Function, type: %s instance: %s\n",
 			usbg_get_function_type_str(type), instance);
-	switch (type) {
-	case F_SERIAL:
-	case F_ACM:
-	case F_OBEX:
+	switch (f_attrs.header.attrs_type) {
+	case USBG_F_ATTRS_SERIAL:
 		fprintf(stdout, "    port_num\t\t%d\n",
-				f_attrs.serial.port_num);
+				f_attrs.attrs.serial.port_num);
 		break;
-	case F_ECM:
-	case F_SUBSET:
-	case F_NCM:
-	case F_EEM:
-	case F_RNDIS:
+
+	case USBG_F_ATTRS_NET:
+	{
+		usbg_f_net_attrs *f_net_attrs = &f_attrs.attrs.net;
+
 		fprintf(stdout, "    dev_addr\t\t%s\n",
-				ether_ntoa(&f_attrs.net.dev_addr));
+			ether_ntoa(&f_net_attrs->dev_addr));
 		fprintf(stdout, "    host_addr\t\t%s\n",
-				ether_ntoa(&f_attrs.net.host_addr));
-		fprintf(stdout, "    ifname\t\t%s\n", f_attrs.net.ifname);
-		fprintf(stdout, "    qmult\t\t%d\n", f_attrs.net.qmult);
+			ether_ntoa(&f_net_attrs->host_addr));
+		fprintf(stdout, "    ifname\t\t%s\n", f_net_attrs->ifname);
+		fprintf(stdout, "    qmult\t\t%d\n", f_net_attrs->qmult);
 		break;
-	case F_PHONET:
-		fprintf(stdout, "    ifname\t\t%s\n", f_attrs.phonet.ifname);
+	}
+	case USBG_F_ATTRS_PHONET:
+		fprintf(stdout, "    ifname\t\t%s\n", f_attrs.attrs.phonet.ifname);
 		break;
-	case F_FFS:
-		fprintf(stdout, "    dev_name\t\t%s\n", f_attrs.ffs.dev_name);
+
+	case USBG_F_ATTRS_FFS:
+		fprintf(stdout, "    dev_name\t\t%s\n", f_attrs.attrs.ffs.dev_name);
 		break;
 	default:
 		fprintf(stdout, "    UNKNOWN\n");
