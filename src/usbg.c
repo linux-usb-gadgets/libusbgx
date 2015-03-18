@@ -444,6 +444,28 @@ static int usbg_read_string(const char *path, const char *name,
 	return ret;
 }
 
+static int usbg_read_string_alloc(const char *path, const char *name,
+			       const char *file, char **dest)
+{
+	char buf[USBG_MAX_FILE_SIZE];
+	char *new_buf = NULL;
+	int ret = USBG_SUCCESS;
+
+	ret = usbg_read_string(path, name, file, buf);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	new_buf = strdup(buf);
+	if (!new_buf) {
+		ret = USBG_ERROR_NO_MEM;
+		goto out;
+	}
+
+	*dest = new_buf;
+out:
+	return ret;
+}
+
 static int usbg_write_buf(const char *path, const char *name, const char *file,
 			  const char *buf)
 {
@@ -821,12 +843,12 @@ static int usbg_parse_function_net_attrs(usbg_function *f,
 		goto out;
 	}
 
-	ret = usbg_read_string(f->path, f->name, "ifname", f_net_attrs->ifname);
+	ret = usbg_read_dec(f->path, f->name, "qmult", &(f_net_attrs->qmult));
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	ret = usbg_read_dec(f->path, f->name, "qmult", &(f_net_attrs->qmult));
-
+	ret = usbg_read_string_alloc(f->path, f->name, "ifname",
+				     &(f_net_attrs->ifname));
 out:
 	return ret;
 }
@@ -2591,6 +2613,8 @@ void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs)
 		break;
 
 	case USBG_F_ATTRS_NET:
+		free(f_attrs->attrs.net.ifname);
+		f_attrs->attrs.net.ifname = NULL;
 		break;
 
 	case USBG_F_ATTRS_PHONET:
@@ -2611,7 +2635,7 @@ int usbg_set_function_net_attrs(usbg_function *f, const usbg_f_net_attrs *attrs)
 	char *addr;
 
 	/* ifname is read only so we accept only empty string for this param */
-	if (attrs->ifname[0]) {
+	if (attrs->ifname && attrs->ifname[0]) {
 		ret = USBG_ERROR_INVALID_PARAM;
 		goto out;
 	}
