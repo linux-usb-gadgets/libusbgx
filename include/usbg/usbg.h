@@ -207,7 +207,7 @@ typedef struct {
  * @brief Attributes for the phonet USB function
  */
 typedef struct {
-	char ifname[USBG_MAX_STR_LENGTH];
+	char *ifname;
 } usbg_f_phonet_attrs;
 
 /**

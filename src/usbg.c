@@ -879,8 +879,8 @@ static int usbg_parse_function_attrs(usbg_function *f,
 
 	case USBG_F_ATTRS_PHONET:
 		f_attrs->header.attrs_type = USBG_F_ATTRS_PHONET;
-		ret = usbg_read_string(f->path, f->name, "ifname",
-				f_attrs->attrs.phonet.ifname);
+		ret = usbg_read_string_alloc(f->path, f->name, "ifname",
+					     &(f_attrs->attrs.phonet.ifname));
 		break;
 
 	case USBG_F_ATTRS_FFS:
@@ -2618,6 +2618,8 @@ void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs)
 		break;
 
 	case USBG_F_ATTRS_PHONET:
+		free(f_attrs->attrs.phonet.ifname);
+		f_attrs->attrs.phonet.ifname = NULL;
 		break;
 
 	case USBG_F_ATTRS_FFS:
@@ -2688,8 +2690,8 @@ int usbg_set_function_attrs(usbg_function *f,
 	case USBG_F_ATTRS_PHONET:
 		/* ifname attribute is read only
 		 * so we accept only empty string */
-		ret = f_attrs->attrs.phonet.ifname[0] ? USBG_ERROR_INVALID_PARAM
-			: USBG_SUCCESS;
+		ret = f_attrs->attrs.phonet.ifname && f_attrs->attrs.phonet.ifname[0] ?
+			USBG_ERROR_INVALID_PARAM : USBG_SUCCESS;
 		break;
 
 	case USBG_F_ATTRS_FFS:
