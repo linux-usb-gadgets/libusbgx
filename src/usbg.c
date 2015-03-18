@@ -888,10 +888,11 @@ static int usbg_parse_function_attrs(usbg_function *f,
 		usbg_f_ffs_attrs *ffs_attrs = &(f_attrs->attrs.ffs);
 
 		f_attrs->header.attrs_type = USBG_F_ATTRS_FFS;
-		strncpy(ffs_attrs->dev_name, f->instance,
-			sizeof(ffs_attrs->dev_name) - 1);
-		ffs_attrs->dev_name[sizeof(ffs_attrs->dev_name) - 1] = '\0';
-		ret = 0;
+		ffs_attrs->dev_name = strdup(f->instance);
+		if (!ffs_attrs->dev_name)
+			ret = USBG_ERROR_NO_MEM;
+		else
+			ret = USBG_SUCCESS;
 		break;
 	}
 	default:
@@ -2210,7 +2211,7 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 	if (!instance) {
 		/* If someone creates ffs function and doesn't pass instance name
 		   this means that device name from attrs should be used */
-		if (type == F_FFS && f_attrs) {
+		if (type == F_FFS && f_attrs && f_attrs->attrs.ffs.dev_name) {
 			instance = f_attrs->attrs.ffs.dev_name;
 			f_attrs = NULL;
 		} else {
@@ -2623,6 +2624,8 @@ void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs)
 		break;
 
 	case USBG_F_ATTRS_FFS:
+		free(f_attrs->attrs.ffs.dev_name);
+		f_attrs->attrs.ffs.dev_name = NULL;
 		break;
 	default:
 		ERROR("Unsupported attrs type\n");
@@ -2697,8 +2700,8 @@ int usbg_set_function_attrs(usbg_function *f,
 	case USBG_F_ATTRS_FFS:
 		/* dev_name is a virtual atribute so allow only to use empty
 		 * empty string which means nop */
-		ret = f_attrs->attrs.ffs.dev_name[0] ? USBG_ERROR_INVALID_PARAM
-			: USBG_SUCCESS;
+		ret = f_attrs->attrs.ffs.dev_name && f_attrs->attrs.ffs.dev_name[0] ?
+			USBG_ERROR_INVALID_PARAM : USBG_SUCCESS;
 		break;
 	default:
 		ERROR("Unsupported function type\n");

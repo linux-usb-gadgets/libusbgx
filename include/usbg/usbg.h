@@ -217,7 +217,7 @@ typedef struct {
  * on config fs.
  */
 typedef struct {
-	char dev_name[USBG_MAX_DEV_LENGTH];
+	char *dev_name;
 } usbg_f_ffs_attrs;
 
 /**
