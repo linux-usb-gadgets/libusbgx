@@ -4,9 +4,14 @@
 /examples/.libs
 /src/.deps
 /src/.libs
+/tests/*
+!/tests/*.*
+/tests/.deps
 *.o
 *.lo
 *.la
+*.so
+*.so.*
 Makefile
 Makefile.in
 /configure
