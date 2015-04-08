@@ -132,6 +132,8 @@ void show_function(usbg_function *f)
 	default:
 		fprintf(stdout, "    UNKNOWN\n");
 	}
+
+	usbg_cleanup_function_attrs(&f_attrs);
 }
 
 void show_config(usbg_config *c)

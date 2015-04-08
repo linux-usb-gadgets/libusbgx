@@ -710,6 +710,16 @@ extern int usbg_lookup_function_type(const char *name);
  */
 extern int usbg_lookup_function_attrs_type(int f_type);
 
+/**
+ * @brief Cleanup content of function attributes
+ * @param f_attrs function attributes which should be cleaned up.
+ * @note This function should be called to free
+ * additional memory allocated by usbg_get_function_attrs().
+ * @warning None of attributes in passed structure should be
+ * accessed after returning from this function.
+ */
+extern void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs);
+
 /* USB configurations allocation and configuration */
 
 /**

@@ -2581,6 +2581,29 @@ int usbg_get_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
 			: USBG_ERROR_INVALID_PARAM;
 }
 
+void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs)
+{
+	if (!f_attrs)
+		return;
+
+	switch (f_attrs->header.attrs_type) {
+	case USBG_F_ATTRS_SERIAL:
+		break;
+
+	case USBG_F_ATTRS_NET:
+		break;
+
+	case USBG_F_ATTRS_PHONET:
+		break;
+
+	case USBG_F_ATTRS_FFS:
+		break;
+	default:
+		ERROR("Unsupported attrs type\n");
+		break;
+	}
+}
+
 int usbg_set_function_net_attrs(usbg_function *f, const usbg_f_net_attrs *attrs)
 {
 	int ret = USBG_SUCCESS;

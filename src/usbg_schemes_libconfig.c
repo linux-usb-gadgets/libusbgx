@@ -397,6 +397,7 @@ static int usbg_export_function_attrs(usbg_function *f, config_setting_t *root)
 		ret = USBG_ERROR_NOT_SUPPORTED;
 	}
 
+	usbg_cleanup_function_attrs(&f_attrs);
 out:
 	return ret;
 }
