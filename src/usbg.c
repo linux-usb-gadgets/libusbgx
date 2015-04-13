@@ -2615,26 +2615,30 @@ int usbg_get_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
 
 void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs)
 {
+	usbg_f_attrs *attrs;
+
 	if (!f_attrs)
 		return;
+
+	attrs = &f_attrs->attrs;
 
 	switch (f_attrs->header.attrs_type) {
 	case USBG_F_ATTRS_SERIAL:
 		break;
 
 	case USBG_F_ATTRS_NET:
-		free(f_attrs->attrs.net.ifname);
-		f_attrs->attrs.net.ifname = NULL;
+		free(attrs->net.ifname);
+		attrs->net.ifname = NULL;
 		break;
 
 	case USBG_F_ATTRS_PHONET:
-		free(f_attrs->attrs.phonet.ifname);
-		f_attrs->attrs.phonet.ifname = NULL;
+		free(attrs->phonet.ifname);
+		attrs->phonet.ifname = NULL;
 		break;
 
 	case USBG_F_ATTRS_FFS:
-		free(f_attrs->attrs.ffs.dev_name);
-		f_attrs->attrs.ffs.dev_name = NULL;
+		free(attrs->ffs.dev_name);
+		attrs->ffs.dev_name = NULL;
 		break;
 	default:
 		ERROR("Unsupported attrs type\n");
