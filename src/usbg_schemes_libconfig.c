@@ -386,7 +386,6 @@ static int usbg_export_function_attrs(usbg_function *f, config_setting_t *root)
 
 	case USBG_F_ATTRS_PHONET:
 		/* Don't export ifname because it is read only */
-		break;
 	case USBG_F_ATTRS_FFS:
 		/* We don't need to export ffs attributes
 		 * due to instance name export */
