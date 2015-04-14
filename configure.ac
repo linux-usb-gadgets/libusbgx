@@ -37,8 +37,6 @@ AS_IF([test "x$with_libconfig" = xyes], [
 AS_IF([test "x$enable_tests" = xyes], [
 	PKG_CHECK_MODULES([CMOCKA], [cmocka >= 0.4.1],
 			  AC_DEFINE(HAS_CMOCKA, 1, [detected cmocka]))
-	CFLAGS="$CFLAGS $CMOCKA_CFLAGS"
-	LIBS="$LIBS $CMOCKA_LIBS"
 	AC_CONFIG_FILES([tests/Makefile])
 ])
 AM_CONDITIONAL(BUILD_TESTS, [test "x$enable_tests" = xyes])
