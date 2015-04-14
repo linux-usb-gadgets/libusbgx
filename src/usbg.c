@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <stdbool.h>
 #include "usbg/usbg_internal.h"
 
 /**
@@ -433,6 +434,21 @@ static int usbg_read_int(const char *path, const char *name, const char *file,
 #define usbg_read_dec(p, n, f, d)	usbg_read_int(p, n, f, 10, d)
 #define usbg_read_hex(p, n, f, d)	usbg_read_int(p, n, f, 16, d)
 
+static int usbg_read_bool(const char *path, const char *name, const char *file,
+			  bool *dest)
+{
+	int buf;
+	int ret;
+
+	ret = usbg_read_dec(path, name, file, &buf);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	*dest = !!buf;
+out:
+	return ret;
+}
+
 static int usbg_read_string(const char *path, const char *name,
 			    const char *file, char *buf)
 {
@@ -521,6 +537,7 @@ static int usbg_write_int(const char *path, const char *name, const char *file,
 #define usbg_write_hex(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%x\n")
 #define usbg_write_hex16(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%04x\n")
 #define usbg_write_hex8(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%02x\n")
+#define usbg_write_bool(p, n, f, v)	usbg_write_dec(p, n, f, !!v)
 
 static inline int usbg_write_string(const char *path, const char *name,
 				    const char *file, const char *buf)
