@@ -22,6 +22,7 @@
 #include <netinet/ether.h>
 #include <stdint.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdio.h> /* For FILE * */
 
 #ifdef __cplusplus
@@ -180,6 +181,7 @@ typedef enum
 	F_RNDIS,
 	F_PHONET,
 	F_FFS,
+	F_MASS_STORAGE,
 	USBG_FUNCTION_TYPE_MAX,
 } usbg_function_type;
 
@@ -221,6 +223,29 @@ typedef struct {
 } usbg_f_ffs_attrs;
 
 /**
+ * @typedef usbg_f_ms_attrs
+ * @brief Attributes for mass storage functions
+ */
+typedef struct usbg_f_ms_lun_attrs {
+	int id;
+	bool cdrom;
+	bool ro;
+	bool nofua;
+	bool removable;
+	char *filename;
+} usbg_f_ms_lun_attrs;
+
+/**
+ * @typedef usbg_f_ms_attrs
+ * @brief Attributes for mass storage functions
+ */
+typedef struct {
+	bool stall;
+	int nluns;
+	usbg_f_ms_lun_attrs **luns;
+} usbg_f_ms_attrs;
+
+/**
  * @typedef attrs
  * @brief Attributes for a given function type
  */
@@ -229,6 +254,7 @@ typedef union {
 	usbg_f_net_attrs net;
 	usbg_f_phonet_attrs phonet;
 	usbg_f_ffs_attrs ffs;
+	usbg_f_ms_attrs ms;
 } usbg_f_attrs;
 
 typedef enum {
@@ -236,6 +262,7 @@ typedef enum {
 	USBG_F_ATTRS_NET,
 	USBG_F_ATTRS_PHONET,
 	USBG_F_ATTRS_FFS,
+	USBG_F_ATTRS_MS,
 } usbg_f_attrs_type;
 
 typedef struct {
