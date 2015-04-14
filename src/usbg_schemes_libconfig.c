@@ -357,6 +357,87 @@ out:
 
 }
 
+static int usbg_export_f_ms_lun_attrs(usbg_f_ms_lun_attrs *lattrs,
+				      config_setting_t *root)
+{
+	config_setting_t *node;
+	int cfg_ret;
+	int i;
+	int ret = USBG_ERROR_NO_MEM;
+
+#define BOOL_ATTR(_name) { .name = #_name, .value = &lattrs->_name, }
+	struct {
+		char *name;
+		bool *value;
+	} bool_attrs[] = {
+		BOOL_ATTR(cdrom),
+		BOOL_ATTR(ro),
+		BOOL_ATTR(nofua),
+		BOOL_ATTR(removable),
+	};
+#undef BOOL_ATTR
+
+	for (i = 0; i < ARRAY_SIZE(bool_attrs); ++i) {
+		node = config_setting_add(root, bool_attrs[i].name, CONFIG_TYPE_BOOL);
+		if (!node)
+			goto out;
+
+		cfg_ret = config_setting_set_bool(node, *(bool_attrs[i].value));
+		if (cfg_ret != CONFIG_TRUE) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			goto out;
+		}
+	}
+
+	node = config_setting_add(root, "filename", CONFIG_TYPE_STRING);
+	if (!node)
+		goto out;
+
+	cfg_ret = config_setting_set_string(node, lattrs->filename);
+	ret = cfg_ret == CONFIG_TRUE ? USBG_SUCCESS : USBG_ERROR_OTHER_ERROR;
+
+out:
+	return ret;
+}
+
+static int usbg_export_f_ms_attrs(usbg_f_ms_attrs *attrs,
+				      config_setting_t *root)
+{
+	config_setting_t *luns_node, *node;
+	int i;
+	int cfg_ret;
+	int ret = USBG_ERROR_NO_MEM;
+
+	node = config_setting_add(root, "stall", CONFIG_TYPE_BOOL);
+	if (!node)
+		goto out;
+
+	cfg_ret = config_setting_set_bool(node, attrs->stall);
+	if (cfg_ret != CONFIG_TRUE) {
+		ret = USBG_ERROR_OTHER_ERROR;
+		goto out;
+	}
+
+	luns_node = config_setting_add(root, "luns", CONFIG_TYPE_LIST);
+	if (!luns_node)
+		goto out;
+
+	for (i = 0; i < attrs->nluns; ++i) {
+		node = config_setting_add(luns_node, "", CONFIG_TYPE_GROUP);
+		if (!node)
+			goto out;
+
+		ret = usbg_export_f_ms_lun_attrs(attrs->luns[i], node);
+		if (ret != USBG_SUCCESS)
+			goto out;
+	}
+
+	ret = USBG_SUCCESS;
+out:
+	return ret;
+
+}
+
 static int usbg_export_function_attrs(usbg_function *f, config_setting_t *root)
 {
 	config_setting_t *node;
@@ -382,6 +463,10 @@ static int usbg_export_function_attrs(usbg_function *f, config_setting_t *root)
 
 	case USBG_F_ATTRS_NET:
 		ret = usbg_export_f_net_attrs(&f_attrs.attrs.net, root);
+		break;
+
+	case USBG_F_ATTRS_MS:
+		ret = usbg_export_f_ms_attrs(&f_attrs.attrs.ms, root);
 		break;
 
 	case USBG_F_ATTRS_PHONET:
