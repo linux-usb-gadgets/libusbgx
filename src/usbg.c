@@ -380,28 +380,36 @@ static int usbg_read_buf(const char *path, const char *name, const char *file,
 {
 	char p[USBG_MAX_PATH_LENGTH];
 	FILE *fp;
+	char *ret_ptr;
 	int nmb;
 	int ret = USBG_SUCCESS;
 
 	nmb = snprintf(p, sizeof(p), "%s/%s/%s", path, name, file);
-	if (nmb < sizeof(p)) {
-		fp = fopen(p, "r");
-		if (fp) {
-			/* Successfully opened */
-			if (!fgets(buf, USBG_MAX_STR_LENGTH, fp)) {
-				ERROR("read error");
-				ret = USBG_ERROR_IO;
-			}
-
-			fclose(fp);
-		} else {
-			/* Set error correctly */
-			ret = usbg_translate_error(errno);
-		}
-	} else {
+	if (nmb >= sizeof(p)) {
 		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
 	}
 
+	fp = fopen(p, "r");
+	if (!fp) {
+		/* Set error correctly */
+		ret = usbg_translate_error(errno);
+		goto out;
+	}
+
+	ret_ptr = fgets(buf, USBG_MAX_STR_LENGTH, fp);
+	if (!ret_ptr) {
+		/* File is empty */
+		if (feof(fp))
+			buf[0] = '\0';
+		/* Error occurred */
+		else
+			ret = USBG_ERROR_IO;
+	}
+
+	fclose(fp);
+
+out:
 	return ret;
 }
 
