@@ -28,6 +28,16 @@
  * @file include/usbg/usbg_internal.h
  */
 
+#ifndef offsetof
+#define offsetof(type, member)  __builtin_offsetof (type, member)
+#endif /* offsetof */
+
+#ifndef container_of
+#define container_of(ptr, type, field) ({                               \
+                        const typeof(((type *)0)->field) *member = (ptr); \
+                        (type *)( (char *)member - offsetof(type, field) ); \
+                })
+#endif /* container_of */
 
 struct usbg_state
 {
