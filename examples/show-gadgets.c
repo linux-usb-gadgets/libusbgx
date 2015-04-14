@@ -129,6 +129,23 @@ void show_function(usbg_function *f)
 	case USBG_F_ATTRS_FFS:
 		fprintf(stdout, "    dev_name\t\t%s\n", f_attrs.attrs.ffs.dev_name);
 		break;
+	case USBG_F_ATTRS_MS:
+	{
+		usbg_f_ms_attrs *attrs = &f_attrs.attrs.ms;
+		int i;
+
+		fprintf(stdout, "    stall\t\t%d\n", attrs->stall);
+		fprintf(stdout, "    nluns\t\t%d\n", attrs->nluns);
+		for (i = 0; i < attrs->nluns; ++i) {
+			fprintf(stdout, "    lun %d:\n", attrs->luns[i]->id);
+			fprintf(stdout, "      cdrom\t\t%d\n", attrs->luns[i]->cdrom);
+			fprintf(stdout, "      ro\t\t%d\n", attrs->luns[i]->ro);
+			fprintf(stdout, "      nofua\t\t%d\n", attrs->luns[i]->nofua);
+			fprintf(stdout, "      removable\t\t%d\n", attrs->luns[i]->removable);
+			fprintf(stdout, "      file\t\t%s\n", attrs->luns[i]->filename);
+		}
+		break;
+	}
 	default:
 		fprintf(stdout, "    UNKNOWN\n");
 	}
