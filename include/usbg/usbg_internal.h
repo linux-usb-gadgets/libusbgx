@@ -74,6 +74,8 @@ struct usbg_config
 	int id;
 };
 
+typedef int (*usbg_rm_function_callback)(usbg_function *, int);
+
 struct usbg_function
 {
 	TAILQ_ENTRY(usbg_function) fnode;
@@ -85,6 +87,7 @@ struct usbg_function
 	/* Only for internal library usage */
 	char *label;
 	usbg_function_type type;
+	usbg_rm_function_callback rm_callback;
 };
 
 struct usbg_binding

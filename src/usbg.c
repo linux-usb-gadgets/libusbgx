@@ -725,6 +725,13 @@ static usbg_function *usbg_allocate_function(const char *path,
 	f->parent = parent;
 	f->type = type;
 
+	/* only composed funcitons (with subdirs) require this callback */
+	switch (usbg_lookup_function_attrs_type(type)) {
+	default:
+		f->rm_callback = NULL;
+		break;
+	}
+
 	if (!(f->path)) {
 		free(f->name);
 		free(f->path);
@@ -1642,12 +1649,19 @@ int usbg_rm_function(usbg_function *f, int opts)
 		} /* TAILQ_FOREACH */
 	}
 
+	if (f->rm_callback) {
+		ret = f->rm_callback(f, opts);
+		if (ret != USBG_SUCCESS)
+			goto out;
+	}
+
 	ret = usbg_rm_dir(f->path, f->name);
 	if (ret == USBG_SUCCESS) {
 		TAILQ_REMOVE(&(g->functions), f, fnode);
 		usbg_free_function(f);
 	}
 
+out:
 	return ret;
 }
 
