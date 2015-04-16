@@ -1354,8 +1354,17 @@ static int usbg_parse_state(usbg_state *s)
 {
 	int ret = USBG_SUCCESS;
 
+	/*
+	 * USBG_ERROR_NOT_FOUND is returned if we are runing on machine where
+	 * there is no udc support in kernel (no /sys/class/udc dir).
+	 * This check allows to run library on such machine or if we don't
+	 * have rights to read this directory.
+	 * User will be able to finish init function and manage gadgets but
+	 * wont be able to bind it as there is no UDC.
+	 */
 	ret = usbg_parse_udcs(s);
-	if (ret != USBG_SUCCESS) {
+	if (ret != USBG_SUCCESS && ret != USBG_ERROR_NOT_FOUND &&
+		ret != USBG_ERROR_NO_ACCESS) {
 		ERROR("Unable to parse udcs");
 		goto out;
 	}
