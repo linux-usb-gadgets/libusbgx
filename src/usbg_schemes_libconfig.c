@@ -944,6 +944,149 @@ out:
 	return ret;
 }
 
+static int usbg_import_f_ms_lun_attrs(usbg_f_ms_lun_attrs *lattrs,
+				      config_setting_t *root)
+{
+	config_setting_t *node;
+	int cfg_ret;
+	int i;
+	int ret = USBG_ERROR_NO_MEM;
+
+#define BOOL_ATTR(_name, _default_val) \
+	{ .name = #_name, .value = &lattrs->_name, }
+	struct {
+		char *name;
+		bool *value;
+		bool default_val;
+	} bool_attrs[] = {
+		BOOL_ATTR(cdrom, false),
+		BOOL_ATTR(ro, false),
+		BOOL_ATTR(nofua, false),
+		BOOL_ATTR(removable, true),
+	};
+#undef BOOL_ATTR
+
+	memset(lattrs, 0, sizeof(*lattrs));
+	lattrs->id = -1;
+
+	for (i = 0; i < ARRAY_SIZE(bool_attrs); ++i) {
+		*(bool_attrs[i].value) = bool_attrs[i].default_val;
+
+		node = config_setting_get_member(root, bool_attrs[i].name);
+		if (!node)
+			continue;
+
+		ret = config_setting_type(node);
+		switch (ret) {
+		case CONFIG_TYPE_INT:
+			*(bool_attrs[i].value) = !!config_setting_get_int(node);
+			break;
+		case CONFIG_TYPE_BOOL:
+			*(bool_attrs[i].value) = config_setting_get_bool(node);
+			break;
+		default:
+			ret = USBG_ERROR_INVALID_TYPE;
+			goto out;
+		}
+	}
+
+	node = config_setting_get_member(root, "filename");
+	if (node) {
+		if (!usbg_config_is_string(node)) {
+			ret = USBG_ERROR_INVALID_PARAM;
+			goto out;
+		}
+		lattrs->filename = (char *)config_setting_get_string(node);
+	} else {
+			lattrs->filename = "";
+	}
+
+	ret = USBG_SUCCESS;
+out:
+	return ret;
+}
+
+static int usbg_import_f_ms_attrs(config_setting_t *root,  usbg_function *f)
+{
+	config_setting_t *luns_node, *node;
+	int i;
+	int cfg_ret;
+	int ret = USBG_ERROR_NO_MEM;
+	usbg_function_attrs attrs;
+	usbg_f_ms_attrs *ms_attrs = &attrs.attrs.ms;
+
+	memset(&attrs, 0, sizeof(attrs));
+
+	node = config_setting_get_member(root, "stall");
+	if (node) {
+		ret = config_setting_type(node);
+		switch (ret) {
+		case CONFIG_TYPE_INT:
+			ms_attrs->stall = !!config_setting_get_int(node);
+			break;
+		case CONFIG_TYPE_BOOL:
+			ms_attrs->stall = config_setting_get_bool(node);
+			break;
+		default:
+			ret = USBG_ERROR_INVALID_TYPE;
+			goto out;
+		}
+	}
+
+	luns_node = config_setting_get_member(root, "luns");
+	if (!node) {
+		ret = USBG_ERROR_INVALID_PARAM;
+		goto out;
+	}
+
+	if (!config_setting_is_list(luns_node)) {
+		ret = USBG_ERROR_INVALID_TYPE;
+		goto out;
+	}
+
+	ms_attrs->nluns = config_setting_length(luns_node);
+
+	ms_attrs->luns = calloc(ms_attrs->nluns + 1, sizeof(*(ms_attrs->luns)));
+	if (!ms_attrs->luns) {
+		ret = USBG_ERROR_NO_MEM;
+		goto out;
+	}
+
+	for (i = 0; i < ms_attrs->nluns; ++i) {
+		node = config_setting_get_elem(luns_node, i);
+		if (!node) {
+			ret = USBG_ERROR_INVALID_FORMAT;
+			goto free_luns;
+		}
+
+		if (!config_setting_is_group(node)) {
+			ret = USBG_ERROR_INVALID_TYPE;
+			goto free_luns;
+		}
+
+		ms_attrs->luns[i] = malloc(sizeof(*(ms_attrs->luns[i])));
+		if (!ms_attrs->luns[i]) {
+			ret = USBG_ERROR_NO_MEM;
+			goto free_luns;
+		}
+
+		ret = usbg_import_f_ms_lun_attrs(ms_attrs->luns[i], node);
+		if (ret != USBG_SUCCESS)
+			goto free_luns;
+	}
+
+	ret = usbg_set_function_attrs(f, &attrs);
+
+free_luns:
+	while (--i >= 0)
+		if (ms_attrs->luns[i])
+			free(ms_attrs->luns[i]);
+	free(ms_attrs->luns);
+out:
+	return ret;
+
+}
+
 static int usbg_import_function_attrs(config_setting_t *root, usbg_function *f)
 {
 	int ret = USBG_SUCCESS;
@@ -972,6 +1115,11 @@ static int usbg_import_function_attrs(config_setting_t *root, usbg_function *f)
 		/* We don't need to import ffs attributes
 		 * due to instance name import */
 		break;
+
+	case USBG_F_ATTRS_MS:
+		ret = usbg_import_f_ms_attrs(root, f);
+		break;
+
 	default:
 		ERROR("Unsupported function type\n");
 		ret = USBG_ERROR_NOT_SUPPORTED;
