@@ -326,7 +326,7 @@ static int usbg_export_f_net_attrs(usbg_f_net_attrs *attrs,
 	if (!node)
 		goto out;
 
-	addr = ether_ntoa_r(&attrs->dev_addr, addr_buf);
+	addr = usbg_ether_ntoa_r(&attrs->dev_addr, addr_buf);
 	cfg_ret = config_setting_set_string(node, addr);
 	if (cfg_ret != CONFIG_TRUE) {
 		ret = USBG_ERROR_OTHER_ERROR;
@@ -337,7 +337,7 @@ static int usbg_export_f_net_attrs(usbg_f_net_attrs *attrs,
 	if (!node)
 		goto out;
 
-	addr = ether_ntoa_r(&attrs->host_addr, addr_buf);
+	addr = usbg_ether_ntoa_r(&attrs->host_addr, addr_buf);
 	cfg_ret = config_setting_set_string(node, addr);
 	if (cfg_ret != CONFIG_TRUE) {
 		ret = USBG_ERROR_OTHER_ERROR;

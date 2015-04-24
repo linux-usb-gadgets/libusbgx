@@ -852,6 +852,15 @@ static int usbg_rm_all_dirs(const char *path)
 	return ret;
 }
 
+char *usbg_ether_ntoa_r(const struct ether_addr *addr, char *buf)
+{
+	sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x",
+		addr->ether_addr_octet[0], addr->ether_addr_octet[1],
+		addr->ether_addr_octet[2], addr->ether_addr_octet[3],
+		addr->ether_addr_octet[4], addr->ether_addr_octet[5]);
+	return buf;
+}
+
 static int usbg_parse_function_net_attrs(usbg_function *f,
 		usbg_f_net_attrs *f_net_attrs)
 {
@@ -2928,12 +2937,12 @@ int usbg_set_function_net_attrs(usbg_function *f, const usbg_f_net_attrs *attrs)
 		goto out;
 	}
 
-	addr = ether_ntoa_r(&attrs->dev_addr, addr_buf);
+	addr = usbg_ether_ntoa_r(&attrs->dev_addr, addr_buf);
 	ret = usbg_write_string(f->path, f->name, "dev_addr", addr);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	addr = ether_ntoa_r(&attrs->host_addr, addr_buf);
+	addr = usbg_ether_ntoa_r(&attrs->host_addr, addr_buf);
 	ret = usbg_write_string(f->path, f->name, "host_addr", addr);
 	if (ret != USBG_SUCCESS)
 		goto out;
@@ -3171,7 +3180,7 @@ int usbg_set_net_dev_addr(usbg_function *f, struct ether_addr *dev_addr)
 
 	if (f && dev_addr) {
 		char str_buf[USBG_MAX_STR_LENGTH];
-		char *str_addr = ether_ntoa_r(dev_addr, str_buf);
+		char *str_addr = usbg_ether_ntoa_r(dev_addr, str_buf);
 		ret = usbg_write_string(f->path, f->name, "dev_addr", str_addr);
 	} else {
 		ret = USBG_ERROR_INVALID_PARAM;
@@ -3186,7 +3195,7 @@ int usbg_set_net_host_addr(usbg_function *f, struct ether_addr *host_addr)
 
 	if (f && host_addr) {
 		char str_buf[USBG_MAX_STR_LENGTH];
-		char *str_addr = ether_ntoa_r(host_addr, str_buf);
+		char *str_addr = usbg_ether_ntoa_r(host_addr, str_buf);
 		ret = usbg_write_string(f->path, f->name, "host_addr", str_addr);
 	} else {
 		ret = USBG_ERROR_INVALID_PARAM;

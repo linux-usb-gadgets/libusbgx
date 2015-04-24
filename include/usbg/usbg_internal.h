@@ -168,5 +168,7 @@ static inline int file_select(const struct dirent *dent)
 
 int usbg_translate_error(int error);
 
+char *usbg_ether_ntoa_r(const struct ether_addr *addr, char *buf);
+
 #endif /* USBG_INTERNAL_H */
 
