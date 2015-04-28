@@ -247,7 +247,7 @@ int usbg_lookup_function_attrs_type(int f_type)
 		ret = USBG_F_ATTRS_PHONET;
 		break;
 	case F_FFS:
-		ret = USBG_F_ATTRS_PHONET;
+		ret = USBG_F_ATTRS_FFS;
 		break;
 	case F_MASS_STORAGE:
 		ret = USBG_F_ATTRS_MS;
