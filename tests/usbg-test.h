@@ -435,4 +435,44 @@ typedef void (*BindingTestFunc)(struct test_binding *tb, usbg_binding *b);
  */
 void for_each_binding(void **state, BindingTestFunc fun);
 
+static inline void *safe_calloc(int count, size_t size)
+{
+	void *ptr;
+
+	ptr = calloc(count, size);
+	if (ptr == NULL)
+		fail();
+
+	free_later(ptr);
+	return ptr;
+}
+
+static inline void *safe_malloc(size_t size)
+{
+	void *ptr;
+
+	ptr = malloc(size);
+	if (ptr == NULL)
+		fail();
+
+	free_later(ptr);
+	return ptr;
+}
+
+static inline int safe_asprintf(char **ptr, const char *fmt, ...)
+{
+	va_list args;
+	int ret;
+
+	va_start(args, fmt);
+	ret = vasprintf(ptr, fmt, args);
+	va_end(args);
+
+	if (ret < 0)
+		fail();
+
+	free_later(*ptr);
+	return ret;
+}
+
 #endif /* USBG_TEST_H */

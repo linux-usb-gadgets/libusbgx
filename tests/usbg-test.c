@@ -192,17 +192,12 @@ void prepare_binding(struct test_binding *b, struct test_function *f, char *fpat
 
 void prepare_config(struct test_config *c, char *cpath, char *fpath)
 {
-	int tmp;
 	int count = 0;
 	struct test_function *f;
 	struct test_binding *b;
 	int i;
 
-	tmp = asprintf(&c->name, "%s.%d",
-			c->label, c->id);
-	if (tmp < 0)
-		fail();
-	free_later(c->name);
+	safe_asprintf(&c->name, "%s.%d", c->label, c->id);
 
 	c->path = cpath;
 
@@ -211,10 +206,7 @@ void prepare_config(struct test_config *c, char *cpath, char *fpath)
 		for (f = c->bound_funcs; f->instance; f++)
 			count++;
 
-		c->bindings = calloc(count + 1, sizeof(*c->bindings));
-		if (c->bindings == NULL)
-			fail();
-		free_later(c->bindings);
+		c->bindings = safe_calloc(count + 1, sizeof(*c->bindings));
 	} else {
 		for (b = c->bindings; b->name; b++)
 			count++;
@@ -231,17 +223,12 @@ void prepare_config(struct test_config *c, char *cpath, char *fpath)
 void prepare_function(struct test_function *f, char *path)
 {
 	const char *func_type;
-	int tmp;
 
 	func_type = usbg_get_function_type_str(f->type);
 	if (func_type == NULL)
 		fail();
 
-	tmp = asprintf(&f->name, "%s.%s",
-			func_type, f->instance);
-	if (tmp < 0)
-		fail();
-	free_later(f->name);
+	safe_asprintf(&f->name, "%s.%s", func_type, f->instance);
 
 	f->path = path;
 }
@@ -252,7 +239,6 @@ void prepare_gadget(struct test_state *state, struct test_gadget *g)
 	struct test_function *f;
 	char *fpath;
 	char *cpath;
-	int tmp;
 	int count;
 
 	g->path = strdup(state->path);
@@ -261,11 +247,7 @@ void prepare_gadget(struct test_state *state, struct test_gadget *g)
 
 	free_later(g->path);
 
-	tmp = asprintf(&fpath, "%s/%s/functions",
-			g->path, g->name);
-	if (tmp < 0)
-		fail();
-	free_later(fpath);
+	safe_asprintf(&fpath, "%s/%s/functions", g->path, g->name);
 
 	count = 0;
 	for (f = g->functions; f->instance; f++) {
@@ -279,11 +261,7 @@ void prepare_gadget(struct test_state *state, struct test_gadget *g)
 	qsort(g->functions, count, sizeof(*g->functions),
 		(int (*)(const void *, const void *))test_function_cmp);
 
-	tmp = asprintf(&cpath, "%s/%s/configs",
-			g->path, g->name);
-	if (tmp < 0)
-		fail();
-	free_later(cpath);
+	safe_asprintf(&cpath, "%s/%s/configs", g->path, g->name);
 
 	count = 0;
 	for (c = g->configs; c->label; c++) {
@@ -319,10 +297,7 @@ static struct test_function *dup_test_functions(struct test_function *functions)
 	for (f = functions; f->instance; ++f)
 		++count;
 
-	new_functions = calloc(count + 1, sizeof(*f));
-	if (!new_functions)
-		fail();
-	free_later(new_functions);
+	new_functions = safe_calloc(count + 1, sizeof(*f));
 
 	for (f = functions, nf = new_functions; f->instance; ++f, ++nf)
 		cpy_test_function(nf, f);
@@ -341,11 +316,7 @@ static struct test_function *get_new_binding_target(struct test_function *which,
 	if (which < old || ((which - old) > count)) {
 		/* We may need to do a deep copy */
 		if (!which->writable) {
-			ret = calloc(1, sizeof(*ret));
-			if (!ret)
-				fail();
-			free_later(ret);
-
+			ret = safe_calloc(1, sizeof(*ret));
 			cpy_test_function(ret, which);
 		} else {
 			ret = which;
@@ -386,10 +357,7 @@ static struct test_binding *dup_test_bindings(struct test_binding *bindings,
 	for (b = bindings; b->name; ++b)
 		++count;
 
-	new_bindings = calloc(count + 1, sizeof(*b));
-	if (!new_bindings)
-		fail();
-	free_later(new_bindings);
+	new_bindings = safe_calloc(count + 1, sizeof(*b));
 
 	for (b = bindings, nb = new_bindings; b->name; ++b, ++nb)
 		cpy_test_binding(nb, b, old, func_count, new);
@@ -462,10 +430,7 @@ static struct test_config *dup_test_configs(struct test_config *configs)
 	for (c = configs; c->label; ++c)
 		++count;
 
-	new_configs = calloc(count + 1, sizeof(*c));
-	if (!new_configs)
-		fail();
-	free_later(new_configs);
+	new_configs = safe_calloc(count + 1, sizeof(*c));
 
 	for (c = configs, nc = new_configs; c->label; ++c, ++nc)
 		cpy_test_config(nc, c);
@@ -518,10 +483,7 @@ static struct test_gadget *dup_test_gadgets(struct test_gadget *gadgets)
 	for (g = gadgets; g->name; ++g)
 		++count;
 
-	new_gadgets = calloc(count + 1, sizeof(*g));
-	if (!new_gadgets)
-		fail();
-	free_later(new_gadgets);
+	new_gadgets = safe_calloc(count + 1, sizeof(*g));
 
 	for (g = gadgets, ng = new_gadgets; g->name; ++g, ++ng)
 		cpy_test_gadget(ng, g);
@@ -534,10 +496,7 @@ static struct test_state *dup_test_state(struct test_state *state)
 	struct test_state *new_state;
 	struct test_gadget *g;
 
-	new_state = calloc(1, sizeof(*new_state));
-	if (!new_state)
-		fail();
-	free_later(new_state);
+	new_state = safe_calloc(1, sizeof(*new_state));
 
 	/* We don't copy configfs path because it is never changed
 	 if you would like to free it before test end replace
@@ -570,19 +529,14 @@ struct test_state *prepare_state(struct test_state *state)
 	struct test_gadget *g;
 	struct test_state *new_state;
 	int count = 0;
-	int tmp;
 
 	if (!state->writable)
 		new_state = dup_test_state(state);
 	else
 		new_state = state;
 
-	tmp = asprintf(&(new_state->path), "%s/usb_gadget",
-		       new_state->configfs_path);
-	if (tmp < 0)
-		fail();
-	free_later(new_state->path);
-
+	safe_asprintf(&(new_state->path), "%s/usb_gadget",
+		      new_state->configfs_path);
 
 	for (g = new_state->gadgets; g->name; g++) {
 		prepare_gadget(new_state, g);
@@ -599,19 +553,11 @@ struct test_state *prepare_state(struct test_state *state)
 
 static void push_binding(struct test_config *conf, struct test_binding *binding)
 {
-	int tmp;
 	char *s_path;
 	char *d_path;
 
-	tmp = asprintf(&s_path, "%s/%s/%s", conf->path, conf->name, binding->name);
-	if (tmp < 0)
-		fail();
-	free_later(s_path);
-
-	tmp = asprintf(&d_path, "%s/%s", binding->target->path, binding->target->name);
-	if (tmp < 0)
-		fail();
-	free_later(d_path);
+	safe_asprintf(&s_path, "%s/%s/%s", conf->path, conf->name, binding->name);
+	safe_asprintf(&d_path, "%s/%s", binding->target->path, binding->target->name);
 
 	PUSH_LINK(s_path, d_path, USBG_MAX_PATH_LENGTH - 1);
 }
@@ -620,13 +566,9 @@ static void push_config(struct test_config *c)
 {
 	struct test_binding *b;
 	int count = 0;
-	int tmp;
 	char *path;
 
-	tmp = asprintf(&path, "%s/%s", c->path, c->name);
-	if (tmp < 0)
-		fail();
-	free_later(path);
+	safe_asprintf(&path, "%s/%s", c->path, c->name);
 
 	for (b = c->bindings; b->name; b++)
 		count++;
@@ -643,13 +585,9 @@ static void push_gadget(struct test_gadget *g)
 	int count;
 	struct test_config *c;
 	struct test_function *f;
-	int tmp;
 	char *path;
 
-	tmp = asprintf(&path, "%s/%s/UDC", g->path, g->name);
-	if (tmp < 0)
-		fail();
-	free_later(path);
+	safe_asprintf(&path, "%s/%s/UDC", g->path, g->name);
 	PUSH_FILE(path, g->udc);
 
 	count = 0;
@@ -742,18 +680,11 @@ void pull_gadget_attribute(struct test_gadget *gadget,
 {
 	char *path;
 	char *content;
-	int tmp;
 
-	tmp = asprintf(&path, "%s/%s/%s",
+	safe_asprintf(&path, "%s/%s/%s",
 			gadget->path, gadget->name, usbg_get_gadget_attr_str(attr));
-	if (tmp >= USBG_MAX_PATH_LENGTH)
-		fail();
-	free_later(path);
 
-	tmp = asprintf(&content, "0x%x\n", value);
-	if (tmp < 0)
-		fail();
-	free_later(content);
+	safe_asprintf(&content, "0x%x\n", value);
 
 	EXPECT_HEX_WRITE(path, content);
 }
@@ -763,18 +694,10 @@ void push_gadget_attribute(struct test_gadget *gadget,
 {
 	char *path;
 	char *content;
-	int tmp;
 
-	tmp = asprintf(&path, "%s/%s/%s",
+	safe_asprintf(&path, "%s/%s/%s",
 			gadget->path, gadget->name, usbg_get_gadget_attr_str(attr));
-	if (tmp < 0)
-		fail();
-	free_later(path);
-
-	tmp = asprintf(&content, "0x%x\n", value);
-	if (tmp < 0)
-		fail();
-	free_later(content);
+	safe_asprintf(&content, "0x%x\n", value);
 
 	PUSH_FILE(path, content);
 }
@@ -828,25 +751,17 @@ void push_config_attribute(struct test_config *config, config_attr attr,
 {
 	char *path;
 	char *content;
-	int tmp;
 
-	tmp = asprintf(&path, "%s/%s/%s", config->path, config->name, config_attr_names[attr]);
-	if (tmp < 0)
-		fail();
-	free_later(path);
+	safe_asprintf(&path, "%s/%s/%s", config->path, config->name, config_attr_names[attr]);
 
 	switch (config_attr_format[attr]) {
 	case FORMAT_HEX:
-		tmp = asprintf(&content, "0x%x\n", value);
+		safe_asprintf(&content, "0x%x\n", value);
 		break;
 	case FORMAT_DEC:
-		tmp = asprintf(&content, "%d\n", value);
+		safe_asprintf(&content, "%d\n", value);
 		break;
 	}
-
-	if (tmp < 0)
-		fail();
-	free_later(content);
 
 	PUSH_FILE(path, content);
 }
@@ -865,25 +780,17 @@ void pull_config_attribute(struct test_config *config, config_attr attr,
 {
 	char *path;
 	char *content;
-	int tmp;
 
-	tmp = asprintf(&path, "%s/%s/%s", config->path, config->name, config_attr_names[attr]);
-	if (tmp < 0)
-		fail();
-	free_later(path);
+	safe_asprintf(&path, "%s/%s/%s", config->path, config->name, config_attr_names[attr]);
 
 	switch (config_attr_format[attr]) {
 	case FORMAT_HEX:
-		tmp = asprintf(&content, "0x%x\n", value);
+		safe_asprintf(&content, "0x%x\n", value);
 		break;
 	case FORMAT_DEC:
-		tmp = asprintf(&content, "%d\n", value);
+		safe_asprintf(&content, "%d\n", value);
 		break;
 	}
-
-	if (tmp < 0)
-		fail();
-	free_later(content);
 
 	switch (config_attr_format[attr]) {
 	case FORMAT_HEX:
@@ -929,11 +836,9 @@ static void pull_gadget_str_dir(struct test_gadget *gadget, int lang)
 {
 	char *dir;
 	int tmp;
-	tmp = asprintf(&dir, "%s/%s/strings/0x%x",
+
+	safe_asprintf(&dir, "%s/%s/strings/0x%x",
 			gadget->path, gadget->name, lang);
-	if (tmp < 0)
-		fail();
-	free_later(dir);
 
 	srand(time(NULL));
 	tmp = rand() % 2;
@@ -950,13 +855,9 @@ static void pull_gadget_str(struct test_gadget *gadget, const char *attr_name,
 		int lang, const char *content)
 {
 	char *path;
-	int tmp;
 
-	tmp = asprintf(&path, "%s/%s/strings/0x%x/%s",
+	safe_asprintf(&path, "%s/%s/strings/0x%x/%s",
 			gadget->path, gadget->name, lang, attr_name);
-	if (tmp < 0)
-		fail();
-	free_later(path);
 	EXPECT_WRITE(path, content);
 }
 
@@ -979,12 +880,9 @@ void pull_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *st
 static void push_gadget_str_dir(struct test_gadget *gadget, int lang)
 {
 	char *dir;
-	int tmp;
-	tmp = asprintf(&dir, "%s/%s/strings/0x%x",
+
+	safe_asprintf(&dir, "%s/%s/strings/0x%x",
 			gadget->path, gadget->name, lang);
-	if (tmp < 0)
-		fail();
-	free_later(dir);
 
 	EXPECT_OPENDIR(dir);
 }
@@ -993,13 +891,9 @@ static void push_gadget_str(struct test_gadget *gadget, const char *attr_name,
 		int lang, const char *content)
 {
 	char *path;
-	int tmp;
 
-	tmp = asprintf(&path, "%s/%s/strings/0x%x/%s",
+	safe_asprintf(&path, "%s/%s/strings/0x%x/%s",
 			gadget->path, gadget->name, lang, attr_name);
-	if (tmp < 0)
-		fail();
-	free_later(path);
 	PUSH_FILE(path, content);
 }
 
@@ -1018,11 +912,8 @@ void pull_config_string(struct test_config *config, int lang, const char *str)
 	int tmp;
 
 
-	tmp = asprintf(&path, "%s/%s/strings/0x%x",
+	safe_asprintf(&path, "%s/%s/strings/0x%x",
 			config->path, config->name, lang);
-	if (tmp < 0)
-		fail();
-	free_later(path);
 
 	srand(time(NULL));
 	tmp = rand() % 2;
@@ -1034,10 +925,7 @@ void pull_config_string(struct test_config *config, int lang, const char *str)
 		EXPECT_MKDIR(path);
 	}
 
-	tmp = asprintf(&path, "%s/configuration", path);
-	if (tmp < 0)
-		fail();
-	free_later(path);
+	safe_asprintf(&path, "%s/configuration", path);
 
 	EXPECT_WRITE(path, str);
 }
@@ -1050,21 +938,13 @@ void pull_config_strs(struct test_config *config, int lang, usbg_config_strs *st
 void push_config_string(struct test_config *config, int lang, const char *str)
 {
 	char *path;
-	int tmp;
 
-
-	tmp = asprintf(&path, "%s/%s/strings/0x%x",
+	safe_asprintf(&path, "%s/%s/strings/0x%x",
 			config->path, config->name, lang);
-	if (tmp < 0)
-		fail();
-	free_later(path);
 
 	EXPECT_OPENDIR(path);
 
-	tmp = asprintf(&path, "%s/configuration", path);
-	if (tmp < 0)
-		fail();
-	free_later(path);
+	safe_asprintf(&path, "%s/configuration", path);
 
 	PUSH_FILE(path, str);
 }

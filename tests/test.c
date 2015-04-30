@@ -280,10 +280,7 @@ static usbg_config_attrs *get_random_config_attrs()
 {
 	usbg_config_attrs *ret;
 
-	ret = malloc(sizeof(*ret));
-	if (ret == NULL)
-		fail();
-	free_later(ret);
+	ret = safe_malloc(sizeof(*ret));
 
 	srand(time(NULL));
 	ret->bmAttributes = rand() % max_config_attrs.bmAttributes;
@@ -296,10 +293,7 @@ static usbg_gadget_attrs *get_random_gadget_attrs()
 {
 	usbg_gadget_attrs *ret;
 
-	ret = malloc(sizeof(*ret));
-	if (ret == NULL)
-		fail();
-	free_later(ret);
+	ret = safe_malloc(sizeof(*ret));
 
 	srand(time(NULL));
 	ret->bcdUSB = rand() % max_gadget_attrs.bcdUSB;
@@ -377,26 +371,11 @@ static struct test_state *put_func_in_state(struct test_function *func)
 	struct test_config *c;
 	char **udcs;
 
-	st = calloc(1, sizeof(*st));
-	if (st == NULL)
-		fail();
-	free_later(st);
-
+	st = safe_calloc(1, sizeof(*st));
 	/* Do not need config */
-	c = calloc(1, sizeof(*c));
-	if (c == NULL)
-		fail();
-	free_later(c);
-
-	g = calloc(2, sizeof(*g));
-	if (g == NULL)
-		fail();
-	free_later(g);
-
-	udcs = calloc(2, sizeof(*udcs));
-	if (udcs == NULL)
-		fail();
-	free_later(udcs);
+	c = safe_calloc(1, sizeof(*c));
+	g = safe_calloc(2, sizeof(*g));
+	udcs = safe_calloc(2, sizeof(*udcs));
 
 	g[0].name = "g1";
 	g[0].udc = "UDC1";
@@ -473,15 +452,8 @@ static int setup_random_len_gadget_strs_data(void **state)
 	struct test_gadget_strs_data *data;
 
 	/* will fill memory with zeros */
-	strs = calloc(1, sizeof(*strs));
-	if (strs == NULL)
-		fail();
-	free_later(strs);
-
-	data = malloc(sizeof(*data));
-	if (data == NULL)
-		fail();
-	free_later(data);
+	strs = safe_calloc(1, sizeof(*strs));
+	data = safe_malloc(sizeof(*data));
 
 	srand(time(NULL));
 
