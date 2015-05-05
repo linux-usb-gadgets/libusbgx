@@ -26,6 +26,23 @@
 #define FILLED_STR(len, c) \
 	{ [0 ... len - 2] = c, [len - 1] = '\0' }
 
+/* two levels of macros allow to strigify result of macro expansion */
+#define STR(s) #s
+#define XSTR(s) STR(s)
+/* unique string */
+#define UNIQUE XSTR(__COUNTER__)
+
+#define FUNC_FROM_TYPE(t) { \
+	.type = t, \
+	.instance = "instance"UNIQUE \
+}
+
+#define CONF_FROM_BOUND(b) { \
+	.label = "c", \
+	.id = __COUNTER__, \
+	.bound_funcs = b \
+}
+
 static usbg_gadget_attrs min_gadget_attrs = {
 	.bcdUSB = 0x0000,
 	.bDeviceClass = 0x0,
@@ -90,14 +107,8 @@ static char *long_udcs[] = {
  * @details Used to go through init when testing other things
  */
 static struct test_function simple_funcs[] = {
-	{
-		.type = F_ECM,
-		.instance = "0"
-	}, {
-		.type = F_ACM,
-		.instance = "0"
-	},
-
+	FUNC_FROM_TYPE(F_ECM),
+	FUNC_FROM_TYPE(F_ACM),
 	TEST_FUNCTION_LIST_END
 };
 
@@ -107,53 +118,23 @@ static struct test_function simple_funcs[] = {
  * processed correctly
  */
 static struct test_function all_funcs[] = {
-	{
-		.type = F_SERIAL,
-		.instance = "serial_instance0"
-	}, {
-		.type = F_ACM,
-		.instance = "acm_instance0"
-	}, {
-		.type = F_OBEX,
-		.instance = "obex_instance0"
-	}, {
-		.type = F_ECM,
-		.instance = "ecm_instance0"
-	}, {
-		.type = F_SUBSET,
-		.instance = "subset_instance0"
-	}, {
-		.type = F_NCM,
-		.instance = "ncm_instance0"
-	}, {
-		.type = F_EEM,
-		.instance = "eem_instance0"
-	}, {
-		.type = F_RNDIS,
-		.instance = "rndis_instance0"
-	}, {
-		.type = F_PHONET,
-		.instance = "phonet_instance0"
-	}, {
-		.type = F_FFS,
-		.instance = "ffs_instance0"
-	},
-
+	FUNC_FROM_TYPE(F_SERIAL),
+	FUNC_FROM_TYPE(F_ACM),
+	FUNC_FROM_TYPE(F_OBEX),
+	FUNC_FROM_TYPE(F_ECM),
+	FUNC_FROM_TYPE(F_SUBSET),
+	FUNC_FROM_TYPE(F_NCM),
+	FUNC_FROM_TYPE(F_EEM),
+	FUNC_FROM_TYPE(F_RNDIS),
+	FUNC_FROM_TYPE(F_PHONET),
+	FUNC_FROM_TYPE(F_FFS),
 	TEST_FUNCTION_LIST_END
 };
 
 static struct test_function same_type_funcs[] = {
-	{
-		.type = F_SERIAL,
-		.instance = "0"
-	}, {
-		.type = F_SERIAL,
-		.instance = "1"
-	}, {
-		.type = F_SERIAL,
-		.instance = "2"
-	},
-
+	FUNC_FROM_TYPE(F_SERIAL),
+	FUNC_FROM_TYPE(F_SERIAL),
+	FUNC_FROM_TYPE(F_SERIAL),
 	TEST_FUNCTION_LIST_END
 };
 
@@ -171,12 +152,7 @@ static struct test_function no_funcs[] = {
  * @details Used to pass through init when testing other things
  */
 static struct test_config simple_confs[] = {
-	{
-		.label = "c",
-		.id = 1,
-		.bound_funcs = simple_funcs
-	},
-
+	CONF_FROM_BOUND(simple_funcs),
 	TEST_CONFIG_LIST_END
 };
 
@@ -184,30 +160,24 @@ static struct test_config simple_confs[] = {
  * @brief Configs bound to all avaible function types
  */
 static struct test_config all_bindings_confs[] = {
-	{
-		.label = "c",
-		.id = 2,
-		.bound_funcs = no_funcs
-	}, {
-		.label = "c",
-		.id = 4,
-		.bound_funcs = all_funcs
-	},
-
+	CONF_FROM_BOUND(no_funcs),
+	CONF_FROM_BOUND(all_funcs),
 	TEST_CONFIG_LIST_END
 };
+
+#define GADGET(n, u, c, f) \
+	{ \
+		.name = n, \
+		.udc = u, \
+		.configs = c, \
+		.functions = f \
+	}
 
 /**
  * @brief Simplest gadget
  */
 static struct test_gadget simple_gadgets[] = {
-	{
-		.name = "g1",
-		.udc = "UDC1",
-		.configs = simple_confs,
-		.functions = simple_funcs
-	},
-
+	GADGET("g1", "UDC1", simple_confs, simple_funcs),
 	TEST_GADGET_LIST_END
 };
 
@@ -215,24 +185,12 @@ static struct test_gadget simple_gadgets[] = {
  * @brief Gadgets with all avaible functions
  */
 static struct test_gadget all_funcs_gadgets[] = {
-	{
-		.name = "all_funcs_gadget1",
-		.udc = "UDC1",
-		.configs = all_bindings_confs,
-		.functions = all_funcs
-	},
-
+	GADGET("all_funcs_gadget1", "UDC1", all_bindings_confs, all_funcs),
 	TEST_GADGET_LIST_END
 };
 
 static struct test_gadget long_udc_gadgets[] = {
-	{
-		.name = "long_udc_gadgets",
-		.udc = long_usbg_string,
-		.configs = simple_confs,
-		.functions = simple_funcs
-	},
-
+	GADGET("long_udc_gadgets", long_usbg_string, simple_confs, simple_funcs),
 	TEST_GADGET_LIST_END
 };
 
@@ -246,35 +204,25 @@ struct test_gadget_strs_data {
 	usbg_gadget_strs *strs;
 };
 
+#define STATE(p, g, u) { \
+	.configfs_path = p, \
+	.gadgets = g, \
+	.udcs = u \
+}
+
 /**
  * @brief Simple state
  */
-static struct test_state simple_state = {
-	.configfs_path = "config",
-	.gadgets = simple_gadgets,
-	.udcs = simple_udcs
-};
+static struct test_state simple_state = STATE("config", simple_gadgets, simple_udcs);
 
 /**
  * @brief State with all functions avaible
  */
-static struct test_state all_funcs_state = {
-	.configfs_path = "all_funcs_configfs",
-	.gadgets = all_funcs_gadgets,
-        .udcs = simple_udcs
-};
+static struct test_state all_funcs_state = STATE("all_funcs_configfs", all_funcs_gadgets, simple_udcs);
 
-static struct test_state long_path_state = {
-	.configfs_path = long_path_str,
-	.gadgets = simple_gadgets,
-        .udcs = simple_udcs
-};
+static struct test_state long_path_state = STATE(long_path_str, simple_gadgets, simple_udcs);
 
-static struct test_state long_udc_state = {
-	.configfs_path = "simple_path",
-	.gadgets = long_udc_gadgets,
-	.udcs = long_udcs
-};
+static struct test_state long_udc_state = STATE("simple_path", long_udc_gadgets, long_udcs);
 
 static usbg_config_attrs *get_random_config_attrs()
 {
@@ -712,7 +660,7 @@ static void test_get_function_type_str(void **state)
 		{F_EEM, "eem"},
 		{F_RNDIS, "rndis"},
 		{F_PHONET, "phonet"},
-		{F_FFS, "ffs"}
+		{F_FFS, "ffs"},
 	};
 
 	const char *str;
