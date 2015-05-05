@@ -435,6 +435,18 @@ typedef void (*BindingTestFunc)(struct test_binding *tb, usbg_binding *b);
  */
 void for_each_binding(void **state, BindingTestFunc fun);
 
+/**
+ * @brief Function that performs test on given usbg gadget
+ */
+typedef void (*GadgetTestFunc)(usbg_gadget *g, struct test_gadget *tg);
+
+/**
+ * @brief Call given function for all usb gadgets present in given state
+ * @param[in] state Properly prepared state to be tested
+ * @param[in] fun Function to be called on each usb gadget in state
+ */
+void for_each_test_gadget(void **state, GadgetTestFunc fun);
+
 static inline void *safe_calloc(int count, size_t size)
 {
 	void *ptr;

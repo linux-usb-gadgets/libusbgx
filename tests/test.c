@@ -474,22 +474,7 @@ static int setup_random_len_gadget_strs_data(void **state)
  */
 static void test_get_gadget(void **state)
 {
-	usbg_gadget *g = NULL;
-	usbg_state *s = NULL;
-	struct test_state *st;
-	int i = 0;
-
-	st = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(st, &s);
-	*state = s;
-
-	for (i = 0; st->gadgets[i].name; i++) {
-		g = usbg_get_gadget(s, st->gadgets[i].name);
-		assert_non_null(g);
-		assert_gadget_equal(g, &st->gadgets[i]);
-	}
+	for_each_test_gadget(state, assert_gadget_equal);
 }
 
 /**
@@ -545,30 +530,31 @@ static void test_get_first_gadget_fail(void **state)
 	assert_null(g);
 }
 
+static void try_get_gadget_name(usbg_gadget *g, struct test_gadget *tg)
+{
+	const char *name;
+
+	name = usbg_get_gadget_name(g);
+	assert_string_equal(name, tg->name);
+}
+
 /**
  * @brief Tests getting name of gadget
  * @details Check if gadget name is returned correctly
  */
 static void test_get_gadget_name(void **state)
 {
-	usbg_gadget *g = NULL;
-	usbg_state *s = NULL;
-	struct test_state *st;
-	int i = 0;
-	const char *name;
+	for_each_test_gadget(state, try_get_gadget_name);
+}
 
-	st = (struct test_state *)(*state);
-	*state = NULL;
+static void try_get_gadget_name_len(usbg_gadget *g, struct test_gadget *tg)
+{
+	int len;
+	int expected;
 
-	init_with_state(st, &s);
-	*state = s;
-
-	for (i = 0; st->gadgets[i].name; i++) {
-		g = usbg_get_gadget(s, st->gadgets[i].name);
-		assert_non_null(g);
-		name = usbg_get_gadget_name(g);
-		assert_string_equal(name, st->gadgets[i].name);
-	}
+	expected = strlen(tg->name);
+	len = usbg_get_gadget_name_len(g);
+	assert_int_equal(len, expected);
 }
 
 /**
@@ -577,27 +563,7 @@ static void test_get_gadget_name(void **state)
  */
 static void test_get_gadget_name_len(void **state)
 {
-	usbg_gadget *g = NULL;
-	usbg_state *s = NULL;
-	struct test_state *st;
-	int i = 0;
-	int len;
-	int expected;
-
-	st = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(st, &s);
-	*state = s;
-
-	for (i = 0; st->gadgets[i].name; i++) {
-		g = usbg_get_gadget(s, st->gadgets[i].name);
-		assert_non_null(g);
-
-		expected = strlen(st->gadgets[i].name);
-		len = usbg_get_gadget_name_len(g);
-		assert_int_equal(len, expected);
-	}
+	for_each_test_gadget(state, try_get_gadget_name_len);
 }
 
 /**
@@ -613,33 +579,23 @@ static void test_get_gadget_name_fail(void **state)
 	assert_null(name);
 }
 
+static void try_cpy_gadget_name(usbg_gadget *g, struct test_gadget *tg)
+{
+	char name[USBG_MAX_NAME_LENGTH];
+	int ret;
+
+	ret = usbg_cpy_gadget_name(g, name, USBG_MAX_NAME_LENGTH);
+	assert_int_equal(ret, USBG_SUCCESS);
+	assert_string_equal(name, tg->name);
+}
+
 /**
  * @brief Tests copying gadget's name
  * @details Check if copying gadget name copy actual name correctly
  */
 static void test_cpy_gadget_name(void **state)
 {
-	usbg_gadget *g = NULL;
-	usbg_state *s = NULL;
-	struct test_state *st;
-	int i = 0;
-	char name[USBG_MAX_NAME_LENGTH];
-	int ret;
-
-	st = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(st, &s);
-	*state = s;
-
-	for (i = 0; st->gadgets[i].name; i++) {
-		g = usbg_get_gadget(s, st->gadgets[i].name);
-		assert_non_null(g);
-
-		ret = usbg_cpy_gadget_name(g, name, USBG_MAX_NAME_LENGTH);
-		assert_int_equal(ret, USBG_SUCCESS);
-		assert_string_equal(name, st->gadgets[i].name);
-	}
+	for_each_test_gadget(state, try_cpy_gadget_name);
 }
 
 /**

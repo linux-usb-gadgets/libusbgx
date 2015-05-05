@@ -1174,3 +1174,23 @@ void for_each_binding(void **state, BindingTestFunc fun)
 		}
 	}
 }
+
+void for_each_test_gadget(void **state, GadgetTestFunc fun)
+{
+	struct test_state *ts;
+	struct test_gadget *tg;
+	usbg_state *s = NULL;
+	usbg_gadget *g = NULL;
+
+	ts = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(ts, &s);
+	*state = s;
+
+	for (tg = ts->gadgets; tg->name; ++tg) {
+		g = usbg_get_gadget(s, tg->name);
+		assert_non_null(g);
+		fun(g, tg);
+	}
+}
