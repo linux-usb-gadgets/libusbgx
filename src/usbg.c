@@ -275,7 +275,7 @@ int usbg_lookup_function_type(const char *name)
 	return USBG_ERROR_NOT_FOUND;
 }
 
-const const char *usbg_get_function_type_str(usbg_function_type type)
+const char *usbg_get_function_type_str(usbg_function_type type)
 {
 	return type >= USBG_FUNCTION_TYPE_MIN &&
 		type < USBG_FUNCTION_TYPE_MAX ?
@@ -298,7 +298,7 @@ int usbg_lookup_gadget_attr(const char *name)
 	return USBG_ERROR_NOT_FOUND;
 }
 
-const const char *usbg_get_gadget_attr_str(usbg_gadget_attr attr)
+const char *usbg_get_gadget_attr_str(usbg_gadget_attr attr)
 {
 	return attr >= USBG_GADGET_ATTR_MIN &&
 		attr < USBG_GADGET_ATTR_MAX ?

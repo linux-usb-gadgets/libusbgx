@@ -948,7 +948,6 @@ static int usbg_import_f_ms_lun_attrs(usbg_f_ms_lun_attrs *lattrs,
 				      config_setting_t *root)
 {
 	config_setting_t *node;
-	int cfg_ret;
 	int i;
 	int ret = USBG_ERROR_NO_MEM;
 
@@ -1010,7 +1009,6 @@ static int usbg_import_f_ms_attrs(config_setting_t *root,  usbg_function *f)
 {
 	config_setting_t *luns_node, *node;
 	int i;
-	int cfg_ret;
 	int ret = USBG_ERROR_NO_MEM;
 	usbg_function_attrs attrs;
 	usbg_f_ms_attrs *ms_attrs = &attrs.attrs.ms;
