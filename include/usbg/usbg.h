@@ -200,7 +200,7 @@ typedef struct {
 typedef struct {
 	struct ether_addr dev_addr;
 	struct ether_addr host_addr;
-	char *ifname;
+	const char *ifname;
 	int qmult;
 } usbg_f_net_attrs;
 
@@ -209,7 +209,7 @@ typedef struct {
  * @brief Attributes for the phonet USB function
  */
 typedef struct {
-	char *ifname;
+	const char *ifname;
 } usbg_f_phonet_attrs;
 
 /**
@@ -219,7 +219,7 @@ typedef struct {
  * on config fs.
  */
 typedef struct {
-	char *dev_name;
+	const char *dev_name;
 } usbg_f_ffs_attrs;
 
 /**
@@ -232,7 +232,7 @@ typedef struct usbg_f_ms_lun_attrs {
 	bool ro;
 	bool nofua;
 	bool removable;
-	char *filename;
+	const char *filename;
 } usbg_f_ms_lun_attrs;
 
 /**

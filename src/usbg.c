@@ -473,7 +473,7 @@ static int usbg_read_string(const char *path, const char *name,
 }
 
 static int usbg_read_string_alloc(const char *path, const char *name,
-			       const char *file, char **dest)
+			       const char *file, const char **dest)
 {
 	char buf[USBG_MAX_FILE_SIZE];
 	char *new_buf = NULL;
@@ -2868,7 +2868,7 @@ static void usbg_cleanup_function_ms_lun_attrs(usbg_f_ms_lun_attrs *lun_attrs)
 	if (!lun_attrs)
 		return;
 
-	free(lun_attrs->filename);
+	free((char*)lun_attrs->filename);
 	lun_attrs->id = -1;
 }
 
@@ -2886,17 +2886,17 @@ void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs)
 		break;
 
 	case USBG_F_ATTRS_NET:
-		free(attrs->net.ifname);
+		free((char*)attrs->net.ifname);
 		attrs->net.ifname = NULL;
 		break;
 
 	case USBG_F_ATTRS_PHONET:
-		free(attrs->phonet.ifname);
+		free((char*)attrs->phonet.ifname);
 		attrs->phonet.ifname = NULL;
 		break;
 
 	case USBG_F_ATTRS_FFS:
-		free(attrs->ffs.dev_name);
+		free((char*)attrs->ffs.dev_name);
 		attrs->ffs.dev_name = NULL;
 		break;
 
