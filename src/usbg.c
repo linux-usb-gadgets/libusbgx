@@ -155,7 +155,7 @@ const char *usbg_error_name(usbg_error e)
 		ret = "USBG_ERROR_MISSING_TAG";
 		break;
 	case USBG_ERROR_INVALID_TYPE:
-		ret = "USBG_ERROR_INVALUD_TYPE";
+		ret = "USBG_ERROR_INVALID_TYPE";
 		break;
 	case USBG_ERROR_INVALID_VALUE:
 		ret = "USBG_ERROR_INVALID_VALUE";
@@ -731,7 +731,7 @@ static usbg_function *usbg_allocate_function(const char *path,
 	f->parent = parent;
 	f->type = type;
 
-	/* only composed funcitons (with subdirs) require this callback */
+	/* only composed functions (with subdirs) require this callback */
 	switch (usbg_lookup_function_attrs_type(type)) {
 	case USBG_F_ATTRS_MS:
 		f->rm_callback = usbg_rm_ms_function;
@@ -1558,7 +1558,7 @@ static int usbg_parse_state(usbg_state *s)
 	int ret = USBG_SUCCESS;
 
 	/*
-	 * USBG_ERROR_NOT_FOUND is returned if we are runing on machine where
+	 * USBG_ERROR_NOT_FOUND is returned if we are running on machine where
 	 * there is no udc support in kernel (no /sys/class/udc dir).
 	 * This check allows to run library on such machine or if we don't
 	 * have rights to read this directory.
@@ -3049,7 +3049,7 @@ static int usbg_set_function_ms_attrs(usbg_function *f,
 			if (!ret) {
 				/*
 				 * If we have created a new directory in
-				 * this funciton let's mark it so we can
+				 * this function let's mark it so we can
 				 * cleanup in case of error
 				 */
 				new_lun_mask[i] = 1;
@@ -3157,7 +3157,7 @@ int usbg_set_function_attrs(usbg_function *f,
 		break;
 
 	case USBG_F_ATTRS_FFS:
-		/* dev_name is a virtual atribute so allow only to use empty
+		/* dev_name is a virtual attribute so allow only to use empty
 		 * empty string which means nop */
 		ret = f_attrs->attrs.ffs.dev_name && f_attrs->attrs.ffs.dev_name[0] ?
 			USBG_ERROR_INVALID_PARAM : USBG_SUCCESS;

@@ -229,8 +229,8 @@ out:
 
 }
 
-/* This function does not export configuration id because it is a more
- * a porperty of gadget which contains this config than config itself */
+/* This function does not export configuration id because it is more of
+ * a property of gadget which contains this config than config itself */
 static int usbg_export_config_prep(usbg_config *c, config_setting_t *root)
 {
 	config_setting_t *node;
@@ -486,8 +486,8 @@ out:
 	return ret;
 }
 
-/* This function does not import instance name becuase this is more property
- * of a gadget than a function itselt */
+/* This function does not import instance name because this is more property
+ * of a gadget than a function itself */
 static int usbg_export_function_prep(usbg_function *f, config_setting_t *root)
 {
 	config_setting_t *node;
@@ -782,7 +782,7 @@ int usbg_export_function(usbg_function *f, FILE *stream)
 	/* Set format */
 	config_set_tab_width(&cfg, USBG_TAB_WIDTH);
 
-	/* Allways successful */
+	/* Always successful */
 	root = config_root_setting(&cfg);
 
 	ret = usbg_export_function_prep(f, root);
@@ -809,7 +809,7 @@ int usbg_export_config(usbg_config *c, FILE *stream)
 	/* Set format */
 	config_set_tab_width(&cfg, USBG_TAB_WIDTH);
 
-	/* Allways successful */
+	/* Always successful */
 	root = config_root_setting(&cfg);
 
 	ret = usbg_export_config_prep(c, root);
@@ -836,7 +836,7 @@ int usbg_export_gadget(usbg_gadget *g, FILE *stream)
 	/* Set format */
 	config_set_tab_width(&cfg, USBG_TAB_WIDTH);
 
-	/* Allways successful */
+	/* Always successful */
 	root = config_root_setting(&cfg);
 
 	ret = usbg_export_gadget_prep(g, root);
@@ -1347,7 +1347,7 @@ static int usbg_import_config_strs_lang(config_setting_t *root, usbg_config *c)
 
 	lang = config_setting_get_int(node);
 
-	/* Configuratin string is optional */
+	/* Configuration string is optional */
 	node = config_setting_get_member(root, "configuration");
 	if (node) {
 		if (!usbg_config_is_string(node))
@@ -1774,7 +1774,7 @@ static int usbg_import_gadget_run(usbg_state *s, config_setting_t *root,
 	}
 
 	/* Functions too, because some gadgets may not be fully
-	* configured and don't have any funciton or have all functions
+	* configured and don't have any function or have all functions
 	* defined inline in configurations */
 	node = config_setting_get_member(root, USBG_FUNCTIONS_TAG);
 	if (node) {
@@ -1838,7 +1838,7 @@ int usbg_import_function(usbg_gadget *g, FILE *stream, const char *instance,
 		goto out;
 	}
 
-	/* Allways successful */
+	/* Always successful */
 	root = config_root_setting(cfg);
 
 	ret = usbg_import_function_run(g, root, instance, &newf);
@@ -1882,7 +1882,7 @@ int usbg_import_config(usbg_gadget *g, FILE *stream, int id,  usbg_config **c)
 		goto out;
 	}
 
-	/* Allways successful */
+	/* Always successful */
 	root = config_root_setting(cfg);
 
 	ret = usbg_import_config_run(g, root, id, &newc);
@@ -1926,7 +1926,7 @@ int usbg_import_gadget(usbg_state *s, FILE *stream, const char *name,
 		goto out;
 	}
 
-	/* Allways successful */
+	/* Always successful */
 	root = config_root_setting(cfg);
 
 	ret = usbg_import_gadget_run(s, root, name, &newg);
