@@ -182,6 +182,7 @@ typedef enum
 	F_PHONET,
 	F_FFS,
 	F_MASS_STORAGE,
+	F_MIDI,
 	USBG_FUNCTION_TYPE_MAX,
 } usbg_function_type;
 
@@ -246,6 +247,19 @@ typedef struct {
 } usbg_f_ms_attrs;
 
 /**
+ * @typedef usbg_f_midi_attrs
+ * @brief Attributes for the MIDI function
+ */
+typedef struct {
+	int index;
+	const char *id;
+	unsigned int in_ports;
+	unsigned int out_ports;
+	unsigned int buflen;
+	unsigned int qlen;
+} usbg_f_midi_attrs;
+
+/**
  * @typedef attrs
  * @brief Attributes for a given function type
  */
@@ -255,6 +269,7 @@ typedef union {
 	usbg_f_phonet_attrs phonet;
 	usbg_f_ffs_attrs ffs;
 	usbg_f_ms_attrs ms;
+	usbg_f_midi_attrs midi;
 } usbg_f_attrs;
 
 typedef enum {
@@ -263,6 +278,7 @@ typedef enum {
 	USBG_F_ATTRS_PHONET,
 	USBG_F_ATTRS_FFS,
 	USBG_F_ATTRS_MS,
+	USBG_F_ATTRS_MIDI,
 } usbg_f_attrs_type;
 
 typedef struct {

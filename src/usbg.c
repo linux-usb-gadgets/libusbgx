@@ -51,6 +51,7 @@ const char *function_names[] =
 	"phonet",
 	"ffs",
 	"mass_storage",
+	"midi",
 };
 
 ARRAY_SIZE_SENTINEL(function_names, USBG_FUNCTION_TYPE_MAX);
@@ -251,6 +252,9 @@ int usbg_lookup_function_attrs_type(int f_type)
 		break;
 	case F_MASS_STORAGE:
 		ret = USBG_F_ATTRS_MS;
+		break;
+	case F_MIDI:
+		ret = USBG_F_ATTRS_MIDI;
 		break;
 	default:
 		ret = USBG_ERROR_NOT_SUPPORTED;
@@ -1051,6 +1055,39 @@ out:
 	return ret;
 }
 
+static int usbg_parse_function_midi_attrs(usbg_function *f,
+		usbg_f_midi_attrs *attrs)
+{
+	int ret;
+
+	ret = usbg_read_dec(f->path, f->name, "index", &(attrs->index));
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_read_string_alloc(f->path, f->name, "id", &(attrs->id));
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_read_dec(f->path, f->name, "in_ports", (int*)&(attrs->in_ports));
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_read_dec(f->path, f->name, "out_ports", (int*)&(attrs->out_ports));
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_read_dec(f->path, f->name, "buflen", (int*)&(attrs->buflen));
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_read_dec(f->path, f->name, "qlen", (int*)&(attrs->qlen));
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+out:
+	return ret;
+}
+
 static int usbg_parse_function_attrs(usbg_function *f,
 		usbg_function_attrs *f_attrs)
 {
@@ -1097,6 +1134,11 @@ static int usbg_parse_function_attrs(usbg_function *f,
 	case USBG_F_ATTRS_MS:
 		f_attrs->header.attrs_type = USBG_F_ATTRS_MS;
 		ret = usbg_parse_function_ms_attrs(f, &(f_attrs->attrs.ms));
+		break;
+
+	case USBG_F_ATTRS_MIDI:
+		f_attrs->header.attrs_type = USBG_F_ATTRS_MIDI;
+		ret = usbg_parse_function_midi_attrs(f, &(f_attrs->attrs.midi));
 		break;
 
 	default:
@@ -2922,6 +2964,11 @@ void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs)
 		break;
 	}
 
+	case USBG_F_ATTRS_MIDI:
+		free((char*)attrs->midi.id);
+		attrs->midi.id = NULL;
+		break;
+
 	default:
 		ERROR("Unsupported attrs type\n");
 		break;
@@ -3123,6 +3170,37 @@ out:
 	return ret;
 }
 
+int usbg_set_function_midi_attrs(usbg_function *f,
+				 const usbg_f_midi_attrs *attrs)
+{
+	int ret;
+
+	ret = usbg_write_dec(f->path, f->name, "index", attrs->index);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_string(f->path, f->name, "id", attrs->id);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_dec(f->path, f->name, "in_ports", attrs->in_ports);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_dec(f->path, f->name, "out_ports", attrs->out_ports);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_dec(f->path, f->name, "buflen", attrs->buflen);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_dec(f->path, f->name, "qlen", attrs->qlen);
+
+out:
+	return ret;
+}
+
 int usbg_set_function_attrs(usbg_function *f,
 			    const usbg_function_attrs *f_attrs)
 {
@@ -3168,6 +3246,10 @@ int usbg_set_function_attrs(usbg_function *f,
 
 	case USBG_F_ATTRS_MS:
 		ret = usbg_set_function_ms_attrs(f, &f_attrs->attrs.ms);
+		break;
+
+	case USBG_F_ATTRS_MIDI:
+		ret = usbg_set_function_midi_attrs(f, &f_attrs->attrs.midi);
 		break;
 
 	default:
