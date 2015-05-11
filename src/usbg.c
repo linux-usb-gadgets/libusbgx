@@ -1093,6 +1093,7 @@ static int usbg_parse_function_attrs(usbg_function *f,
 			ret = USBG_SUCCESS;
 		break;
 	}
+
 	case USBG_F_ATTRS_MS:
 		f_attrs->header.attrs_type = USBG_F_ATTRS_MS;
 		ret = usbg_parse_function_ms_attrs(f, &(f_attrs->attrs.ms));
@@ -2898,6 +2899,7 @@ void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs)
 		free(attrs->ffs.dev_name);
 		attrs->ffs.dev_name = NULL;
 		break;
+
 	case USBG_F_ATTRS_MS:
 	{
 		int i;
@@ -2919,6 +2921,7 @@ void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs)
 	ms_break:
 		break;
 	}
+
 	default:
 		ERROR("Unsupported attrs type\n");
 		break;
@@ -3162,9 +3165,11 @@ int usbg_set_function_attrs(usbg_function *f,
 		ret = f_attrs->attrs.ffs.dev_name && f_attrs->attrs.ffs.dev_name[0] ?
 			USBG_ERROR_INVALID_PARAM : USBG_SUCCESS;
 		break;
+
 	case USBG_F_ATTRS_MS:
 		ret = usbg_set_function_ms_attrs(f, &f_attrs->attrs.ms);
 		break;
+
 	default:
 		ERROR("Unsupported function type\n");
 		ret = USBG_ERROR_NOT_SUPPORTED;
