@@ -150,6 +150,19 @@ void show_function(usbg_function *f)
 		break;
 	}
 
+	case USBG_F_ATTRS_MIDI:
+	{
+		usbg_f_midi_attrs *attrs = &f_attrs.attrs.midi;
+
+		fprintf(stdout, "    index\t\t%d\n", attrs->index);
+		fprintf(stdout, "    id\t\t\t%s\n", attrs->id);
+		fprintf(stdout, "    in_ports\t\t%d\n", attrs->in_ports);
+		fprintf(stdout, "    out_ports\t\t%d\n", attrs->out_ports);
+		fprintf(stdout, "    buflen\t\t%d\n", attrs->buflen);
+		fprintf(stdout, "    qlen\t\t%d\n", attrs->qlen);
+		break;
+	}
+
 	default:
 		fprintf(stdout, "    UNKNOWN\n");
 	}
