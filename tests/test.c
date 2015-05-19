@@ -21,9 +21,7 @@
  */
 
 #define USBG_TEST(name, test, setup, teardown) \
-	{"setup "#test, setup, UNIT_TEST_FUNCTION_TYPE_SETUP}, \
-	{name, test, UNIT_TEST_FUNCTION_TYPE_TEST}, \
-	{"teardown "#test, teardown, UNIT_TEST_FUNCTION_TYPE_TEARDOWN}
+	{name, test, setup, teardown}
 
 #define FILLED_STR(len, c) \
 	{ [0 ... len - 2] = c, [len - 1] = '\0' }
@@ -334,22 +332,25 @@ static void *prepare_state_with_config_attrs(struct test_state *state,
 	return state;
 }
 
-static void setup_max_config_attrs_state(void **state)
+static int setup_max_config_attrs_state(void **state)
 {
 	*state = prepare_state_with_config_attrs(&simple_state, &max_config_attrs);
+	return 0;
 }
 
-static void setup_min_config_attrs_state(void **state)
+static int setup_min_config_attrs_state(void **state)
 {
 	*state = prepare_state_with_config_attrs(&simple_state, &min_config_attrs);
+	return 0;
 }
 
-static void setup_random_config_attrs_state(void **state)
+static int setup_random_config_attrs_state(void **state)
 {
 	*state = prepare_state_with_config_attrs(&simple_state, get_random_config_attrs());
+	return 0;
 }
 
-static void setup_simple_config_strs_state(void **state)
+static int setup_simple_config_strs_state(void **state)
 {
 	struct test_gadget *tg;
 	struct test_config *tc;
@@ -359,6 +360,7 @@ static void setup_simple_config_strs_state(void **state)
 			tc->strs = &simple_config_strs;
 
 	*state = prepare_state(&simple_state);
+	return 0;
 }
 
 /**
@@ -418,41 +420,46 @@ static struct test_state *put_func_in_state(struct test_function *func)
 /**
  * @brief Setup simple state with some gadgets, configs and functions
  */
-static void setup_simple_state(void **state)
+static int setup_simple_state(void **state)
 {
 	*state = prepare_state(&simple_state);
+	return 0;
 }
 
 /**
  * @brief Setup state with all avaible functions
  */
-static void setup_all_funcs_state(void **state)
+static int setup_all_funcs_state(void **state)
 {
 	*state = prepare_state(&all_funcs_state);
+	return 0;
 }
 
 /**
  * @brief Setup state with few functions of the same type
  */
-static void setup_same_type_funcs_state(void **state)
+static int setup_same_type_funcs_state(void **state)
 {
 	*state = put_func_in_state(same_type_funcs);
+	return 0;
 }
 
 /**
  * @brief Setup state with very long path name
  */
-static void setup_long_path_state(void **state)
+static int setup_long_path_state(void **state)
 {
 	*state = prepare_state(&long_path_state);
+	return 0;
 }
 
 /**
  * @brief Setup state with long udc name
  */
-static void setup_long_udc_state(void **state)
+static int setup_long_udc_state(void **state)
 {
 	*state = prepare_state(&long_udc_state);
+	return 0;
 }
 
 /**
@@ -460,7 +467,7 @@ static void setup_long_udc_state(void **state)
  * @param[out] state Pointer to pointer to test_gadget_strs_data structure
  * with initialized state and strings
  */
-static void setup_random_len_gadget_strs_data(void **state)
+static int setup_random_len_gadget_strs_data(void **state)
 {
 	usbg_gadget_strs *strs;
 	struct test_gadget_strs_data *data;
@@ -486,6 +493,7 @@ static void setup_random_len_gadget_strs_data(void **state)
 
 	data->state = prepare_state(&simple_state);
 	*state = data;
+	return 0;
 }
 
 /**
@@ -1570,7 +1578,7 @@ static void test_set_config_attrs(void **state)
  *
  * @brief cleanup usbg state
  */
-static void teardown_state(void **state)
+static int teardown_state(void **state)
 {
 	usbg_state *s = NULL;
 
@@ -1579,6 +1587,7 @@ static void teardown_state(void **state)
 		usbg_cleanup(s);
 
 	cleanup_stack();
+	return 0;
 }
 
 /* Custom macro for defining test with given name and fixed teardown function */
@@ -1592,7 +1601,7 @@ static void teardown_state(void **state)
  */
 
 #ifndef DOXYGEN
-static UnitTest tests[] = {
+static struct CMUnitTest tests[] = {
 #endif
 
 	/**
@@ -2057,9 +2066,6 @@ static int gen_test_config(FILE *output)
 	}
 
 	for (i = 0; i < ARRAY_SIZE(tests); ++i) {
-		if (tests[i].function_type != UNIT_TEST_FUNCTION_TYPE_TEST)
-			continue;
-
 		node = config_setting_add(tests_node, NULL, CONFIG_TYPE_STRING);
 		if (!node) {
 			ret = -ENOMEM;
@@ -2093,11 +2099,15 @@ static int lookup_test(const char *name)
 {
 	int i;
 	for (i = 0; i < ARRAY_SIZE(tests); ++i)
-		if (tests[i].function_type == UNIT_TEST_FUNCTION_TYPE_TEST &&
-		    !strcmp(name, tests[i].name))
+		if (!strcmp(name, tests[i].name))
 			return i;
 
 	return -1;
+}
+
+static void test_skipped(void **state)
+{
+	skip();
 }
 
 #ifdef HAS_LIBCONFIG
@@ -2156,21 +2166,13 @@ static int apply_test_config(FILE *input)
 		selected[ind] = 1;
 	}
 
-	/* Structures with NULL function are skipped by cmocka*/
 	for (i = 0; i < ARRAY_SIZE(selected); ++i) {
-		if (selected[i] ||
-		    tests[i].function_type != UNIT_TEST_FUNCTION_TYPE_TEST)
+		if (selected[i])
 			continue;
 
-		if (i - 1 >= 0 && tests[i - 1].function_type ==
-		    UNIT_TEST_FUNCTION_TYPE_SETUP)
-			tests[i - 1].function = NULL;
-
-		tests[i].function = NULL;
-
-		if (i + 1 < ARRAY_SIZE(tests) && tests[i + 1].function_type ==
-		    UNIT_TEST_FUNCTION_TYPE_TEARDOWN)
-			tests[i + 1].function = NULL;
+		tests[i].test_func = &test_skipped;
+		tests[i].setup_func = NULL;
+		tests[i].teardown_func = NULL;
 	}
 out:
 	config_destroy(&cfg);
@@ -2186,32 +2188,6 @@ static int apply_test_config(FILE *input)
 }
 
 #endif /* HAS_LIBCONFIG */
-
-static void print_skipped_tests(FILE *stream)
-{
-	int i = 0, nmb_skipped = 0;
-
-	for (i = 0; i < ARRAY_SIZE(tests); ++i) {
-		if (tests[i].function ||
-		    tests[i].function_type != UNIT_TEST_FUNCTION_TYPE_TEST)
-			continue;
-		++nmb_skipped;
-	}
-
-	if (nmb_skipped == 0)
-		return;
-
-	fprintf(stream, "[==========] %d test(s) skipped.\n",
-		nmb_skipped);
-
-	for (i = 0; i < ARRAY_SIZE(tests); ++i) {
-		if (tests[i].function ||
-		    tests[i].function_type != UNIT_TEST_FUNCTION_TYPE_TEST)
-			continue;
-
-		fprintf(stream, "[ SKIPPED  ] %s\n", tests[i].name);
-	}
-}
 
 static void print_help()
 {
@@ -2278,8 +2254,7 @@ int main(int argc, char **argv)
 			goto out;
 	}
 
-	ret = run_tests(tests);
-	print_skipped_tests(stderr);
+	ret = cmocka_run_group_tests(tests, NULL, NULL);
 
 out:
 	return ret;
