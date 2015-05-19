@@ -27,6 +27,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <linux/usb/ch9.h>
 #include <usbg/usbg.h>
 
 #define VENDOR          0x1d6b
@@ -40,31 +41,32 @@ int main(void)
 	usbg_function *f_ffs1, *f_ffs2;
 	int ret = -EINVAL;
 	int usbg_ret;
+
+	usbg_gadget_attrs g_attrs = {
+		.bcdUSB = 0x0200,
+		.bDeviceClass =	USB_CLASS_PER_INTERFACE,
+		.bDeviceSubClass = 0x00,
+		.bDeviceProtocol = 0x00,
+		.bMaxPacketSize0 = 0x0040, /* Max allowed ep0 packet size */
+		.idVendor = VENDOR,
+		.idProduct = PRODUCT,
+		.bcdDevice = 0x0001, /* Verson of device */
+	};
+
+	usbg_gadget_strs g_strs = {
+		.str_ser = "0123456789", /* Serial number */
+		.str_mnf = "Foo Inc.", /* Manufacturer */
+		.str_prd = "Bar Gadget" /* Product string */
+	};
+
+	usbg_config_strs c_strs = {
+		.configuration = "2xFFS"
+	};
+
 	usbg_function_attrs f_attrs = {
 		.attrs.ffs = {
 			.dev_name = "my_awesome_dev_name",
 		},
-	};
-
-	usbg_gadget_attrs g_attrs = {
-			0x0200, /* bcdUSB */
-			0x00, /* Defined at interface level */
-			0x00, /* subclass */
-			0x00, /* device protocol */
-			0x0040, /* Max allowed packet size */
-			VENDOR,
-			PRODUCT,
-			0x0001, /* Verson of device */
-	};
-
-	usbg_gadget_strs g_strs = {
-			"0123456789", /* Serial number */
-			"Foo Inc.", /* Manufacturer */
-			"Bar Gadget" /* Product string */
-	};
-
-	usbg_config_strs c_strs = {
-			"2xFFS"
 	};
 
 	usbg_ret = usbg_init("/sys/kernel/config", &s);
