@@ -68,7 +68,7 @@ void show_gadget(usbg_gadget *g)
 	fprintf(stdout, "  bDeviceClass\t\t0x%02x\n", g_attrs.bDeviceClass);
 	fprintf(stdout, "  bDeviceSubClass\t0x%02x\n", g_attrs.bDeviceSubClass);
 	fprintf(stdout, "  bDeviceProtocol\t0x%02x\n", g_attrs.bDeviceProtocol);
-	fprintf(stdout, "  bMaxPacketSize0\t0x%02x\n", g_attrs.bMaxPacketSize0);
+	fprintf(stdout, "  bMaxPacketSize0\t%d\n", g_attrs.bMaxPacketSize0);
 	fprintf(stdout, "  idVendor\t\t0x%04x\n", g_attrs.idVendor);
 	fprintf(stdout, "  idProduct\t\t0x%04x\n", g_attrs.idProduct);
 	fprintf(stdout, "  bcdDevice\t\t%x.%02x\n",

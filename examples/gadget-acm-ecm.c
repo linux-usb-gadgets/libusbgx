@@ -42,7 +42,7 @@ int main(void)
 		.bDeviceClass =	USB_CLASS_PER_INTERFACE,
 		.bDeviceSubClass = 0x00,
 		.bDeviceProtocol = 0x00,
-		.bMaxPacketSize0 = 0x0040, /* Max allowed ep0 packet size */
+		.bMaxPacketSize0 = 64, /* Max allowed ep0 packet size */
 		.idVendor = VENDOR,
 		.idProduct = PRODUCT,
 		.bcdDevice = 0x0001, /* Verson of device */
