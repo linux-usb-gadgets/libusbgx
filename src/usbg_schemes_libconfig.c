@@ -438,6 +438,53 @@ out:
 
 }
 
+static int usbg_export_f_midi_attrs(usbg_f_midi_attrs *attrs,
+				      config_setting_t *root)
+{
+	config_setting_t *node;
+	int cfg_ret;
+	int ret = USBG_ERROR_NO_MEM;
+
+#define ADD_F_MIDI_INT_ATTR(attr, minval)				\
+	do { 								\
+		if ((int)attrs->attr < minval) {			\
+			ret = USBG_ERROR_INVALID_VALUE;			\
+			goto out;					\
+		}							\
+		node = config_setting_add(root, #attr, CONFIG_TYPE_INT);\
+		if (!node) 						\
+			goto out; 					\
+		cfg_ret = config_setting_set_int(node, attrs->attr); 	\
+		if (cfg_ret != CONFIG_TRUE) { 				\
+			ret = USBG_ERROR_OTHER_ERROR; 			\
+			goto out; 					\
+		}							\
+	} while (0)
+
+	ADD_F_MIDI_INT_ATTR(index, INT_MIN);
+
+	node = config_setting_add(root, "id", CONFIG_TYPE_STRING);
+	if (!node)
+		goto out;
+
+	cfg_ret = config_setting_set_string(node, attrs->id);
+	if (cfg_ret != CONFIG_TRUE) {
+		ret = USBG_ERROR_OTHER_ERROR;
+		goto out;
+	}
+
+	ADD_F_MIDI_INT_ATTR(in_ports, 0);
+	ADD_F_MIDI_INT_ATTR(out_ports, 0);
+	ADD_F_MIDI_INT_ATTR(buflen, 0);
+	ADD_F_MIDI_INT_ATTR(qlen, 0);
+
+#undef ADD_F_MIDI_INT_ATTR
+
+	ret = USBG_SUCCESS;
+out:
+	return ret;
+}
+
 static int usbg_export_function_attrs(usbg_function *f, config_setting_t *root)
 {
 	config_setting_t *node;
@@ -467,6 +514,10 @@ static int usbg_export_function_attrs(usbg_function *f, config_setting_t *root)
 
 	case USBG_F_ATTRS_MS:
 		ret = usbg_export_f_ms_attrs(&f_attrs.attrs.ms, root);
+		break;
+
+	case USBG_F_ATTRS_MIDI:
+		ret = usbg_export_f_midi_attrs(&f_attrs.attrs.midi, root);
 		break;
 
 	case USBG_F_ATTRS_PHONET:
