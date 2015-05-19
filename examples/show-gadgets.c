@@ -61,14 +61,14 @@ void show_gadget(usbg_gadget *g)
 
 	fprintf(stdout, "  UDC\t\t\t%s\n", udc);
 
+	fprintf(stdout, "  bcdUSB\t\t0x%04x\n", g_attrs.bcdUSB);
 	fprintf(stdout, "  bDeviceClass\t\t0x%02x\n", g_attrs.bDeviceClass);
 	fprintf(stdout, "  bDeviceSubClass\t0x%02x\n", g_attrs.bDeviceSubClass);
 	fprintf(stdout, "  bDeviceProtocol\t0x%02x\n", g_attrs.bDeviceProtocol);
 	fprintf(stdout, "  bMaxPacketSize0\t0x%02x\n", g_attrs.bMaxPacketSize0);
-	fprintf(stdout, "  bcdDevice\t\t0x%04x\n", g_attrs.bcdDevice);
-	fprintf(stdout, "  bcdUSB\t\t0x%04x\n", g_attrs.bcdUSB);
 	fprintf(stdout, "  idVendor\t\t0x%04x\n", g_attrs.idVendor);
 	fprintf(stdout, "  idProduct\t\t0x%04x\n", g_attrs.idProduct);
+	fprintf(stdout, "  bcdDevice\t\t0x%04x\n", g_attrs.bcdDevice);
 
 	usbg_ret = usbg_get_gadget_strs(g, LANG_US_ENG, &g_strs);
 	if (usbg_ret != USBG_SUCCESS) {
@@ -76,9 +76,9 @@ void show_gadget(usbg_gadget *g)
 				usbg_strerror(usbg_ret));
 		return;
 	}
-	fprintf(stdout, "  Serial Number\t\t%s\n", g_strs.str_ser);
 	fprintf(stdout, "  Manufacturer\t\t%s\n", g_strs.str_mnf);
 	fprintf(stdout, "  Product\t\t%s\n", g_strs.str_prd);
+	fprintf(stdout, "  Serial Number\t\t%s\n", g_strs.str_ser);
 }
 
 void show_function(usbg_function *f)
