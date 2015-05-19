@@ -2761,6 +2761,9 @@ int usbg_add_config_function(usbg_config *c, const char *name, usbg_function *f)
 		goto out;
 	}
 
+	if (!name)
+		name = f->name;
+
 	b = usbg_get_binding(c, name);
 	if (b) {
 		ERROR("duplicate binding name\n");
