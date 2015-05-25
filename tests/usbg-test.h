@@ -18,6 +18,7 @@ struct test_function
 
 	char *path;
 	char *name;
+	usbg_function_attrs *attrs;
 	int writable;
 };
 
@@ -224,6 +225,24 @@ void push_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs);
 void pull_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs);
 
 /**
+ * @brief Prepare fake filesystem to get given function attributes
+ * @details Prepare queue of values passed to wrapped i/o functions,
+ * all values got from given attributes structure.
+ * @warning Calling usbg_get_function_attrs function whithout this
+ * preparation and with wrapped i/o may fail.
+ */
+void push_function_attrs(struct test_function *func, usbg_function_attrs *attrs);
+
+/**
+ * @brief Prepare fake filesystem to set given function attributes
+ * @details Prepare queue of values passed to wrapped i/o functions,
+ * all values got from given attributes structure.
+ * @warning Calling usbg_set_function_attrs function whithout this
+ * preparation and with wrapped i/o may fail.
+ */
+void pull_function_attrs(struct test_function *func, usbg_function_attrs *attrs);
+
+/**
  * @brief Get gadget string
  * @param[in] strs Set of gadget strings
  * @param[in] str Identifier of string which should be returned
@@ -414,6 +433,15 @@ void assert_path_equal(const char *actual, const char *expected);
  */
 void assert_gadget_attrs_equal(usbg_gadget_attrs *actual,
 		usbg_gadget_attrs *expected);
+
+/**
+ * @brief Assert that given function attributes are the same.
+ * @param[in] actual Pointer to actual attributes object
+ * @param[in] expected Pointer to expected attributes obejct
+ * @param[in] type Type of function, which attributes are checked
+ */
+void assert_function_attrs_equal(usbg_function_attrs *actual,
+		usbg_function_attrs *expected, usbg_f_attrs_type type);
 
 /**
  * @brief Assert that given gadget strings are equal

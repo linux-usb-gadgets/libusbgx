@@ -1006,6 +1006,116 @@ void pull_create_config(struct test_config *tc)
 		pull_config_strs(tc, LANG_US_ENG, tc->strs);
 }
 
+#define ETHER_ADDR_STR_LEN 19
+
+static void push_serial_attrs(struct test_function *func,
+		usbg_f_serial_attrs *attrs)
+{
+	char *path;
+	char *content;
+
+	safe_asprintf(&path, "%s/%s/port_num", func->path, func->name);
+	safe_asprintf(&content, "%d\n", attrs->port_num);
+	PUSH_FILE(path, content);
+}
+
+static void push_net_attrs(struct test_function *func,
+		usbg_f_net_attrs *attrs)
+{
+	char *path;
+	char *content;
+
+	safe_asprintf(&path, "%s/%s/dev_addr", func->path, func->name);
+
+	content = safe_malloc(ETHER_ADDR_STR_LEN * sizeof(char));
+	ether_ntoa_r(&attrs->dev_addr, content);
+
+	PUSH_FILE(path, content);
+
+	path = safe_malloc(USBG_MAX_PATH_LENGTH * sizeof(char));
+	sprintf(path, "%s/%s/host_addr",
+			func->path, func->name);
+
+	content = safe_malloc(ETHER_ADDR_STR_LEN * sizeof(char));
+	ether_ntoa_r(&attrs->host_addr, content);
+
+	PUSH_FILE(path, content);
+
+	safe_asprintf(&path, "%s/%s/qmult", func->path, func->name);
+	safe_asprintf(&content, "%d\n", attrs->qmult);
+	PUSH_FILE(path, content);
+
+	safe_asprintf(&path, "%s/%s/ifname", func->path, func->name);
+	safe_asprintf(&content, "%s\n", attrs->ifname);
+	PUSH_FILE(path, content);
+}
+
+static void push_phonet_attrs(struct test_function *func,
+		usbg_f_phonet_attrs *attrs)
+{
+	char *path;
+	char *content;
+
+	safe_asprintf(&path, "%s/%s/ifname", func->path, func->name);
+	safe_asprintf(&content, "%s\n", attrs->ifname);
+	PUSH_FILE(path, content);
+}
+
+void push_function_attrs(struct test_function *func, usbg_function_attrs *function_attrs)
+{
+	int attrs_type;
+	usbg_f_attrs *attrs = &function_attrs->attrs;
+
+	attrs_type = usbg_lookup_function_attrs_type(func->type);
+
+	switch (attrs_type) {
+	case USBG_F_ATTRS_SERIAL:
+		push_serial_attrs(func, &attrs->serial);
+		break;
+	case USBG_F_ATTRS_NET:
+		push_net_attrs(func, &attrs->net);
+		break;
+	case USBG_F_ATTRS_PHONET:
+		push_phonet_attrs(func, &attrs->phonet);
+		break;
+	case USBG_F_ATTRS_FFS:
+		// ffs does not exist in filesystem
+	default:
+		break;
+	}
+}
+
+static void pull_function_net_attrs(struct test_function *func, usbg_f_net_attrs *attrs)
+{
+	char *path;
+	char *content;
+
+	safe_asprintf(&path, "%s/%s/dev_addr", func->path, func->name);
+
+	content = safe_malloc(ETHER_ADDR_STR_LEN * sizeof(char));
+	usbg_ether_ntoa_r(&attrs->dev_addr, content);
+
+	EXPECT_WRITE(path, content);
+
+	safe_asprintf(&path, "%s/%s/host_addr", func->path, func->name);
+
+	content = safe_malloc(ETHER_ADDR_STR_LEN * sizeof(char));
+	usbg_ether_ntoa_r(&attrs->host_addr, content);
+
+	EXPECT_WRITE(path, content);
+
+	safe_asprintf(&path, "%s/%s/qmult", func->path, func->name);
+	safe_asprintf(&content, "%d\n", attrs->qmult);
+	EXPECT_WRITE(path, content);
+}
+
+void pull_function_attrs(struct test_function *func, usbg_function_attrs *attrs)
+{
+	/* only net attributes are writtable */
+	if (attrs->header.attrs_type == USBG_F_ATTRS_NET)
+		pull_function_net_attrs(func, &attrs->attrs.net);
+}
+
 void assert_func_equal(usbg_function *f, struct test_function *expected)
 {
 	assert_string_equal(f->instance, expected->instance);
@@ -1168,6 +1278,28 @@ void assert_f_ffs_attrs_equal(usbg_f_ffs_attrs *actual, usbg_f_ffs_attrs *expect
 {
 	assert_string_equal(actual->dev_name, expected->dev_name);
 }
+
+void assert_function_attrs_equal(usbg_function_attrs *actual,
+		usbg_function_attrs *expected, usbg_f_attrs_type type)
+{
+	switch (type) {
+	case USBG_F_ATTRS_SERIAL:
+		assert_f_serial_attrs_equal(&actual->attrs.serial, &expected->attrs.serial);
+		break;
+	case USBG_F_ATTRS_NET:
+		assert_f_net_attrs_equal(&actual->attrs.net, &expected->attrs.net);
+		break;
+	case USBG_F_ATTRS_PHONET:
+		assert_f_phonet_attrs_equal(&actual->attrs.phonet, &expected->attrs.phonet);
+		break;
+	case USBG_F_ATTRS_FFS:
+		assert_f_ffs_attrs_equal(&actual->attrs.ffs, &expected->attrs.ffs);
+		break;
+	default:
+		fail();
+	}
+}
+
 
 void for_each_test_function(struct test_state *ts, usbg_state *s, FunctionTest fun)
 {

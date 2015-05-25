@@ -194,10 +194,32 @@ static struct test_gadget long_udc_gadgets[] = {
 	TEST_GADGET_LIST_END
 };
 
+struct test_function_attrs_data {
+	struct test_state *state;
+	usbg_function_attrs *attrs;
+};
 struct test_data {
 	struct test_state *state;
 	struct usbg_state *usbg_state;
 };
+
+#define FUNC_ATTRS(t, label, a...) { \
+	.header = { \
+		.attrs_type = t \
+	}, \
+	.attrs = { \
+		.label = { a } \
+	}, \
+}
+
+static usbg_function_attrs simple_serial_attrs = FUNC_ATTRS(USBG_F_ATTRS_SERIAL, serial, 42);
+static usbg_function_attrs simple_net_attrs = FUNC_ATTRS(USBG_F_ATTRS_NET, net, {}, {}, "if", 1);
+static usbg_function_attrs simple_phonet_attrs = FUNC_ATTRS(USBG_F_ATTRS_PHONET, phonet, "if");
+static usbg_function_attrs writable_serial_attrs = FUNC_ATTRS(USBG_F_ATTRS_SERIAL, serial, 0);
+static usbg_function_attrs writable_net_attrs = FUNC_ATTRS(USBG_F_ATTRS_NET, net, {}, {}, "", 42);
+static usbg_function_attrs writable_phonet_attrs = FUNC_ATTRS(USBG_F_ATTRS_PHONET, phonet, "");
+static usbg_function_attrs simple_ffs_attrs = FUNC_ATTRS(USBG_F_ATTRS_FFS, ffs, "0");
+static usbg_function_attrs writable_ffs_attrs = FUNC_ATTRS(USBG_F_ATTRS_FFS, ffs, "");
 
 struct test_gadget_strs_data {
 	struct test_state *state;
@@ -413,6 +435,143 @@ static int setup_random_len_gadget_strs_data(void **state)
 
 	data->state = prepare_state(&simple_state);
 	*state = data;
+	return 0;
+}
+
+static void *setup_f_attrs(int f_type, usbg_function_attrs *attrs)
+{
+	struct test_function_attrs_data *data;
+	struct test_function *func;
+
+	data = safe_malloc(sizeof(*data));
+
+	func = safe_calloc(2, sizeof(*func));
+	func[0].type = f_type;
+	func[0].instance = "0";
+	func[0].writable = 1;
+
+	data->state = put_func_in_state(func);
+	data->attrs = attrs;
+	return data;
+}
+
+static int setup_f_serial_attrs(void **state)
+{
+	*state = setup_f_attrs(F_SERIAL, &simple_serial_attrs);
+	return 0;
+}
+
+static int setup_f_serial_writable_attrs(void **state)
+{
+	*state = setup_f_attrs(F_SERIAL, &writable_serial_attrs);
+	return 0;
+}
+
+static int setup_f_acm_attrs(void **state)
+{
+	*state = setup_f_attrs(F_ACM, &simple_serial_attrs);
+	return 0;
+}
+
+static int setup_f_acm_writable_attrs(void **state)
+{
+	*state = setup_f_attrs(F_ACM, &writable_serial_attrs);
+	return 0;
+}
+
+static int setup_f_obex_attrs(void **state)
+{
+	*state = setup_f_attrs(F_OBEX, &simple_serial_attrs);
+	return 0;
+}
+
+static int setup_f_obex_writable_attrs(void **state)
+{
+	*state = setup_f_attrs(F_OBEX, &writable_serial_attrs);
+	return 0;
+}
+
+static int setup_f_ecm_attrs(void **state)
+{
+	*state = setup_f_attrs(F_ECM, &simple_net_attrs);
+	return 0;
+}
+
+static int setup_f_ecm_writable_attrs(void **state)
+{
+	*state = setup_f_attrs(F_ECM, &writable_net_attrs);
+	return 0;
+}
+
+static int setup_f_subset_attrs(void **state)
+{
+	*state = setup_f_attrs(F_SUBSET, &simple_net_attrs);
+	return 0;
+}
+
+static int setup_f_subset_writable_attrs(void **state)
+{
+	*state = setup_f_attrs(F_SUBSET, &writable_net_attrs);
+	return 0;
+}
+
+static int setup_f_ncm_attrs(void **state)
+{
+	*state = setup_f_attrs(F_NCM, &simple_net_attrs);
+	return 0;
+}
+
+static int setup_f_ncm_writable_attrs(void **state)
+{
+	*state = setup_f_attrs(F_NCM, &writable_net_attrs);
+	return 0;
+}
+
+static int setup_f_eem_attrs(void **state)
+{
+	*state = setup_f_attrs(F_EEM, &simple_net_attrs);
+	return 0;
+}
+
+static int setup_f_eem_writable_attrs(void **state)
+{
+	*state = setup_f_attrs(F_EEM, &writable_net_attrs);
+	return 0;
+}
+
+static int setup_f_rndis_attrs(void **state)
+{
+	*state = setup_f_attrs(F_RNDIS, &simple_net_attrs);
+	return 0;
+}
+
+static int setup_f_rndis_writable_attrs(void **state)
+{
+	*state = setup_f_attrs(F_RNDIS, &writable_net_attrs);
+	return 0;
+}
+
+static int setup_f_phonet_attrs(void **state)
+{
+	*state = setup_f_attrs(F_PHONET, &simple_phonet_attrs);
+	return 0;
+}
+
+static int setup_f_phonet_writable_attrs(void **state)
+{
+	*state = setup_f_attrs(F_PHONET, &writable_phonet_attrs);
+	return 0;
+}
+
+static int setup_f_ffs_attrs(void **state)
+{
+	*state = setup_f_attrs(F_FFS, &simple_ffs_attrs);
+	return 0;
+}
+
+static int setup_f_ffs_writable_attrs(void **state)
+{
+	*state = setup_f_attrs(F_FFS, &writable_ffs_attrs);
 	return 0;
 }
 
@@ -1511,6 +1670,71 @@ static void test_create_config(void **state)
 }
 
 /**
+
+/**
+ * @brief Test only one given function for attribute getting
+ * @param[in] state Pointer to pointer to correctly initialized state
+ */
+static void test_get_function_attrs(void **state)
+{
+	struct test_function_attrs_data *data;
+	usbg_state *s;
+	usbg_function *f;
+	usbg_gadget *g;
+	usbg_function_attrs actual;
+	int ret;
+
+	data = (struct test_function_attrs_data *)(*state);
+	*state = NULL;
+
+
+	init_with_state(data->state, &s);
+	*state = s;
+
+	g = usbg_get_first_gadget(s);
+	assert_non_null(g);
+	f = usbg_get_first_function(g);
+	assert_non_null(f);
+
+	push_function_attrs(&data->state->gadgets[0].functions[0], data->attrs);
+	ret = usbg_get_function_attrs(f, &actual);
+
+	assert_int_equal(ret, 0);
+	assert_function_attrs_equal(&actual, data->attrs, data->attrs->header.attrs_type);
+
+	usbg_cleanup_function_attrs(&actual);
+}
+
+/**
+ * @brief Test setting attributes in only one given function
+ * @param[in] state Pointer to pointer to correctly initialized state
+ */
+static void test_set_function_attrs(void **state)
+{
+	struct test_function_attrs_data *data;
+	usbg_state *s;
+	usbg_function *f;
+	usbg_gadget *g;
+	int ret;
+
+	data = (struct test_function_attrs_data *)(*state);
+	*state = NULL;
+
+	init_with_state(data->state, &s);
+	*state = s;
+
+	g = usbg_get_first_gadget(s);
+	assert_non_null(g);
+	f = usbg_get_first_function(g);
+	assert_non_null(f);
+
+	pull_function_attrs(&data->state->gadgets[0].functions[0], data->attrs);
+	ret = usbg_set_function_attrs(f, data->attrs);
+
+	assert_int_equal(ret, 0);
+}
+
+/**
  *
  * @brief cleanup usbg state
  */
@@ -1975,6 +2199,142 @@ static struct CMUnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_create_config_random",
 		     test_create_config, setup_random_config_attrs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_serial_attrs,
+	 * Get f_serial function attributes,
+	 * usbg_get_function_attrs}
+	 */
+	USBG_TEST_TS("test_get_f_serial_attrs",
+		     test_get_function_attrs, setup_f_serial_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_obex_attrs,
+	 * Get f_obex function attributes,
+	 * usbg_get_function_attrs}
+	 */
+	USBG_TEST_TS("test_get_f_obex_attrs",
+		     test_get_function_attrs, setup_f_obex_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_ecm_attrs,
+	 * Get f_ecm function attributes,
+	 * usbg_get_function_attrs}
+	 */
+	USBG_TEST_TS("test_get_f_ecm_attrs",
+		     test_get_function_attrs, setup_f_ecm_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_subset_attrs,
+	 * Get f_subset function attributes,
+	 * usbg_get_function_attrs}
+	 */
+	USBG_TEST_TS("test_get_f_subset_attrs",
+		     test_get_function_attrs, setup_f_subset_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_ncm_attrs,
+	 * Get f_ncm function attributes,
+	 * usbg_get_function_attrs}
+	 */
+	USBG_TEST_TS("test_get_f_ncm_attrs",
+		     test_get_function_attrs, setup_f_ncm_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_serial_attrs,
+	 * Get f_rndis function attributes,
+	 * usbg_get_function_attrs}
+	 */
+	USBG_TEST_TS("test_get_f_rndis_attrs",
+		     test_get_function_attrs, setup_f_rndis_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_phonet_attrs,
+	 * Get f_phonet function attributes,
+	 * usbg_get_function_attrs}
+	 */
+	USBG_TEST_TS("test_get_f_phonet_attrs",
+		     test_get_function_attrs, setup_f_phonet_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_serial_attrs,
+	 * Get f_ffs function attributes,
+	 * usbg_get_function_attrs}
+	 */
+	USBG_TEST_TS("test_get_f_ffs_attrs",
+		     test_get_function_attrs, setup_f_ffs_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_serial_attrs,
+	 * Set f_serial function attributes,
+	 * usbg_set_function_attrs}
+	 */
+	USBG_TEST_TS("test_set_f_serial_attrs",
+		     test_set_function_attrs, setup_f_serial_writable_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_acm_attrs,
+	 * Set f_acm function attributes,
+	 * usbg_set_function_attrs}
+	 */
+	USBG_TEST_TS("test_set_f_acm_attrs",
+		     test_set_function_attrs, setup_f_acm_writable_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_serial_obex,
+	 * Set f_obex function attributes,
+	 * usbg_set_function_attrs}
+	 */
+	USBG_TEST_TS("test_set_f_obex_attrs",
+		     test_set_function_attrs, setup_f_obex_writable_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_ecm_attrs,
+	 * Set f_ecm function attributes,
+	 * usbg_set_function_attrs}
+	 */
+	USBG_TEST_TS("test_set_f_ecm_attrs",
+		     test_set_function_attrs, setup_f_ecm_writable_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_subset_attrs,
+	 * Set f_subset function attributes,
+	 * usbg_set_function_attrs}
+	 */
+	USBG_TEST_TS("test_set_f_subset_attrs",
+		     test_set_function_attrs, setup_f_subset_writable_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_ncm_attrs,
+	 * Set f_ncm function attributes,
+	 * usbg_set_function_attrs}
+	 */
+	USBG_TEST_TS("test_set_f_ncm_attrs",
+		     test_set_function_attrs, setup_f_ncm_writable_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_serial_attrs,
+	 * Set f_rndis function attributes,
+	 * usbg_get_function_attrs}
+	 */
+	USBG_TEST_TS("test_set_f_rndis_attrs",
+		     test_set_function_attrs, setup_f_rndis_writable_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_phonet_attrs,
+	 * Set f_phonet function attributes,
+	 * usbg_set_function_attrs}
+	 */
+	USBG_TEST_TS("test_set_f_phonet_attrs",
+		     test_set_function_attrs, setup_f_phonet_writable_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_serial_attrs,
+	 * Set f_ffs function attributes,
+	 * usbg_set_function_attrs}
+	 */
+	USBG_TEST_TS("test_set_f_ffs_attrs",
+		     test_set_function_attrs, setup_f_ffs_writable_attrs),
 
 #ifndef DOXYGEN
 };
