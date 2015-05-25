@@ -314,6 +314,12 @@ void push_config_strs(struct test_config *config, int lang, usbg_config_strs *st
 void pull_create_config(struct test_config *tc);
 
 /**
+ * @brief Prepare for creating function
+ * @param[in] tf Test function to be created
+ */
+void pull_create_function(struct test_function *tf);
+
+/**
  * @brief Copy state without configs and functions
  * @param[in] ts State to bo copied
  * @return State with empty gadgets

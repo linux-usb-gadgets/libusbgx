@@ -1116,6 +1116,21 @@ void pull_function_attrs(struct test_function *func, usbg_function_attrs *attrs)
 		pull_function_net_attrs(func, &attrs->attrs.net);
 }
 
+void pull_create_function(struct test_function *tf)
+{
+	char *path;
+	int tmp;
+
+	tmp = asprintf(&path, "%s/%s", tf->path, tf->name);
+	if (tmp < 0)
+		fail();
+	free_later(path);
+
+	EXPECT_MKDIR(path);
+	if (tf->attrs)
+		pull_function_attrs(tf, tf->attrs);
+}
+
 void assert_func_equal(usbg_function *f, struct test_function *expected)
 {
 	assert_string_equal(f->instance, expected->instance);

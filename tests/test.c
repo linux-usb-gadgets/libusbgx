@@ -1670,6 +1670,37 @@ static void test_create_config(void **state)
 }
 
 /**
+ * @brief Start with empty gadget, add all functions from given one
+ */
+static void test_create_function(void **state)
+{
+	usbg_state *s = NULL;
+	usbg_gadget *g = NULL;
+	usbg_function *f = NULL;
+	struct test_state *ts;
+	struct test_state *empty;
+	struct test_gadget *tg;
+	struct test_function *tf;
+
+	ts = (struct test_state *)(*state);
+	*state = NULL;
+
+	empty = build_empty_gadget_state(ts);
+
+	init_with_state(empty, &s);
+	*state = s;
+
+	for (tg = ts->gadgets; tg->name; tg++) {
+		g = usbg_get_gadget(s, tg->name);
+		assert_non_null(g);
+		for (tf = tg->functions; tf->instance; tf++) {
+			pull_create_function(tf);
+			usbg_create_function(g, tf->type, tf->instance,
+					tf->attrs, &f);
+			assert_func_equal(f, tf);
+		}
+	}
+}
 
 /**
  * @brief Test only one given function for attribute getting
@@ -2335,6 +2366,14 @@ static struct CMUnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_set_f_ffs_attrs",
 		     test_set_function_attrs, setup_f_ffs_writable_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_create_all_functions,
+	 * Create full set of functions in empty state,
+	 * usbg_get_binding_name_len}
+	 */
+	USBG_TEST_TS("test_create_all_functions",
+		     test_create_function, setup_all_funcs_state),
 
 #ifndef DOXYGEN
 };
