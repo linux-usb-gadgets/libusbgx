@@ -1100,16 +1100,12 @@ void assert_gadget_strs_equal(usbg_gadget_strs *actual, usbg_gadget_strs *expect
 		assert_string_equal(get_gadget_str(actual, i), get_gadget_str(expected, i));
 }
 
-void for_each_test_function(void **state, FunctionTest fun)
+void for_each_test_function(struct test_state *ts, usbg_state *s, FunctionTest fun)
 {
-	usbg_state *s = NULL;
-	struct test_state *ts;
 	struct test_gadget *tg;
 	struct test_function *tf;
 	usbg_gadget *g = NULL;
 	usbg_function *f = NULL;
-
-	safe_init_with_state(state, &ts, &s);
 
 	for (tg = ts->gadgets; tg->name; ++tg) {
 		g = usbg_get_gadget(s, tg->name);
@@ -1121,16 +1117,12 @@ void for_each_test_function(void **state, FunctionTest fun)
 	}
 }
 
-void for_each_test_config(void **state, ConfigTest fun)
+void for_each_test_config(struct test_state *ts, usbg_state *s, ConfigTest fun)
 {
-	usbg_state *s = NULL;
 	usbg_gadget *g = NULL;
 	usbg_config *c = NULL;
-	struct test_state *ts;
 	struct test_gadget *tg;
 	struct test_config *tc;
-
-	safe_init_with_state(state, &ts, &s);
 
 	for (tg = ts->gadgets; tg->name; tg++) {
 		g = usbg_get_gadget(s, tg->name);
@@ -1142,18 +1134,14 @@ void for_each_test_config(void **state, ConfigTest fun)
 	}
 }
 
-void for_each_binding(void **state, BindingTestFunc fun)
+void for_each_binding(struct test_state *ts, usbg_state *s, BindingTestFunc fun)
 {
-	struct test_state *ts;
 	struct test_gadget *tg;
 	struct test_config *tc;
 	struct test_binding *tb;
-	usbg_state *s = NULL;
 	usbg_gadget *g = NULL;
 	usbg_config *c = NULL;
 	usbg_binding *b = NULL;
-
-	safe_init_with_state(state, &ts, &s);
 
 	for (tg = ts->gadgets; tg->name; tg++) {
 		g = usbg_get_gadget(s, tg->name);
@@ -1172,14 +1160,10 @@ void for_each_binding(void **state, BindingTestFunc fun)
 	}
 }
 
-void for_each_test_gadget(void **state, GadgetTestFunc fun)
+void for_each_test_gadget(struct test_state *ts, usbg_state *s, GadgetTestFunc fun)
 {
-	struct test_state *ts;
 	struct test_gadget *tg;
-	usbg_state *s = NULL;
 	usbg_gadget *g = NULL;
-
-	safe_init_with_state(state, &ts, &s);
 
 	for (tg = ts->gadgets; tg->name; ++tg) {
 		g = usbg_get_gadget(s, tg->name);

@@ -422,7 +422,11 @@ static int setup_random_len_gadget_strs_data(void **state)
  */
 static void test_get_gadget(void **state)
 {
-	for_each_test_gadget(state, assert_gadget_equal);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_gadget(ts, s, assert_gadget_equal);
 }
 
 /**
@@ -484,7 +488,11 @@ static void try_get_gadget_name(usbg_gadget *g, struct test_gadget *tg)
  */
 static void test_get_gadget_name(void **state)
 {
-	for_each_test_gadget(state, try_get_gadget_name);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_gadget(ts, s, try_get_gadget_name);
 }
 
 static void try_get_gadget_name_len(usbg_gadget *g, struct test_gadget *tg)
@@ -503,7 +511,11 @@ static void try_get_gadget_name_len(usbg_gadget *g, struct test_gadget *tg)
  */
 static void test_get_gadget_name_len(void **state)
 {
-	for_each_test_gadget(state, try_get_gadget_name_len);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_gadget(ts, s, try_get_gadget_name_len);
 }
 
 /**
@@ -535,7 +547,11 @@ static void try_cpy_gadget_name(usbg_gadget *g, struct test_gadget *tg)
  */
 static void test_cpy_gadget_name(void **state)
 {
-	for_each_test_gadget(state, try_cpy_gadget_name);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_gadget(ts, s, try_cpy_gadget_name);
 }
 
 /**
@@ -591,7 +607,11 @@ static void test_init(void **state)
  */
 static void test_get_function(void **state)
 {
-	for_each_test_function(state, assert_func_equal);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_function(ts, s, assert_func_equal);
 }
 
 /**
@@ -687,7 +707,11 @@ static void try_get_function_instance(usbg_function *f, struct test_function *tf
  */
 static void test_get_function_instance(void **state)
 {
-	for_each_test_function(state, try_get_function_instance);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_function(ts, s, try_get_function_instance);
 }
 
 /**
@@ -718,7 +742,11 @@ static void try_cpy_function_instance(usbg_function *f, struct test_function *tf
  */
 static void test_cpy_function_instance(void **state)
 {
-	for_each_test_function(state, try_cpy_function_instance);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_function(ts, s, try_cpy_function_instance);
 }
 
 /**
@@ -742,7 +770,11 @@ static void try_get_function_type(usbg_function *f, struct test_function *tf)
  */
 static void test_get_function_type(void **state)
 {
-	for_each_test_function(state, try_get_function_type);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_function(ts, s, try_get_function_type);
 }
 
 /**
@@ -765,7 +797,11 @@ static void try_get_function_instance_len(usbg_function *f, struct test_function
  */
 static void test_get_function_instance_len(void **state)
 {
-	for_each_test_function(state, try_get_function_instance_len);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_function(ts, s, try_get_function_instance_len);
 }
 
 /**
@@ -829,7 +865,11 @@ static void test_cpy_configfs_path(void **state)
  */
 static void test_get_config(void **state)
 {
-	for_each_test_config(state, assert_config_equal);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_config(ts, s, assert_config_equal);
 }
 
 static void test_get_config_without_label(void **state)
@@ -903,7 +943,11 @@ static void try_get_config_label(usbg_config *c, struct test_config *tc)
  */
 static void test_get_config_label(void **state)
 {
-	for_each_test_config(state, try_get_config_label);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_config(ts, s, try_get_config_label);
 }
 
 /**
@@ -925,7 +969,11 @@ static void try_get_config_id(usbg_config *c, struct test_config *tc)
  */
 static void test_get_config_id(void **state)
 {
-	for_each_test_config(state, try_get_config_id);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_config(ts, s, try_get_config_id);
 }
 
 /**
@@ -1225,7 +1273,11 @@ static void try_get_binding_target(struct test_binding *tb, usbg_binding *b)
  */
 static void test_get_binding_target(void **state)
 {
-	for_each_binding(state, try_get_binding_target);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_binding(ts, s, try_get_binding_target);
 }
 
 /**
@@ -1250,7 +1302,11 @@ static void try_get_binding_name(struct test_binding *tb, usbg_binding *b)
  */
 static void test_get_binding_name(void **state)
 {
-	for_each_binding(state, try_get_binding_name);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_binding(ts, s, try_get_binding_name);
 }
 
 /**
@@ -1273,7 +1329,11 @@ static void try_get_binding_name_len(struct test_binding *tb, usbg_binding *b)
  */
 static void test_get_binding_name_len(void **state)
 {
-	for_each_binding(state, try_get_binding_name_len);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_binding(ts, s, try_get_binding_name_len);
 }
 
 /**
@@ -1295,7 +1355,11 @@ static void try_set_config_strs(usbg_config *c, struct test_config *tc)
  */
 static void test_set_config_strs(void **state)
 {
-	for_each_test_config(state, try_set_config_strs);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_config(ts, s, try_set_config_strs);
 }
 
 /**
@@ -1317,7 +1381,11 @@ static void try_set_config_string(usbg_config *c, struct test_config *tc)
  */
 static void test_set_config_string(void **state)
 {
-	for_each_test_config(state, try_set_config_string);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_config(ts, s, try_set_config_string);
 }
 
 /**
@@ -1342,7 +1410,11 @@ static void try_get_config_strs(usbg_config *c, struct test_config *tc)
  */
 static void test_get_config_strs(void **state)
 {
-	for_each_test_config(state, try_get_config_strs);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_config(ts, s, try_get_config_strs);
 }
 
 /**
@@ -1369,7 +1441,11 @@ static void try_get_config_attrs(usbg_config *c, struct test_config *tc)
  */
 static void test_get_config_attrs(void **state)
 {
-	for_each_test_config(state, try_get_config_attrs);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_config(ts, s, try_get_config_attrs);
 }
 
 /**
@@ -1391,7 +1467,11 @@ static void try_set_config_attrs(usbg_config *c, struct test_config *tc)
  */
 static void test_set_config_attrs(void **state)
 {
-	for_each_test_config(state, try_set_config_attrs);
+	usbg_state *s = NULL;
+	struct test_state *ts;
+
+	safe_init_with_state(state, &ts, &s);
+	for_each_test_config(ts, s, try_set_config_attrs);
 }
 
 /**

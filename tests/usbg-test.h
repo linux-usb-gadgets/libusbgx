@@ -414,10 +414,11 @@ typedef void (*FunctionTest)(usbg_function *f, struct test_function *tf);
 
 /**
  * @brief Call given function for all usb functions present in given state
- * @param[in] state Properly prepared state to be tested
+ * @param[in] ts Test state to be tested
+ * @param[in] s Properly prepared usbg state to be tested
  * @param[in] fun Function to be called on each usb function in state
  */
-void for_each_test_function(void **state, FunctionTest fun);
+void for_each_test_function(struct test_state *ts, usbg_state *s, FunctionTest fun);
 
 /**
  * @brief Function that performs some test on given usbg config
@@ -426,10 +427,11 @@ typedef void (*ConfigTest)(usbg_config *c, struct test_config *tc);
 
 /**
  * @brief Call given function for all usb configs present in given state
- * @param[in] state Properly prepared state to be tested
+ * @param[in] ts Test state to be tested
+ * @param[in] s Properly prepared usbg state to be tested
  * @param[in] fun Function to be called on each usb function in state
  */
-void for_each_test_config(void **state, ConfigTest fun);
+void for_each_test_config(struct test_state *ts, usbg_state *s, ConfigTest fun);
 
 /**
  * @brief Function that performs test on given usbg binding
@@ -438,10 +440,11 @@ typedef void (*BindingTestFunc)(struct test_binding *tb, usbg_binding *b);
 
 /**
  * @brief Call given function for all usb bindings present in given state
- * @param[in] state Properly prepared state to be tested
+ * @param[in] ts Test state to be tested
+ * @param[in] s Properly prepared usbg state to be tested
  * @param[in] fun Function to be called on each usb binding in state
  */
-void for_each_binding(void **state, BindingTestFunc fun);
+void for_each_binding(struct test_state *ts, usbg_state *s, BindingTestFunc fun);
 
 /**
  * @brief Function that performs test on given usbg gadget
@@ -450,10 +453,11 @@ typedef void (*GadgetTestFunc)(usbg_gadget *g, struct test_gadget *tg);
 
 /**
  * @brief Call given function for all usb gadgets present in given state
- * @param[in] state Properly prepared state to be tested
+ * @param[in] ts Test state to be tested
+ * @param[in] s Properly prepared usbg state to be tested
  * @param[in] fun Function to be called on each usb gadget in state
  */
-void for_each_test_gadget(void **state, GadgetTestFunc fun);
+void for_each_test_gadget(struct test_state *ts, usbg_state *s, GadgetTestFunc fun);
 
 static inline void *safe_calloc(int count, size_t size)
 {
