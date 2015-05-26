@@ -727,6 +727,15 @@ void init_with_state(struct test_state *in, usbg_state **out)
 	assert_int_equal(usbg_ret, USBG_SUCCESS);
 }
 
+void safe_init_with_state(void **state, struct test_state **ts, usbg_state **s)
+{
+	*ts = (struct test_state *)(*state);
+	*state = NULL;
+
+	init_with_state(*ts, s);
+	*state = *s;
+}
+
 static int get_config_attr(usbg_config_attrs *attrs, config_attr attr)
 {
 	int ret;
@@ -1100,11 +1109,7 @@ void for_each_test_function(void **state, FunctionTest fun)
 	usbg_gadget *g = NULL;
 	usbg_function *f = NULL;
 
-	ts = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(ts, &s);
-	*state = s;
+	safe_init_with_state(state, &ts, &s);
 
 	for (tg = ts->gadgets; tg->name; ++tg) {
 		g = usbg_get_gadget(s, tg->name);
@@ -1125,11 +1130,7 @@ void for_each_test_config(void **state, ConfigTest fun)
 	struct test_gadget *tg;
 	struct test_config *tc;
 
-	ts = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(ts, &s);
-	*state = s;
+	safe_init_with_state(state, &ts, &s);
 
 	for (tg = ts->gadgets; tg->name; tg++) {
 		g = usbg_get_gadget(s, tg->name);
@@ -1152,11 +1153,7 @@ void for_each_binding(void **state, BindingTestFunc fun)
 	usbg_config *c = NULL;
 	usbg_binding *b = NULL;
 
-	ts = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(ts, &s);
-	*state = s;
+	safe_init_with_state(state, &ts, &s);
 
 	for (tg = ts->gadgets; tg->name; tg++) {
 		g = usbg_get_gadget(s, tg->name);
@@ -1182,11 +1179,7 @@ void for_each_test_gadget(void **state, GadgetTestFunc fun)
 	usbg_state *s = NULL;
 	usbg_gadget *g = NULL;
 
-	ts = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(ts, &s);
-	*state = s;
+	safe_init_with_state(state, &ts, &s);
 
 	for (tg = ts->gadgets; tg->name; ++tg) {
 		g = usbg_get_gadget(s, tg->name);

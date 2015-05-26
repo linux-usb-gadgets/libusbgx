@@ -436,11 +436,7 @@ static void test_get_gadget_fail(void **state)
 	usbg_state *s = NULL;
 	struct test_state *st;
 
-	st = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(st, &s);
-	*state = s;
+	safe_init_with_state(state, &st, &s);
 
 	g = usbg_get_gadget(s, "non-existing-gadget");
 	assert_null(g);
@@ -456,11 +452,7 @@ static void test_get_first_gadget(void **state)
 	usbg_state *s = NULL;
 	struct test_state *st;
 
-	st = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(st, &s);
-	*state = s;
+	safe_init_with_state(state, &st, &s);
 
 	g = usbg_get_first_gadget(s);
 	assert_non_null(g);
@@ -561,11 +553,7 @@ static void test_cpy_gadget_name_fail(void **state)
 	char name[USBG_MAX_NAME_LENGTH];
 	int ret;
 
-	st = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(st, &s);
-	*state = s;
+	safe_init_with_state(state, &st, &s);
 
 	for (i = 0; st->gadgets[i].name; i++) {
 		g = usbg_get_gadget(s, st->gadgets[i].name);
@@ -592,11 +580,7 @@ static void test_init(void **state)
 	usbg_state *s = NULL;
 	struct test_state *st;
 
-	st = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(st, &s);
-	*state = s;
+	safe_init_with_state(state, &st, &s);
 
 	assert_state_equal(s, st);
 }
@@ -623,11 +607,7 @@ static void test_get_function_fail(void **state)
 	usbg_function *f = NULL;
 	struct test_state *st;
 
-	st = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(st, &s);
-	*state = s;
+	safe_init_with_state(state, &st, &s);
 
 	g = usbg_get_first_gadget(s);
 	assert_non_null(g);
@@ -799,11 +779,7 @@ static void test_get_configfs_path(void **state)
 	struct test_state *st;
 	const char *path;
 
-	st = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(st, &s);
-	*state = s;
+	safe_init_with_state(state, &st, &s);
 
 	path = usbg_get_configfs_path(s);
 	assert_path_equal(path, st->configfs_path);
@@ -820,11 +796,7 @@ static void test_get_configfs_path_len(void **state)
 	struct test_state *st;
 	int ret, len;
 
-	st = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(st, &s);
-	*state = s;
+	safe_init_with_state(state, &st, &s);
 
 	ret = usbg_get_configfs_path_len(s);
 	len = strlen(st->configfs_path);
@@ -843,11 +815,7 @@ static void test_cpy_configfs_path(void **state)
 	char path[PATH_MAX];
 	int ret;
 
-	st = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(st, &s);
-	*state = s;
+	safe_init_with_state(state, &st, &s);
 
 	ret = usbg_cpy_configfs_path(s, path, PATH_MAX);
 	assert_int_equal(ret, USBG_SUCCESS);
@@ -873,11 +841,7 @@ static void test_get_config_without_label(void **state)
 	struct test_gadget *tg;
 	struct test_config *tc;
 
-	ts = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(ts, &s);
-	*state = s;
+	safe_init_with_state(state, &ts, &s);
 
 	for (tg = ts->gadgets; tg->name; tg++) {
 		g = usbg_get_gadget(s, tg->name);
@@ -903,11 +867,7 @@ static void test_get_config_fail(void **state)
 	struct test_state *ts;
 	struct test_gadget *tg;
 
-	ts = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(ts, &s);
-	*state = s;
+	safe_init_with_state(state, &ts, &s);
 
 	for (tg = ts->gadgets; tg->name; tg++) {
 		g = usbg_get_gadget(s, tg->name);
@@ -1004,11 +964,7 @@ static void test_get_gadget_attrs(void **state)
 	usbg_state *s = NULL;
 	struct test_state *ts;
 
-	ts = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(ts, &s);
-	*state = s;
+	safe_init_with_state(state, &ts, &s);
 
 	try_get_gadget_attrs(s, ts, &min_gadget_attrs);
 	try_get_gadget_attrs(s, ts, &max_gadget_attrs);
@@ -1047,11 +1003,7 @@ static void test_set_gadget_attrs(void **state)
 	usbg_state *s = NULL;
 	struct test_state *ts;
 
-	ts = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(ts, &s);
-	*state = s;
+	safe_init_with_state(state, &ts, &s);
 
 	try_set_gadget_attrs(s, ts, &min_gadget_attrs);
 	try_set_gadget_attrs(s, ts, &max_gadget_attrs);
@@ -1096,11 +1048,7 @@ static void test_set_specific_gadget_attr(void **state)
 	usbg_state *s = NULL;
 	struct test_state *ts;
 
-	ts = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(ts, &s);
-	*state = s;
+	safe_init_with_state(state, &ts, &s);
 
 	try_set_specific_gadget_attr(s, ts, &min_gadget_attrs);
 	try_set_specific_gadget_attr(s, ts, &max_gadget_attrs);
@@ -1120,11 +1068,7 @@ void test_get_udc(void **state)
 	usbg_udc *u = NULL;
 	usbg_gadget *g = NULL;
 
-	ts = (struct test_state *)(*state);
-	*state = NULL;
-
-	init_with_state(ts, &s);
-	*state = s;
+	safe_init_with_state(state, &ts, &s);
 
 	for (tu = ts->udcs; *tu; tu++) {
 		u = usbg_get_udc(s, *tu);

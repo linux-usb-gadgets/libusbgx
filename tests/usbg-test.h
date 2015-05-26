@@ -310,6 +310,14 @@ void cleanup_stack();
 void init_with_state(struct test_state *in, usbg_state **out);
 
 /**
+ * @brief Safely initialize usbg state from pointer given to test
+ * @param[in] state Pointer given to test function
+ * @param[out] ts Pointer to be filled with test state
+ * @param[out] s Pointer to be filled with usbg state
+ */
+void safe_init_with_state(void **state, struct test_state **ts, usbg_state **s);
+
+/**
  * @brief Assert that given config attributes are equal
  */
 void assert_config_attrs_equal(usbg_config_attrs *actual, usbg_config_attrs *expected);
