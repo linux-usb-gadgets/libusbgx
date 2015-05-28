@@ -1137,6 +1137,38 @@ void assert_gadget_strs_equal(usbg_gadget_strs *actual, usbg_gadget_strs *expect
 		assert_string_equal(get_gadget_str(actual, i), get_gadget_str(expected, i));
 }
 
+void assert_f_serial_attrs_equal(usbg_f_serial_attrs *actual,
+		usbg_f_serial_attrs *expected)
+{
+	assert_int_equal(actual->port_num, expected->port_num);
+}
+
+static void assert_ether_addrs_equal(const struct ether_addr *ea1,
+		const struct ether_addr *ea2)
+{
+	assert_memory_equal(ea1->ether_addr_octet, ea2->ether_addr_octet,
+			ETHER_ADDR_LEN);
+}
+
+void assert_f_net_attrs_equal(usbg_f_net_attrs *actual, usbg_f_net_attrs *expected)
+{
+	assert_ether_addrs_equal(&actual->dev_addr, &expected->dev_addr);
+	assert_ether_addrs_equal(&actual->host_addr, &expected->host_addr);
+	assert_string_equal(actual->ifname, expected->ifname);
+	assert_int_equal(actual->qmult, expected->qmult);
+}
+
+void assert_f_phonet_attrs_equal(usbg_f_phonet_attrs *actual,
+		usbg_f_phonet_attrs *expected)
+{
+	assert_string_equal(actual->ifname, expected->ifname);
+}
+
+void assert_f_ffs_attrs_equal(usbg_f_ffs_attrs *actual, usbg_f_ffs_attrs *expected)
+{
+	assert_string_equal(actual->dev_name, expected->dev_name);
+}
+
 void for_each_test_function(struct test_state *ts, usbg_state *s, FunctionTest fun)
 {
 	struct test_gadget *tg;
