@@ -1475,6 +1475,42 @@ static void test_set_config_attrs(void **state)
 }
 
 /**
+ * @brieg Test creating config
+ * @details Start with empty gadgets, add all functions from given state
+ * @param[in, out] state Pointer to pointer to correctly initialized test state,
+ * will point to usbg state when finished.
+ */
+static void test_create_config(void **state)
+{
+	usbg_state *s = NULL;
+	usbg_gadget *g = NULL;
+	usbg_config *c = NULL;
+	struct test_state *ts;
+	struct test_state *empty;
+	struct test_gadget *tg;
+	struct test_config *tc;
+
+	ts = (struct test_state *)(*state);
+	*state = NULL;
+
+	empty = build_empty_gadget_state(ts);
+
+	init_with_state(empty, &s);
+	*state = s;
+
+	for (tg = ts->gadgets; tg->name; tg++) {
+		g = usbg_get_gadget(s, tg->name);
+		assert_non_null(g);
+		for (tc = tg->configs; tc->label; tc++) {
+			pull_create_config(tc);
+			usbg_create_config(g, tc->id, tc->label,
+					tc->attrs, tc->strs, &c);
+			assert_config_equal(c, tc);
+		}
+	}
+}
+
+/**
  *
  * @brief cleanup usbg state
  */
@@ -1931,6 +1967,14 @@ static struct CMUnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_set_config_attrs_random",
 		     test_set_config_attrs, setup_random_config_attrs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_create_config_random,
+	 * Create config with random attributes
+	 * usbg_create_config}
+	 */
+	USBG_TEST_TS("test_create_config_random",
+		     test_create_config, setup_random_config_attrs_state),
 
 #ifndef DOXYGEN
 };
