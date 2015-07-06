@@ -134,6 +134,14 @@ typedef struct
 	uint16_t bcdDevice;
 } usbg_gadget_attrs;
 
+typedef enum {
+	USBG_GADGET_STR_MIN = 0,
+	STR_PRODUCT = USBG_GADGET_STR_MIN,
+	STR_MANUFACTURER,
+	STR_SERIAL_NUMBER,
+	USBG_GADGET_STR_MAX,
+} usbg_gadget_str;
+
 /**
  * @typedef usbg_gadget_strs
  * @brief USB gadget device strings
@@ -510,6 +518,20 @@ extern const char *usbg_get_gadget_attr_str(usbg_gadget_attr attr);
 extern int usbg_lookup_gadget_attr(const char *name);
 
 /**
+ * @brief Lookup str code based on its name
+ * @param name of string
+ * @return code of suitable string or usbg_error
+ */
+extern int usbg_lookup_gadget_str(const char *name);
+
+/**
+ * @brief Get name of selected gadget string
+ * @param str Gadget string code
+ * @return Name of string associated with this code
+ */
+extern const char *usbg_get_gadget_str_name(usbg_gadget_str str);
+
+/**
  * @brief Set selected attribute to value
  * @param g Pointer to gadget
  * @param attr Code of selected attribute
@@ -652,6 +674,16 @@ extern int usbg_set_gadget_device_bcd_usb(usbg_gadget *g, uint16_t bcdUSB);
  */
 extern int usbg_get_gadget_strs(usbg_gadget *g, int lang,
 		usbg_gadget_strs *g_strs);
+
+/**
+ * @brief Set selected string
+ * @param g Pointer to gadget
+ * @param str Code of selected string
+ * @param val value to be set
+ * @return 0 on success, usbg_error otherwise
+ */
+extern int usbg_set_gadget_str(usbg_gadget *g, usbg_gadget_str str, int lang,
+		const char *val);
 
 /**
  * @brief Set the USB gadget strings

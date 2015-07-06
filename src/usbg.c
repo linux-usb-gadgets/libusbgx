@@ -70,6 +70,15 @@ const char *gadget_attr_names[] =
 
 ARRAY_SIZE_SENTINEL(gadget_attr_names, USBG_GADGET_ATTR_MAX);
 
+const char *gadget_str_names[] =
+{
+	"product",
+	"manufacturer",
+	"serialnumber",
+};
+
+ARRAY_SIZE_SENTINEL(gadget_str_names, USBG_GADGET_STR_MAX);
+
 int usbg_translate_error(int error)
 {
 	int ret;
@@ -311,11 +320,34 @@ int usbg_lookup_gadget_attr(const char *name)
 	return USBG_ERROR_NOT_FOUND;
 }
 
+int usbg_lookup_gadget_str(const char *name)
+{
+	int i = USBG_GADGET_STR_MIN;
+
+	if (!name)
+		return USBG_ERROR_INVALID_PARAM;
+
+	do {
+		if (!strcmp(name, gadget_str_names[i]))
+			return i;
+		i++;
+	} while (i != USBG_GADGET_STR_MAX);
+
+	return USBG_ERROR_NOT_FOUND;
+}
+
 const char *usbg_get_gadget_attr_str(usbg_gadget_attr attr)
 {
 	return attr >= USBG_GADGET_ATTR_MIN &&
 		attr < USBG_GADGET_ATTR_MAX ?
 		gadget_attr_names[attr] : NULL;
+}
+
+const char *usbg_get_gadget_str_name(usbg_gadget_str str)
+{
+	return str >= USBG_GADGET_STR_MIN &&
+		str < USBG_GADGET_STR_MAX ?
+		gadget_str_names[str] : NULL;
 }
 
 static usbg_error usbg_split_function_instance_type(const char *full_name,
@@ -2398,6 +2430,38 @@ static int usbg_check_dir(const char *path)
 	else if (errno != ENOENT || mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO) != 0)
 		ret = usbg_translate_error(errno);
 
+	return ret;
+}
+
+int usbg_set_gadget_str(usbg_gadget *g, usbg_gadget_str str, int lang,
+		const char *val)
+{
+	const char *str_name;
+	int ret = USBG_ERROR_INVALID_PARAM;
+	char path[USBG_MAX_PATH_LENGTH];
+	int nmb;
+
+	if (!g)
+		goto out;
+
+	str_name = usbg_get_gadget_str_name(str);
+	if (!str_name)
+		goto out;
+
+	nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", g->path, g->name,
+			STRINGS_DIR, lang);
+	if (nmb >= sizeof(path)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	ret = usbg_check_dir(path);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_string(path, "", str_name, val);
+
+out:
 	return ret;
 }
 
