@@ -104,6 +104,9 @@ int usbg_translate_error(int error)
 	case EBUSY:
 		ret = USBG_ERROR_BUSY;
 		break;
+	case ENOTEMPTY:
+		ret = USBG_ERROR_NOT_EMPTY;
+		break;
 	default:
 		ret = USBG_ERROR_OTHER_ERROR;
 	}
@@ -160,6 +163,9 @@ const char *usbg_error_name(usbg_error e)
 		break;
 	case USBG_ERROR_INVALID_VALUE:
 		ret = "USBG_ERROR_INVALID_VALUE";
+		break;
+	case USBG_ERROR_NOT_EMPTY:
+		ret = "USBG_ERROR_NOT_EMPTY";
 		break;
 	case USBG_ERROR_OTHER_ERROR:
 		ret = "USBG_ERROR_OTHER_ERROR";
@@ -218,6 +224,9 @@ const char *usbg_strerror(usbg_error e)
 		break;
 	case USBG_ERROR_INVALID_VALUE:
 		ret = "Incorrect value provided as attribute.";
+		break;
+	case USBG_ERROR_NOT_EMPTY:
+		ret = "Entity is not empty.";
 		break;
 	case USBG_ERROR_OTHER_ERROR:
 		ret = "Other error";
