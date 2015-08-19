@@ -832,6 +832,48 @@ static void test_get_function_type_str(void **state)
 	}
 }
 
+static struct {
+	usbg_gadget_str code;
+	const char *name;
+} gadget_str_names[] = {
+	{STR_PRODUCT, "product"},
+	{STR_MANUFACTURER, "manufacturer"},
+	{STR_SERIAL_NUMBER, "serialnumber"},
+};
+
+/**
+ * @brief Tests gadget codeing name getting
+ * @param[in] state Pointer to pointer to correctly initialized test_state codeucture
+ * @details Check if usbg_get_gadget_code_name returns proper codeings for all types.
+ */
+static void test_get_gadget_str_name(void **state)
+{
+	const char *name;
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(gadget_str_names); i++) {
+		name = usbg_get_gadget_str_name(gadget_str_names[i].code);
+		assert_non_null(name);
+		assert_string_equal(name, gadget_str_names[i].name);
+	}
+}
+
+/**
+ * @brief Tests gadget codeing code getting by its name
+ * @param[in] state Pointer to pointer to correctly initialized test_state codeucture
+ * @details Check if usbg_lookup_gadget_code returns values matching codeings
+ */
+static void test_lookup_gadget_str(void **state)
+{
+	int i, code;
+
+	for (i = 0; i < ARRAY_SIZE(gadget_str_names); i++) {
+		code = usbg_lookup_gadget_str(gadget_str_names[i].name);
+		assert_return_code(code, 0);
+		assert_int_equal(code,  gadget_str_names[i].code);
+	}
+}
+
 /**
  * @brief Tests function type translation to string with unknown funcs
  * @param[in] state Not used parameter
@@ -1379,6 +1421,19 @@ static void test_set_gadget_strs(void **data)
 		assert_int_equal(ret, 0);
 
 		ret = usbg_set_gadget_product(g, LANG_US_ENG, ts->strs->str_prd);
+		assert_int_equal(ret, 0);
+
+		for (i = 0; i < GADGET_STR_MAX; i++)
+			pull_gadget_string(tg, LANG_US_ENG, i, get_gadget_str(ts->strs, i));
+
+
+		ret = usbg_set_gadget_str(g, STR_SERIAL_NUMBER, LANG_US_ENG, ts->strs->str_ser);
+		assert_int_equal(ret, 0);
+
+		ret = usbg_set_gadget_str(g, STR_MANUFACTURER, LANG_US_ENG, ts->strs->str_mnf);
+		assert_int_equal(ret, 0);
+
+		ret = usbg_set_gadget_str(g, STR_PRODUCT, LANG_US_ENG, ts->strs->str_prd);
 		assert_int_equal(ret, 0);
 	}
 }
