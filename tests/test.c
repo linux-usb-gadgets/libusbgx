@@ -2303,12 +2303,28 @@ static struct CMUnitTest tests[] = {
 		     test_get_function_attrs, setup_f_obex_attrs),
 	/**
 	 * @usbg_test
+	 * @test_desc{test_get_f_acm_attrs,
+	 * Get f_acm function attributes,
+	 * usbg_get_function_attrs}
+	 */
+	USBG_TEST_TS("test_get_f_acm_attrs",
+		     test_get_function_attrs, setup_f_acm_attrs),
+	/**
+	 * @usbg_test
 	 * @test_desc{test_get_f_ecm_attrs,
 	 * Get f_ecm function attributes,
 	 * usbg_get_function_attrs}
 	 */
 	USBG_TEST_TS("test_get_f_ecm_attrs",
 		     test_get_function_attrs, setup_f_ecm_attrs),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_f_eem_attrs,
+	 * Get f_eem function attributes,
+	 * usbg_get_function_attrs}
+	 */
+	USBG_TEST_TS("test_get_f_eem_attrs",
+		     test_get_function_attrs, setup_f_eem_attrs),
 	/**
 	 * @usbg_test
 	 * @test_desc{test_get_f_subset_attrs,
@@ -2383,6 +2399,14 @@ static struct CMUnitTest tests[] = {
 		     test_set_function_attrs, setup_f_ecm_writable_attrs),
 	/**
 	 * @usbg_test
+	 * @test_desc{test_get_f_eem_attrs,
+	 * Set f_eem function attributes,
+	 * usbg_set_function_attrs}
+	 */
+	USBG_TEST_TS("test_set_f_eem_attrs",
+		     test_set_function_attrs, setup_f_eem_writable_attrs),
+	/**
+	 * @usbg_test
 	 * @test_desc{test_get_f_subset_attrs,
 	 * Set f_subset function attributes,
 	 * usbg_set_function_attrs}
@@ -2429,6 +2453,20 @@ static struct CMUnitTest tests[] = {
 	 */
 	USBG_TEST_TS("test_create_all_functions",
 		     test_create_function, setup_all_funcs_state),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_gadget_str_name,
+	 * Compare returned gadget string name with expected
+	 * usbg_get_gadget_str_name}
+	 */
+	unit_test(test_get_gadget_str_name),
+	/**
+	 * @usbg_test
+	 * @test_desc{test_lookup_gadget_str,
+	 * Compare returned gadget string code with expected
+	 * usbg_lookup_gadget_str}
+	 */
+	unit_test(test_lookup_gadget_str),
 
 #ifndef DOXYGEN
 };
