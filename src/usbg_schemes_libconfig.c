@@ -485,6 +485,39 @@ out:
 	return ret;
 }
 
+static int usbg_export_f_loopback_attrs(usbg_f_loopback_attrs *attrs,
+				      config_setting_t *root)
+{
+	config_setting_t *node;
+	int cfg_ret;
+	int ret = USBG_ERROR_NO_MEM;
+
+#define ADD_F_LOOPBACK_INT_ATTR(attr, minval)				\
+	do { 								\
+		if ((int)attrs->attr < minval) {			\
+			ret = USBG_ERROR_INVALID_VALUE;			\
+			goto out;					\
+		}							\
+		node = config_setting_add(root, #attr, CONFIG_TYPE_INT);\
+		if (!node) 						\
+			goto out; 					\
+		cfg_ret = config_setting_set_int(node, attrs->attr); 	\
+		if (cfg_ret != CONFIG_TRUE) { 				\
+			ret = USBG_ERROR_OTHER_ERROR; 			\
+			goto out; 					\
+		}							\
+	} while (0)
+
+	ADD_F_LOOPBACK_INT_ATTR(buflen, 0);
+	ADD_F_LOOPBACK_INT_ATTR(qlen, 0);
+
+#undef ADD_F_LOOPBACK_INT_ATTR
+
+	ret = USBG_SUCCESS;
+out:
+	return ret;
+}
+
 static int usbg_export_function_attrs(usbg_function *f, config_setting_t *root)
 {
 	config_setting_t *node;
@@ -518,6 +551,10 @@ static int usbg_export_function_attrs(usbg_function *f, config_setting_t *root)
 
 	case USBG_F_ATTRS_MIDI:
 		ret = usbg_export_f_midi_attrs(&f_attrs.attrs.midi, root);
+		break;
+
+	case USBG_F_ATTRS_LOOPBACK:
+		ret = usbg_export_f_loopback_attrs(&f_attrs.attrs.loopback, root);
 		break;
 
 	case USBG_F_ATTRS_PHONET:
@@ -1191,6 +1228,45 @@ out:
 	return ret;
 }
 
+static int usbg_import_f_loopback_attrs(config_setting_t *root,  usbg_function *f)
+{
+	config_setting_t *node;
+	int ret = USBG_ERROR_NO_MEM;
+	int tmp;
+	usbg_function_attrs attrs;
+	usbg_f_loopback_attrs *loopback_attrs = &attrs.attrs.loopback;
+
+	attrs.header.attrs_type = USBG_F_ATTRS_LOOPBACK;
+
+#define ADD_F_LOOPBACK_INT_ATTR(attr, defval, minval)			\
+	do {								\
+		node = config_setting_get_member(root, #attr);		\
+		if (node) {						\
+			if (!usbg_config_is_int(node)) {		\
+				ret = USBG_ERROR_INVALID_TYPE;		\
+				goto out;				\
+			}						\
+			tmp = config_setting_get_int(node);		\
+			if (tmp < minval) {				\
+				ret = USBG_ERROR_INVALID_VALUE;		\
+				goto out;				\
+			}						\
+			loopback_attrs->attr = tmp;				\
+		} else {						\
+			loopback_attrs->attr = defval;			\
+		}							\
+	} while (0)
+
+	ADD_F_LOOPBACK_INT_ATTR(buflen, 4096, 0);
+	ADD_F_LOOPBACK_INT_ATTR(qlen, 32, 0);
+
+#undef ADD_F_LOOPBACK_INT_ATTR
+
+	ret = usbg_set_function_attrs(f, &attrs);
+out:
+	return ret;
+}
+
 static int usbg_import_function_attrs(config_setting_t *root, usbg_function *f)
 {
 	int ret = USBG_SUCCESS;
@@ -1226,6 +1302,10 @@ static int usbg_import_function_attrs(config_setting_t *root, usbg_function *f)
 
 	case USBG_F_ATTRS_MIDI:
 		ret = usbg_import_f_midi_attrs(root, f);
+		break;
+
+	case USBG_F_ATTRS_LOOPBACK:
+		ret = usbg_import_f_loopback_attrs(root, f);
 		break;
 
 	default:
