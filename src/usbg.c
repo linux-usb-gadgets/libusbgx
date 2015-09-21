@@ -52,6 +52,7 @@ const char *function_names[] =
 	"ffs",
 	"mass_storage",
 	"midi",
+	"Loopback",
 };
 
 ARRAY_SIZE_SENTINEL(function_names, USBG_FUNCTION_TYPE_MAX);
@@ -273,6 +274,9 @@ int usbg_lookup_function_attrs_type(int f_type)
 		break;
 	case F_MIDI:
 		ret = USBG_F_ATTRS_MIDI;
+		break;
+	case F_LOOPBACK:
+		ret = USBG_F_ATTRS_LOOPBACK;
 		break;
 	default:
 		ret = USBG_ERROR_NOT_SUPPORTED;
@@ -1129,6 +1133,21 @@ out:
 	return ret;
 }
 
+static int usbg_parse_function_loopback_attrs(usbg_function *f,
+		usbg_f_loopback_attrs *attrs)
+{
+	int ret;
+
+	ret = usbg_read_dec(f->path, f->name, "buflen", (int *)&(attrs->buflen));
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_read_dec(f->path, f->name, "qlen", (int *)&(attrs->qlen));
+
+out:
+	return ret;
+}
+
 static int usbg_parse_function_attrs(usbg_function *f,
 		usbg_function_attrs *f_attrs)
 {
@@ -1180,6 +1199,11 @@ static int usbg_parse_function_attrs(usbg_function *f,
 	case USBG_F_ATTRS_MIDI:
 		f_attrs->header.attrs_type = USBG_F_ATTRS_MIDI;
 		ret = usbg_parse_function_midi_attrs(f, &(f_attrs->attrs.midi));
+		break;
+
+	case USBG_F_ATTRS_LOOPBACK:
+		f_attrs->header.attrs_type = USBG_F_ATTRS_LOOPBACK;
+		ret = usbg_parse_function_loopback_attrs(f, &(f_attrs->attrs.loopback));
 		break;
 
 	default:
@@ -3045,6 +3069,9 @@ void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs)
 		attrs->midi.id = NULL;
 		break;
 
+	case USBG_F_ATTRS_LOOPBACK:
+		break;
+
 	default:
 		ERROR("Unsupported attrs type\n");
 		break;
@@ -3277,6 +3304,21 @@ out:
 	return ret;
 }
 
+int usbg_set_function_loopback_attrs(usbg_function *f,
+				 const usbg_f_loopback_attrs *attrs)
+{
+	int ret;
+
+	ret = usbg_write_dec(f->path, f->name, "buflen", attrs->buflen);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_dec(f->path, f->name, "qlen", attrs->qlen);
+
+out:
+	return ret;
+}
+
 int usbg_set_function_attrs(usbg_function *f,
 			    const usbg_function_attrs *f_attrs)
 {
@@ -3326,6 +3368,10 @@ int usbg_set_function_attrs(usbg_function *f,
 
 	case USBG_F_ATTRS_MIDI:
 		ret = usbg_set_function_midi_attrs(f, &f_attrs->attrs.midi);
+		break;
+
+	case USBG_F_ATTRS_LOOPBACK:
+		ret = usbg_set_function_loopback_attrs(f, &f_attrs->attrs.loopback);
 		break;
 
 	default:
