@@ -3241,6 +3241,7 @@ static int usbg_set_function_ms_attrs(usbg_function *f,
 			goto err_rm_loop;
 	}
 	free(dent);
+	free(new_lun_mask);
 
 	return USBG_SUCCESS;
 
