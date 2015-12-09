@@ -18,8 +18,8 @@
 #include <sys/types.h>
 #include <malloc.h>
 
-int usbg_read_buf(const char *path, const char *name,
-		  const char *file, char *buf)
+int usbg_read_buf_limited(const char *path, const char *name,
+			  const char *file, char *buf, int len)
 {
 	char p[USBG_MAX_PATH_LENGTH];
 	FILE *fp;
@@ -40,7 +40,7 @@ int usbg_read_buf(const char *path, const char *name,
 		goto out;
 	}
 
-	ret_ptr = fgets(buf, USBG_MAX_STR_LENGTH, fp);
+	ret_ptr = fgets(buf, len, fp);
 	if (!ret_ptr) {
 		/* File is empty */
 		if (feof(fp))
@@ -54,6 +54,12 @@ int usbg_read_buf(const char *path, const char *name,
 
 out:
 	return ret;
+}
+
+int usbg_read_buf(const char *path, const char *name,
+		  const char *file, char *buf)
+{
+	return usbg_read_buf_limited(path, name, file, buf, USBG_MAX_STR_LENGTH);
 }
 
 int usbg_read_int(const char *path, const char *name, const char *file,
@@ -91,10 +97,17 @@ out:
 int usbg_read_string(const char *path, const char *name,
 		     const char *file, char *buf)
 {
+	return usbg_read_string_limited(path, name, file, buf,
+					USBG_MAX_STR_LENGTH);
+}
+
+int usbg_read_string_limited(const char *path, const char *name,
+			     const char *file, char *buf, int len)
+{
 	char *p = NULL;
 	int ret;
 
-	ret = usbg_read_buf(path, name, file, buf);
+	ret = usbg_read_buf_limited(path, name, file, buf, len);
 	/* Check whether read was successful */
 	if (ret == USBG_SUCCESS) {
 		if ((p = strchr(buf, '\n')) != NULL)
@@ -105,10 +118,11 @@ int usbg_read_string(const char *path, const char *name,
 	}
 
 	return ret;
+
 }
 
 int usbg_read_string_alloc(const char *path, const char *name,
-			   const char *file, const char **dest)
+			   const char *file, char **dest)
 {
 	char buf[USBG_MAX_FILE_SIZE];
 	char *new_buf = NULL;

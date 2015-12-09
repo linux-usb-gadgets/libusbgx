@@ -16,6 +16,7 @@
 #include <sys/queue.h>
 #include <string.h>
 #include <usbg/usbg.h>
+#include <malloc.h>
 
 #ifdef HAS_LIBCONFIG
 #include <libconfig.h>
@@ -205,6 +206,9 @@ char *usbg_ether_ntoa_r(const struct ether_addr *addr, char *buf);
 int usbg_read_buf(const char *path, const char *name,
 		  const char *file, char *buf);
 
+int usbg_read_buf_limited(const char *path, const char *name,
+			  const char *file, char *buf, int len);
+
 int usbg_read_int(const char *path, const char *name, const char *file,
 		  int base, int *dest);
 
@@ -217,8 +221,11 @@ int usbg_read_bool(const char *path, const char *name,
 int usbg_read_string(const char *path, const char *name,
 		     const char *file, char *buf);
 
+int usbg_read_string_limited(const char *path, const char *name,
+			     const char *file, char *buf, int len);
+
 int usbg_read_string_alloc(const char *path, const char *name,
-			   const char *file, const char **dest);
+			   const char *file, char **dest);
 
 int usbg_write_buf(const char *path, const char *name,
 		   const char *file, const char *buf);
