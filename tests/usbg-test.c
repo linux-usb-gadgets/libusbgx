@@ -1041,12 +1041,12 @@ static void push_net_attrs(struct test_function *func,
 
 	PUSH_FILE(path, content);
 
-	safe_asprintf(&path, "%s/%s/qmult", func->path, func->name);
-	safe_asprintf(&content, "%d\n", attrs->qmult);
-	PUSH_FILE(path, content);
-
 	safe_asprintf(&path, "%s/%s/ifname", func->path, func->name);
 	safe_asprintf(&content, "%s\n", attrs->ifname);
+	PUSH_FILE(path, content);
+
+	safe_asprintf(&path, "%s/%s/qmult", func->path, func->name);
+	safe_asprintf(&content, "%d\n", attrs->qmult);
 	PUSH_FILE(path, content);
 }
 
