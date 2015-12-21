@@ -1009,18 +1009,18 @@ void pull_create_config(struct test_config *tc)
 #define ETHER_ADDR_STR_LEN 19
 
 static void push_serial_attrs(struct test_function *func,
-		usbg_f_serial_attrs *attrs)
+		int *port_num)
 {
 	char *path;
 	char *content;
 
 	safe_asprintf(&path, "%s/%s/port_num", func->path, func->name);
-	safe_asprintf(&content, "%d\n", attrs->port_num);
+	safe_asprintf(&content, "%d\n", *port_num);
 	PUSH_FILE(path, content);
 }
 
 static void push_net_attrs(struct test_function *func,
-		usbg_f_net_attrs *attrs)
+		struct usbg_f_net_attrs *attrs)
 {
 	char *path;
 	char *content;
@@ -1051,41 +1051,43 @@ static void push_net_attrs(struct test_function *func,
 }
 
 static void push_phonet_attrs(struct test_function *func,
-		usbg_f_phonet_attrs *attrs)
+		char **ifname)
 {
 	char *path;
 	char *content;
 
 	safe_asprintf(&path, "%s/%s/ifname", func->path, func->name);
-	safe_asprintf(&content, "%s\n", attrs->ifname);
+	safe_asprintf(&content, "%s\n", *ifname);
 	PUSH_FILE(path, content);
 }
 
-void push_function_attrs(struct test_function *func, usbg_function_attrs *function_attrs)
+void push_function_attrs(struct test_function *func, void *function_attrs)
 {
-	int attrs_type;
-	usbg_f_attrs *attrs = &function_attrs->attrs;
-
-	attrs_type = usbg_lookup_function_attrs_type(func->type);
-
-	switch (attrs_type) {
-	case USBG_F_ATTRS_SERIAL:
-		push_serial_attrs(func, &attrs->serial);
+	switch (func->type) {
+	case F_ACM:
+	case F_OBEX:
+	case F_SERIAL:
+		push_serial_attrs(func, function_attrs);
 		break;
-	case USBG_F_ATTRS_NET:
-		push_net_attrs(func, &attrs->net);
+	case F_ECM:
+	case F_SUBSET:
+	case F_NCM:
+	case F_EEM:
+	case F_RNDIS:
+		push_net_attrs(func, function_attrs);
 		break;
-	case USBG_F_ATTRS_PHONET:
-		push_phonet_attrs(func, &attrs->phonet);
+	case F_PHONET:
+		push_phonet_attrs(func, function_attrs);
 		break;
-	case USBG_F_ATTRS_FFS:
+	case F_FFS:
 		// ffs does not exist in filesystem
 	default:
 		break;
 	}
 }
 
-static void pull_function_net_attrs(struct test_function *func, usbg_f_net_attrs *attrs)
+static void pull_function_net_attrs(struct test_function *func,
+				    struct usbg_f_net_attrs *attrs)
 {
 	char *path;
 	char *content;
@@ -1109,11 +1111,19 @@ static void pull_function_net_attrs(struct test_function *func, usbg_f_net_attrs
 	EXPECT_WRITE(path, content);
 }
 
-void pull_function_attrs(struct test_function *func, usbg_function_attrs *attrs)
+void pull_function_attrs(struct test_function *func, void *attrs)
 {
-	/* only net attributes are writtable */
-	if (attrs->header.attrs_type == USBG_F_ATTRS_NET)
-		pull_function_net_attrs(func, &attrs->attrs.net);
+	switch (func->type) {
+	case F_ECM:
+	case F_SUBSET:
+	case F_NCM:
+	case F_EEM:
+	case F_RNDIS:
+		pull_function_net_attrs(func, attrs);
+		break;
+	default:
+		break;
+	}
 }
 
 void pull_create_function(struct test_function *tf)
@@ -1262,10 +1272,9 @@ void assert_gadget_strs_equal(usbg_gadget_strs *actual, usbg_gadget_strs *expect
 		assert_string_equal(get_gadget_str(actual, i), get_gadget_str(expected, i));
 }
 
-void assert_f_serial_attrs_equal(usbg_f_serial_attrs *actual,
-		usbg_f_serial_attrs *expected)
+void assert_f_serial_attrs_equal(int *actual, int *expected)
 {
-	assert_int_equal(actual->port_num, expected->port_num);
+	assert_int_equal(*actual, *expected);
 }
 
 static void assert_ether_addrs_equal(const struct ether_addr *ea1,
@@ -1275,7 +1284,8 @@ static void assert_ether_addrs_equal(const struct ether_addr *ea1,
 			ETHER_ADDR_LEN);
 }
 
-void assert_f_net_attrs_equal(usbg_f_net_attrs *actual, usbg_f_net_attrs *expected)
+void assert_f_net_attrs_equal(struct usbg_f_net_attrs *actual,
+			      struct usbg_f_net_attrs *expected)
 {
 	assert_ether_addrs_equal(&actual->dev_addr, &expected->dev_addr);
 	assert_ether_addrs_equal(&actual->host_addr, &expected->host_addr);
@@ -1283,32 +1293,37 @@ void assert_f_net_attrs_equal(usbg_f_net_attrs *actual, usbg_f_net_attrs *expect
 	assert_int_equal(actual->qmult, expected->qmult);
 }
 
-void assert_f_phonet_attrs_equal(usbg_f_phonet_attrs *actual,
-		usbg_f_phonet_attrs *expected)
+void assert_f_phonet_attrs_equal(char  **actual, char **expected)
 {
-	assert_string_equal(actual->ifname, expected->ifname);
+	assert_string_equal(*actual, *expected);
 }
 
-void assert_f_ffs_attrs_equal(usbg_f_ffs_attrs *actual, usbg_f_ffs_attrs *expected)
+void assert_f_ffs_attrs_equal(char **actual, char **expected)
 {
-	assert_string_equal(actual->dev_name, expected->dev_name);
+	assert_string_equal(*actual, *expected);
 }
 
-void assert_function_attrs_equal(usbg_function_attrs *actual,
-		usbg_function_attrs *expected, usbg_f_attrs_type type)
+void assert_function_attrs_equal(void *actual, void *expected,
+				 usbg_function_type type)
 {
 	switch (type) {
-	case USBG_F_ATTRS_SERIAL:
-		assert_f_serial_attrs_equal(&actual->attrs.serial, &expected->attrs.serial);
+	case F_ACM:
+	case F_OBEX:
+	case F_SERIAL:
+		assert_f_serial_attrs_equal(actual, expected);
 		break;
-	case USBG_F_ATTRS_NET:
-		assert_f_net_attrs_equal(&actual->attrs.net, &expected->attrs.net);
+	case F_ECM:
+	case F_SUBSET:
+	case F_NCM:
+	case F_EEM:
+	case F_RNDIS:
+		assert_f_net_attrs_equal(actual, expected);
 		break;
-	case USBG_F_ATTRS_PHONET:
-		assert_f_phonet_attrs_equal(&actual->attrs.phonet, &expected->attrs.phonet);
+	case F_PHONET:
+		assert_f_phonet_attrs_equal(actual, expected);
 		break;
-	case USBG_F_ATTRS_FFS:
-		assert_f_ffs_attrs_equal(&actual->attrs.ffs, &expected->attrs.ffs);
+	case F_FFS:
+		assert_f_ffs_attrs_equal(actual, expected);
 		break;
 	default:
 		fail();

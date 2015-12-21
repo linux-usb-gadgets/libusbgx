@@ -196,30 +196,33 @@ static struct test_gadget long_udc_gadgets[] = {
 
 struct test_function_attrs_data {
 	struct test_state *state;
-	usbg_function_attrs *attrs;
+	void *attrs;
 };
 struct test_data {
 	struct test_state *state;
 	struct usbg_state *usbg_state;
 };
 
-#define FUNC_ATTRS(t, label, a...) { \
-	.header = { \
-		.attrs_type = t \
-	}, \
-	.attrs = { \
-		.label = { a } \
-	}, \
-}
+static int simple_serial_attrs = 42;
 
-static usbg_function_attrs simple_serial_attrs = FUNC_ATTRS(USBG_F_ATTRS_SERIAL, serial, 42);
-static usbg_function_attrs simple_net_attrs = FUNC_ATTRS(USBG_F_ATTRS_NET, net, {}, {}, "if", 1);
-static usbg_function_attrs simple_phonet_attrs = FUNC_ATTRS(USBG_F_ATTRS_PHONET, phonet, "if");
-static usbg_function_attrs writable_serial_attrs = FUNC_ATTRS(USBG_F_ATTRS_SERIAL, serial, 0);
-static usbg_function_attrs writable_net_attrs = FUNC_ATTRS(USBG_F_ATTRS_NET, net, {}, {}, "", 42);
-static usbg_function_attrs writable_phonet_attrs = FUNC_ATTRS(USBG_F_ATTRS_PHONET, phonet, "");
-static usbg_function_attrs simple_ffs_attrs = FUNC_ATTRS(USBG_F_ATTRS_FFS, ffs, "0");
-static usbg_function_attrs writable_ffs_attrs = FUNC_ATTRS(USBG_F_ATTRS_FFS, ffs, "");
+static struct usbg_f_net_attrs simple_net_attrs = {
+	.dev_addr = {}, .host_addr = {}, .ifname = "if", .qmult = 1,
+};
+
+static char *simple_phonet_attrs = "if";
+
+static char *simple_ffs_attrs = "0";
+
+static int writable_serial_attrs = 0;
+
+static struct usbg_f_net_attrs writable_net_attrs = {
+	.dev_addr = {}, .host_addr = {}, .ifname = "", .qmult = 1,
+};
+
+static char *writable_phonet_attrs = "";
+
+static char *writable_ffs_attrs = "";
+
 
 struct test_gadget_strs_data {
 	struct test_state *state;
@@ -438,7 +441,7 @@ static int setup_random_len_gadget_strs_data(void **state)
 	return 0;
 }
 
-static void *setup_f_attrs(int f_type, usbg_function_attrs *attrs)
+static void *setup_f_attrs(int f_type, void *attrs)
 {
 	struct test_function_attrs_data *data;
 	struct test_function *func;
@@ -1767,7 +1770,14 @@ static void test_get_function_attrs(void **state)
 	usbg_state *s;
 	usbg_function *f;
 	usbg_gadget *g;
-	usbg_function_attrs actual;
+	union {
+		struct usbg_f_net_attrs net;
+		char *ffs_dev_name;
+		struct usbg_f_ms_attrs ms;
+		struct usbg_f_midi_attrs midi;
+		int serial_port_num;
+		char *phonet_ifname;
+	} actual;
 	int ret;
 
 	data = (struct test_function_attrs_data *)(*state);
@@ -1786,9 +1796,9 @@ static void test_get_function_attrs(void **state)
 	ret = usbg_get_function_attrs(f, &actual);
 
 	assert_int_equal(ret, 0);
-	assert_function_attrs_equal(&actual, data->attrs, data->attrs->header.attrs_type);
+	assert_function_attrs_equal(&actual, data->attrs, f->type);
 
-	usbg_cleanup_function_attrs(&actual);
+	usbg_cleanup_function_attrs(f, &actual);
 }
 
 /**

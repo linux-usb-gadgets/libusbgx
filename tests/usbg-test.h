@@ -2,6 +2,12 @@
 #define USBG_TEST_H
 
 #include <usbg/usbg.h>
+#include <usbg/function/ms.h>
+#include <usbg/function/net.h>
+#include <usbg/function/ffs.h>
+#include <usbg/function/phonet.h>
+#include <usbg/function/midi.h>
+
 #include <sys/queue.h>
 #include "usbg/usbg_internal.h"
 
@@ -18,7 +24,7 @@ struct test_function
 
 	char *path;
 	char *name;
-	usbg_function_attrs *attrs;
+	void *attrs;
 	int writable;
 };
 
@@ -231,7 +237,7 @@ void pull_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs);
  * @warning Calling usbg_get_function_attrs function whithout this
  * preparation and with wrapped i/o may fail.
  */
-void push_function_attrs(struct test_function *func, usbg_function_attrs *attrs);
+void push_function_attrs(struct test_function *func, void *attrs);
 
 /**
  * @brief Prepare fake filesystem to set given function attributes
@@ -240,7 +246,7 @@ void push_function_attrs(struct test_function *func, usbg_function_attrs *attrs)
  * @warning Calling usbg_set_function_attrs function whithout this
  * preparation and with wrapped i/o may fail.
  */
-void pull_function_attrs(struct test_function *func, usbg_function_attrs *attrs);
+void pull_function_attrs(struct test_function *func, void *attrs);
 
 /**
  * @brief Get gadget string
@@ -446,8 +452,7 @@ void assert_gadget_attrs_equal(usbg_gadget_attrs *actual,
  * @param[in] expected Pointer to expected attributes obejct
  * @param[in] type Type of function, which attributes are checked
  */
-void assert_function_attrs_equal(usbg_function_attrs *actual,
-		usbg_function_attrs *expected, usbg_f_attrs_type type);
+void assert_function_attrs_equal(void *actual, void *expected, usbg_function_type type);
 
 /**
  * @brief Assert that given gadget strings are equal
