@@ -267,6 +267,18 @@ static inline int usbg_set_dec(const char *path, const char *name,
 	return usbg_write_dec(path, name, attr, *((int *)val));
 }
 
+static inline int usbg_get_bool(const char *path, const char *name,
+			   const char *attr, void *val)
+{
+	return usbg_read_bool(path, name, attr, (bool *)val);
+}
+
+static inline int usbg_set_bool(const char *path, const char *name,
+			   const char *attr, void *val)
+{
+	return usbg_write_bool(path, name, attr, *((bool *)val));
+}
+
 static inline int usbg_get_string(const char *path, const char *name,
 			      const char *attr, void *val)
 {
@@ -301,6 +313,9 @@ typedef int (*usbg_export_node_func)(config_setting_t *root,
 int usbg_get_config_node_int(config_setting_t *root,
 					   const char *node_name, void *val);
 
+int usbg_get_config_node_bool(config_setting_t *root,
+					   const char *node_name, void *val);
+
 int usbg_get_config_node_string(config_setting_t *root,
 					      const char *node_name, void *val);
 
@@ -310,6 +325,9 @@ int usbg_get_config_node_ether_addr(config_setting_t *root,
 int usbg_set_config_node_int(config_setting_t *root,
 					   const char *node_name, void *val);
 
+int usbg_set_config_node_bool(config_setting_t *root,
+					   const char *node_name, void *val);
+
 int usbg_set_config_node_string(config_setting_t *root,
 					      const char *node_name, void *val);
 
@@ -317,4 +335,3 @@ int usbg_set_config_node_ether_addr(config_setting_t *root,
 					      const char *node_name, void *val);
 
 #endif /* USBG_INTERNAL_H */
-

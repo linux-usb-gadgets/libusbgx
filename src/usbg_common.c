@@ -309,6 +309,32 @@ int usbg_get_config_node_int(config_setting_t *root,
 	return 1;
 }
 
+int usbg_get_config_node_bool(config_setting_t *root,
+					   const char *node_name, void *val)
+{
+	config_setting_t *node;
+	bool *value = val;
+	int ret;
+
+	node = config_setting_get_member(root, node_name);
+	if (!node)
+		return 0;
+
+	ret = config_setting_type(node);
+	switch (ret) {
+	case CONFIG_TYPE_INT:
+		*value = !!config_setting_get_int(node);
+		break;
+	case CONFIG_TYPE_BOOL:
+		*value = config_setting_get_bool(node);
+		break;
+	default:
+		return USBG_ERROR_INVALID_TYPE;
+	}
+
+	return 0;
+}
+
 int usbg_get_config_node_string(config_setting_t *root,
 					   const char *node_name, void *val)
 {
@@ -337,7 +363,7 @@ int usbg_get_config_node_ether_addr(config_setting_t *root,
 	if (ret)
 		return ret;
 
-	addr = usbg_ether_ntoa_r(str_addr, val);
+	addr = ether_aton_r(str_addr, val);
 
 	return addr ? 0 : USBG_ERROR_INVALID_VALUE;
 }
@@ -353,6 +379,21 @@ int usbg_set_config_node_int(config_setting_t *root,
 		return USBG_ERROR_NO_MEM;
 
 	ret = config_setting_set_int(node, *(int *)val);
+
+	return ret == CONFIG_TRUE ? 0 : USBG_ERROR_OTHER_ERROR;
+}
+
+int usbg_set_config_node_bool(config_setting_t *root,
+					   const char *node_name, void *val)
+{
+	config_setting_t *node;
+	int ret = 0;
+
+	node = config_setting_add(root, node_name, CONFIG_TYPE_BOOL);
+	if (!node)
+		return USBG_ERROR_NO_MEM;
+
+	ret = config_setting_set_bool(node, *(bool *)val);
 
 	return ret == CONFIG_TRUE ? 0 : USBG_ERROR_OTHER_ERROR;
 }
