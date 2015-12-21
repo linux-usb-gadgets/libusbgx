@@ -27,43 +27,21 @@ GENERIC_ALLOC_INST(phonet, struct usbg_f_phonet, func);
 
 GENERIC_FREE_INST(phonet, struct usbg_f_phonet, func);
 
-static int phonet_set_attrs(struct usbg_function *f,
-			    const usbg_function_attrs *f_attrs)
+static int phonet_set_attrs(struct usbg_function *f, void *f_attrs)
 {
-	int ret = USBG_ERROR_INVALID_PARAM;
-	const usbg_f_phonet_attrs *attrs = &f_attrs->attrs.phonet;
+	const char *ifname = *(const char **)f_attrs;
 
-	if (f_attrs->header.attrs_type &&
-	    f_attrs->header.attrs_type != USBG_F_ATTRS_PHONET)
-		goto out;
-
-	ret = attrs->ifname && attrs->ifname[0] ?
-		USBG_ERROR_INVALID_PARAM : USBG_SUCCESS;
-
-out:
-	return ret;
+	return ifname && ifname[0] ? USBG_ERROR_INVALID_PARAM : USBG_SUCCESS;
 }
 
-static int phonet_get_attrs(struct usbg_function *f,
-			    usbg_function_attrs *f_attrs)
+static int phonet_get_attrs(struct usbg_function *f, void *f_attrs)
 {
-	int ret;
-
-	ret = usbg_f_phonet_get_ifname(usbg_to_phonet_function(f),
-				       (char **)&(f_attrs->attrs.phonet.ifname));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	f_attrs->header.attrs_type = USBG_F_ATTRS_PHONET;
-out:
-	return ret;
+	return usbg_f_phonet_get_ifname(usbg_to_phonet_function(f), f_attrs);
 }
 
-static void phonet_cleanup_attrs(struct usbg_function *f,
-				usbg_function_attrs *f_attrs)
+static void phonet_cleanup_attrs(struct usbg_function *f, void *f_attrs)
 {
-	free((char*)f_attrs->attrs.phonet.ifname);
-	f_attrs->attrs.phonet.ifname = NULL;
+	free(*(char **)f_attrs);
 }
 
 static int phonet_libconfig_import(struct usbg_function *f,

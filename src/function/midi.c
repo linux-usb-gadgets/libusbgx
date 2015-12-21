@@ -66,40 +66,19 @@ GENERIC_ALLOC_INST(midi, struct usbg_f_midi, func);
 
 GENERIC_FREE_INST(midi, struct usbg_f_midi, func);
 
-static int midi_set_attrs(struct usbg_function *f,
-			  const usbg_function_attrs *f_attrs)
+static int midi_set_attrs(struct usbg_function *f, void *f_attrs)
 {
-	const usbg_f_midi_attrs *attrs = &f_attrs->attrs.midi;
-
-	if (f_attrs->header.attrs_type &&
-	    f_attrs->header.attrs_type != USBG_F_ATTRS_MIDI)
-		return USBG_ERROR_INVALID_PARAM;
-
-	return usbg_f_midi_set_attrs(usbg_to_midi_function(f),
-				    (struct usbg_f_midi_attrs *)attrs);
+	return usbg_f_midi_set_attrs(usbg_to_midi_function(f), f_attrs);
 }
 
-static int midi_get_attrs(struct usbg_function *f,
-			  usbg_function_attrs *f_attrs)
+static int midi_get_attrs(struct usbg_function *f, void *f_attrs)
 {
-	int ret;
-	usbg_f_midi_attrs *attrs = &f_attrs->attrs.midi;
-
-	ret = usbg_f_midi_get_attrs(usbg_to_midi_function(f),
-				    (struct usbg_f_midi_attrs *)attrs);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	f_attrs->header.attrs_type = USBG_F_ATTRS_MIDI;
-out:
-	return ret;
+	return usbg_f_midi_get_attrs(usbg_to_midi_function(f), f_attrs);
 }
 
-static void midi_cleanup_attrs(struct usbg_function *f,
-			       usbg_function_attrs *f_attrs)
+static void midi_cleanup_attrs(struct usbg_function *f, void *f_attrs)
 {
-	free((char*)f_attrs->attrs.midi.id);
-	f_attrs->attrs.midi.id = NULL;
+	usbg_f_midi_cleanup_attrs(f_attrs);
 }
 
 #ifdef HAS_LIBCONFIG

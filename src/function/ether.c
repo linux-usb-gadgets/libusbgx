@@ -76,45 +76,27 @@ GENERIC_ALLOC_INST(ether, struct usbg_f_net, func);
 
 GENERIC_FREE_INST(ether, struct usbg_f_net, func);
 
-static int ether_set_attrs(struct usbg_function *f,
-			   const usbg_function_attrs *f_attrs)
+static int ether_set_attrs(struct usbg_function *f, void *f_attrs)
 {
-	int ret = USBG_SUCCESS;
-	const usbg_f_net_attrs *attrs = &f_attrs->attrs.net;
-
-	if (f_attrs->header.attrs_type &&
-	    f_attrs->header.attrs_type != USBG_F_ATTRS_NET)
-		return USBG_ERROR_INVALID_PARAM;
+	const struct usbg_f_net_attrs *attrs = f_attrs;
 
 	/* ifname is read only so we accept only empty string for this param */
 	if (attrs->ifname && attrs->ifname[0])
 		return USBG_ERROR_INVALID_PARAM;
 
-	return usbg_f_net_set_attrs(usbg_to_net_function(f),
-				    (struct usbg_f_net_attrs *)attrs);
+	return usbg_f_net_set_attrs(usbg_to_net_function(f), attrs);
 }
 
-static int ether_get_attrs(struct usbg_function *f,
-			   usbg_function_attrs *f_attrs)
+static int ether_get_attrs(struct usbg_function *f, void *f_attrs)
 {
-	int ret;
-	usbg_f_net_attrs *attrs = &f_attrs->attrs.net;
+	struct usbg_f_net_attrs *attrs = f_attrs;
 
-	ret = usbg_f_net_get_attrs(usbg_to_net_function(f),
-				    (struct usbg_f_net_attrs *)attrs);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	f_attrs->header.attrs_type = USBG_F_ATTRS_NET;
-out:
-	return ret;
+	return usbg_f_net_get_attrs(usbg_to_net_function(f), attrs);
 }
 
-static void ether_cleanup_attrs(struct usbg_function *f,
-				usbg_function_attrs *f_attrs)
+static void ether_cleanup_attrs(struct usbg_function *f, void *f_attrs)
 {
-	free((char*)f_attrs->attrs.net.ifname);
-	f_attrs->attrs.net.ifname = NULL;
+	usbg_f_net_cleanup_attrs(f_attrs);
 }
 
 #ifdef HAS_LIBCONFIG

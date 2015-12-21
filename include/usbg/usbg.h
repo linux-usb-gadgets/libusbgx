@@ -195,122 +195,6 @@ typedef enum
 	USBG_FUNCTION_TYPE_MAX,
 } usbg_function_type;
 
-/**
- * @typedef usbg_f_serial_attrs
- * @brief Attributes for Serial, ACM, and OBEX USB functions
- */
-typedef struct {
-	int port_num;
-} usbg_f_serial_attrs;
-
-/**
- * @typedef net_attrs
- * @brief Attributes for ECM, ECM subset, NCM, EEM, and RNDIS USB functions
- */
-typedef struct {
-	struct ether_addr dev_addr;
-	struct ether_addr host_addr;
-	const char *ifname;
-	int qmult;
-} usbg_f_net_attrs;
-
-/**
- * @typedef usbg_f_phonet_attrs
- * @brief Attributes for the phonet USB function
- */
-typedef struct {
-	const char *ifname;
-} usbg_f_phonet_attrs;
-
-/**
- * @typedef usbg_f_ffs_attrs
- * @brief Attributes for function fs based functions
- * @details This is read only and a virtual attribute, it is non present
- * on config fs.
- */
-typedef struct {
-	const char *dev_name;
-} usbg_f_ffs_attrs;
-
-/**
- * @typedef usbg_f_ms_attrs
- * @brief Attributes for mass storage functions
- */
-typedef struct {
-	int id;
-	bool cdrom;
-	bool ro;
-	bool nofua;
-	bool removable;
-	const char *filename;
-} usbg_f_ms_lun_attrs;
-
-/**
- * @typedef usbg_f_ms_attrs
- * @brief Attributes for mass storage functions
- */
-typedef struct {
-	bool stall;
-	int nluns;
-	usbg_f_ms_lun_attrs **luns;
-} usbg_f_ms_attrs;
-
-/**
- * @typedef usbg_f_midi_attrs
- * @brief Attributes for the MIDI function
- */
-typedef struct {
-	int index;
-	const char *id;
-	unsigned int in_ports;
-	unsigned int out_ports;
-	unsigned int buflen;
-	unsigned int qlen;
-} usbg_f_midi_attrs;
-
-
-/**
- * @typedef usbg_f_loopback_attrs
- * @brief Attributes for Loopback function
- */
-typedef struct {
-	unsigned int buflen;
-	unsigned int qlen;
-} usbg_f_loopback_attrs;
-
-/**
- * @typedef attrs
- * @brief Attributes for a given function type
- */
-typedef union {
-	usbg_f_serial_attrs serial;
-	usbg_f_net_attrs net;
-	usbg_f_phonet_attrs phonet;
-	usbg_f_ffs_attrs ffs;
-	usbg_f_ms_attrs ms;
-	usbg_f_midi_attrs midi;
-	usbg_f_loopback_attrs loopback;
-} usbg_f_attrs;
-
-typedef enum {
-	USBG_F_ATTRS_SERIAL = 1,
-	USBG_F_ATTRS_NET,
-	USBG_F_ATTRS_PHONET,
-	USBG_F_ATTRS_FFS,
-	USBG_F_ATTRS_MS,
-	USBG_F_ATTRS_MIDI,
-	USBG_F_ATTRS_LOOPBACK,
-} usbg_f_attrs_type;
-
-typedef struct {
-	int attrs_type;
-} usbg_f_attrs_header;
-
-typedef struct {
-	usbg_f_attrs_header header;
-	usbg_f_attrs attrs;
-} usbg_function_attrs;
-
 /* Error codes */
 
 /**
@@ -745,14 +629,14 @@ extern int usbg_set_gadget_product(usbg_gadget *g, int lang,
  * @param g Pointer to gadget
  * @param type Type of function
  * @param instance Function instance name
- * @param f_attrs Function attributes to be set. If NULL setting is omitted.
+ * @param f_attrs Function specific attributes to be set.
+ *        If NULL setting is omitted.
  * @param f Pointer to be filled with pointer to function
  * @note Given strings are assumed to be in US English
  * @return 0 on success usbg_error if error occurred
  */
 extern int usbg_create_function(usbg_gadget *g, usbg_function_type type,
-		 const char *instance, const usbg_function_attrs *f_attrs,
-				usbg_function **f);
+		 const char *instance, void *f_attrs, usbg_function **f);
 
 /**
  * @brief Get function instance name
@@ -795,13 +679,6 @@ extern const char *usbg_get_function_type_str(usbg_function_type type);
 extern int usbg_lookup_function_type(const char *name);
 
 /**
- * @brief Lookup attrs type for given type of function
- * @param f_type type of functions
- * @return Attributes type for this type of function
- */
-extern int usbg_lookup_function_attrs_type(int f_type);
-
-/**
  * @brief Cleanup content of function attributes
  * @param f_attrs function attributes which should be cleaned up.
  * @note This function should be called to free
@@ -809,7 +686,35 @@ extern int usbg_lookup_function_attrs_type(int f_type);
  * @warning None of attributes in passed structure should be
  * accessed after returning from this function.
  */
-extern void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs);
+extern void usbg_cleanup_function_attrs(usbg_function *f, void *f_attrs);
+
+/**
+ * @brief Get type of given function
+ * @param f Pointer to function
+ * @return usbg_function_type (0 or above) or
+ *  usbg_error (below 0) if error occurred
+ */
+extern usbg_function_type usbg_get_function_type(usbg_function *f);
+
+/**
+ * @brief Get attributes of given function
+ * @param f Pointer to function
+ * @param f_attrs Union to be filled
+ * @return 0 on success usbg_error if error occurred.
+ * @warning memory pointed by f_attrs should be big enough to hold attributes
+ *         specific for given function type. This function can by dangerous.
+ *         That's why it is strongly recomended to use set/get function provided
+ *         by each function type.
+ */
+extern int usbg_get_function_attrs(usbg_function *f, void *f_attrs);
+
+/**
+ * @brief Set attributes of given function
+ * @param f Pointer to function
+ * @param f_attrs Attributes to be set
+ * @return 0 on success, usbg_error if error occurred
+ */
+extern int usbg_set_function_attrs(usbg_function *f, void *f_attrs);
 
 /* USB configurations allocation and configuration */
 
@@ -1025,60 +930,6 @@ extern usbg_udc *usbg_get_gadget_udc(usbg_gadget *g);
  */
 extern usbg_gadget *usbg_get_udc_gadget(usbg_udc *u);
 
-/*
- * USB function-specific attribute configuration
- */
-
-/**
- * @brief Get type of given function
- * @param f Pointer to function
- * @return usbg_function_type (0 or above) or
- *  usbg_error (below 0) if error occurred
- */
-extern usbg_function_type usbg_get_function_type(usbg_function *f);
-
-/**
- * @brief Get attributes of given function
- * @param f Pointer to function
- * @param f_attrs Union to be filled
- * @return 0 on success usbg_error if error occurred.
- */
-extern int usbg_get_function_attrs(usbg_function *f,
-		usbg_function_attrs *f_attrs);
-
-/**
- * @brief Set attributes of given function
- * @param f Pointer to function
- * @param f_attrs Attributes to be set
- * @return 0 on success, usbg_error if error occurred
- */
-extern int usbg_set_function_attrs(usbg_function *f,
-		const usbg_function_attrs *f_attrs);
-
-/**
- * @brief Set USB function network device address
- * @param f Pointer to function
- * @param addr Pointer to Ethernet address
- * @return 0 on success, usbg_error if error occurred
- */
-extern int usbg_set_net_dev_addr(usbg_function *f, struct ether_addr *addr);
-
-/**
- * @brief Set USB function network host address
- * @param f Pointer to function
- * @param addr Pointer to Ethernet address
- * @return 0 on success, usbg_error if error occurred
- */
-extern int usbg_set_net_host_addr(usbg_function *f, struct ether_addr *addr);
-
-/**
- * @brief Set USB function network qmult
- * @param f Pointer to function
- * @param qmult Queue length multiplier
- * @return 0 on success, usbg_error if error occurred
- */
-extern int usbg_set_net_qmult(usbg_function *f, int qmult);
-
 /**
  * @def usbg_for_each_gadget(g, s)
  * Iterates over each gadget
@@ -1248,6 +1099,7 @@ extern int usbg_import_function(usbg_gadget *g, FILE *stream,
  */
 extern int usbg_import_config(usbg_gadget *g, FILE *stream, int id,
 				usbg_config **c);
+
 /**
  * @brief Imports usb gadget from file
  * @param s current state of library

@@ -37,33 +37,15 @@ GENERIC_ALLOC_INST(loopback, struct usbg_f_loopback, func);
 
 GENERIC_FREE_INST(loopback, struct usbg_f_loopback, func);
 
-static int loopback_set_attrs(struct usbg_function *f,
-			    const usbg_function_attrs *f_attrs)
+static int loopback_set_attrs(struct usbg_function *f, void *f_attrs)
 {
-	const usbg_f_loopback_attrs *attrs = &f_attrs->attrs.loopback;
-
-	if (f_attrs->header.attrs_type &&
-	    f_attrs->header.attrs_type != USBG_F_ATTRS_LOOPBACK)
-		return USBG_ERROR_INVALID_PARAM;
-
-	return usbg_f_loopback_set_attrs(usbg_to_loopback_function(f),
-					(const struct usbg_f_loopback_attrs *)attrs);
+	return usbg_f_loopback_set_attrs(usbg_to_loopback_function(f), f_attrs);
 }
 
-static int loopback_get_attrs(struct usbg_function *f,
-			    usbg_function_attrs *f_attrs)
+static int loopback_get_attrs(struct usbg_function *f, void *f_attrs)
 {
-	int ret;
-	usbg_f_loopback_attrs *attrs = &f_attrs->attrs.loopback;
 
-	ret = usbg_f_loopback_get_attrs(usbg_to_loopback_function(f),
-					(struct usbg_f_loopback_attrs *)attrs);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	f_attrs->header.attrs_type = USBG_F_ATTRS_LOOPBACK;
-out:
-	return ret;
+	return usbg_f_loopback_get_attrs(usbg_to_loopback_function(f), f_attrs);
 }
 
 #ifdef HAS_LIBCONFIG

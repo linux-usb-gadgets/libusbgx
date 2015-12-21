@@ -26,34 +26,16 @@ GENERIC_ALLOC_INST(serial, struct usbg_f_serial, func);
 
 GENERIC_FREE_INST(serial, struct usbg_f_serial, func);
 
-static int serial_set_attrs(struct usbg_function *f,
-			    const usbg_function_attrs *f_attrs)
+static int serial_set_attrs(struct usbg_function *f, void *f_attrs)
 {
-	int ret = USBG_ERROR_INVALID_PARAM;
+	int port_num = *(int *)f_attrs;
 
-	if (f_attrs->header.attrs_type &&
-	    f_attrs->header.attrs_type != USBG_F_ATTRS_SERIAL)
-		goto out;
-
-	ret = f_attrs->attrs.serial.port_num ?
-		USBG_ERROR_INVALID_PARAM : USBG_SUCCESS;
- out:
-	return ret;
+	return port_num ? USBG_ERROR_INVALID_PARAM : USBG_SUCCESS;
 }
 
-static int serial_get_attrs(struct usbg_function *f,
-			    usbg_function_attrs *f_attrs)
+static int serial_get_attrs(struct usbg_function *f, void *f_attrs)
 {
-	int ret;
-
-	ret = usbg_f_serial_get_port_num(usbg_to_serial_function(f),
-					 &(f_attrs->attrs.serial.port_num));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	f_attrs->header.attrs_type = USBG_F_ATTRS_SERIAL;
-out:
-	return ret;
+	return usbg_f_serial_get_port_num(usbg_to_serial_function(f), f_attrs);
 }
 
 static int serial_libconfig_import(struct usbg_function *f,

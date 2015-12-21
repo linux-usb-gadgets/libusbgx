@@ -65,13 +65,13 @@ struct usbg_function_type
 	int (*remove)(struct usbg_function *, int);
 
 	/* Set the value of all given attributes */
-	int (*set_attrs)(struct usbg_function *, const usbg_function_attrs *);
+	int (*set_attrs)(struct usbg_function *, void *);
 
 	/* Get the value of all function attributes */
-	int (*get_attrs)(struct usbg_function *, usbg_function_attrs *);
+	int (*get_attrs)(struct usbg_function *, void *);
 
 	/* Free the additional memory allocated for function attributes */
-	void (*cleanup_attrs)(struct usbg_function *, usbg_function_attrs *);
+	void (*cleanup_attrs)(struct usbg_function *, void *);
 
 	/* Should import all function attributes from libconfig format */
 	int (*import)(struct usbg_function *, config_setting_t *);

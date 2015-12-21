@@ -92,45 +92,6 @@ const char *gadget_str_names[] =
 
 ARRAY_SIZE_SENTINEL(gadget_str_names, USBG_GADGET_STR_MAX);
 
-int usbg_lookup_function_attrs_type(int f_type)
-{
-	int ret;
-
-	switch (f_type) {
-	case F_SERIAL:
-	case F_ACM:
-	case F_OBEX:
-		ret = USBG_F_ATTRS_SERIAL;
-		break;
-	case F_ECM:
-	case F_SUBSET:
-	case F_NCM:
-	case F_EEM:
-	case F_RNDIS:
-		ret = USBG_F_ATTRS_NET;
-		break;
-	case F_PHONET:
-		ret = USBG_F_ATTRS_PHONET;
-		break;
-	case F_FFS:
-		ret = USBG_F_ATTRS_FFS;
-		break;
-	case F_MASS_STORAGE:
-		ret = USBG_F_ATTRS_MS;
-		break;
-	case F_MIDI:
-		ret = USBG_F_ATTRS_MIDI;
-		break;
-	case F_LOOPBACK:
-		ret = USBG_F_ATTRS_LOOPBACK;
-		break;
-	default:
-		ret = USBG_ERROR_NOT_SUPPORTED;
-	}
-
-	return ret;
-}
-
 int usbg_lookup_function_type(const char *name)
 {
 	int i = USBG_FUNCTION_TYPE_MIN;
@@ -1805,27 +1766,15 @@ int usbg_set_gadget_product(usbg_gadget *g, int lang, const char *prd)
 }
 
 int usbg_create_function(usbg_gadget *g, usbg_function_type type,
-			 const char *instance, const usbg_function_attrs *f_attrs,
-			 usbg_function **f)
+			 const char *instance, void *f_attrs, usbg_function **f)
 {
 	char fpath[USBG_MAX_PATH_LENGTH];
 	usbg_function *func;
 	int ret = USBG_ERROR_INVALID_PARAM;
 	int n, free_space;
 
-	if (!g || !f)
+	if (!g || !f || !instance)
 		return ret;
-
-	if (!instance) {
-		/* If someone creates ffs function and doesn't pass instance name
-		   this means that device name from attrs should be used */
-		if (type == F_FFS && f_attrs && f_attrs->attrs.ffs.dev_name) {
-			instance = f_attrs->attrs.ffs.dev_name;
-			f_attrs = NULL;
-		} else {
-			return ret;
-		}
-	}
 
 	func = usbg_get_function(g, type, instance);
 	if (func) {
@@ -2208,7 +2157,7 @@ int usbg_disable_gadget(usbg_gadget *g)
 }
 
 /*
- * USB function-specific attribute configuration
+ * USB function
  */
 
 usbg_function_type usbg_get_function_type(usbg_function *f)
@@ -2216,87 +2165,19 @@ usbg_function_type usbg_get_function_type(usbg_function *f)
 	return f ? f->type : USBG_ERROR_INVALID_PARAM;
 }
 
-int usbg_get_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
+int usbg_get_function_attrs(usbg_function *f, void *f_attrs)
 {
 	return f && f_attrs ? f->ops->get_attrs(f, f_attrs)
 			: USBG_ERROR_INVALID_PARAM;
 }
 
-static void usbg_cleanup_function_ms_lun_attrs(usbg_f_ms_lun_attrs *lun_attrs)
+void usbg_cleanup_function_attrs(usbg_function *f, void *f_attrs)
 {
-	if (!lun_attrs)
-		return;
-
-	free((char*)lun_attrs->filename);
-	lun_attrs->id = -1;
+	if (f->ops->cleanup_attrs)
+		f->ops->cleanup_attrs(f, f_attrs);
 }
 
-void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs)
-{
-	usbg_f_attrs *attrs;
-
-	if (!f_attrs)
-		return;
-
-	attrs = &f_attrs->attrs;
-
-	switch (f_attrs->header.attrs_type) {
-	case USBG_F_ATTRS_SERIAL:
-		break;
-
-	case USBG_F_ATTRS_NET:
-		free((char*)attrs->net.ifname);
-		attrs->net.ifname = NULL;
-		break;
-
-	case USBG_F_ATTRS_PHONET:
-		free((char*)attrs->phonet.ifname);
-		attrs->phonet.ifname = NULL;
-		break;
-
-	case USBG_F_ATTRS_FFS:
-		free((char*)attrs->ffs.dev_name);
-		attrs->ffs.dev_name = NULL;
-		break;
-
-	case USBG_F_ATTRS_MS:
-	{
-		int i;
-		usbg_f_ms_attrs *ms_attrs = &attrs->ms;
-
-		if (!ms_attrs->luns)
-			goto ms_break;
-
-		for (i = 0; i < ms_attrs->nluns; ++i) {
-			if (!ms_attrs->luns[i])
-				continue;
-
-			usbg_cleanup_function_ms_lun_attrs(ms_attrs->luns[i]);
-			free(ms_attrs->luns[i]);
-		}
-		free(ms_attrs->luns);
-		ms_attrs->luns = NULL;
-		ms_attrs->nluns = -1;
-	ms_break:
-		break;
-	}
-
-	case USBG_F_ATTRS_MIDI:
-		free((char*)attrs->midi.id);
-		attrs->midi.id = NULL;
-		break;
-
-	case USBG_F_ATTRS_LOOPBACK:
-		break;
-
-	default:
-		ERROR("Unsupported attrs type\n");
-		break;
-	}
-}
-
-int usbg_set_function_attrs(usbg_function *f,
-			    const usbg_function_attrs *f_attrs)
+int usbg_set_function_attrs(usbg_function *f, void *f_attrs)
 {
 	int ret = USBG_ERROR_INVALID_PARAM;
 
@@ -2306,42 +2187,6 @@ int usbg_set_function_attrs(usbg_function *f,
 	ret = f->ops->set_attrs(f, f_attrs);
 out:
 	return ret;
-}
-
-int usbg_set_net_dev_addr(usbg_function *f, struct ether_addr *dev_addr)
-{
-	int ret = USBG_SUCCESS;
-
-	if (f && dev_addr) {
-		char str_buf[USBG_MAX_STR_LENGTH];
-		char *str_addr = usbg_ether_ntoa_r(dev_addr, str_buf);
-		ret = usbg_write_string(f->path, f->name, "dev_addr", str_addr);
-	} else {
-		ret = USBG_ERROR_INVALID_PARAM;
-	}
-
-	return ret;
-}
-
-int usbg_set_net_host_addr(usbg_function *f, struct ether_addr *host_addr)
-{
-	int ret = USBG_SUCCESS;
-
-	if (f && host_addr) {
-		char str_buf[USBG_MAX_STR_LENGTH];
-		char *str_addr = usbg_ether_ntoa_r(host_addr, str_buf);
-		ret = usbg_write_string(f->path, f->name, "host_addr", str_addr);
-	} else {
-		ret = USBG_ERROR_INVALID_PARAM;
-	}
-
-	return ret;
-}
-
-int usbg_set_net_qmult(usbg_function *f, int qmult)
-{
-	return f ? usbg_write_dec(f->path, f->name, "qmult", qmult)
-			: USBG_ERROR_INVALID_PARAM;
 }
 
 usbg_gadget *usbg_get_first_gadget(usbg_state *s)

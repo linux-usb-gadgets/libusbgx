@@ -171,53 +171,21 @@ out:
 
 GENERIC_FREE_INST(ms, struct usbg_f_ms, func);
 
-static int ms_set_attrs(struct usbg_function *f,
-			const usbg_function_attrs *f_attrs)
+static int ms_set_attrs(struct usbg_function *f, void *f_attrs)
 {
-	const usbg_f_ms_attrs *attrs = &f_attrs->attrs.ms;
-
-	if (f_attrs->header.attrs_type &&
-	    f_attrs->header.attrs_type != USBG_F_ATTRS_MS)
-		return USBG_ERROR_INVALID_PARAM;
-
 	return usbg_f_ms_set_attrs(usbg_to_ms_function(f),
-				   (struct usbg_f_ms_attrs *)attrs);
+				   (struct usbg_f_ms_attrs *)f_attrs);
 }
 
-static void ms_cleanup_lun_attrs(usbg_f_ms_lun_attrs *lun_attrs)
+static void ms_cleanup_attrs(struct usbg_function *f, void *f_attrs)
 {
-	if (!lun_attrs)
-		return;
-
-	usbg_f_ms_cleanup_lun_attrs((struct usbg_f_ms_lun_attrs *)lun_attrs);
+	usbg_f_ms_cleanup_attrs((struct usbg_f_ms_attrs *)f_attrs);
 }
 
-
-static void ms_cleanup_attrs(struct usbg_function *f,
-			     usbg_function_attrs *f_attrs)
+static int ms_get_attrs(struct usbg_function *f, void *f_attrs)
 {
-	int i;
-	usbg_f_ms_attrs *attrs = &f_attrs->attrs.ms;
-
-	usbg_f_ms_cleanup_attrs((struct usbg_f_ms_attrs *)attrs);
-}
-
-static int ms_get_attrs(struct usbg_function *f,
-			usbg_function_attrs *f_attrs)
-{
-	usbg_f_ms_attrs *attrs = &f_attrs->attrs.ms;
-	int ret;
-
-	ret = usbg_f_ms_get_attrs(usbg_to_ms_function(f),
-				  (struct usbg_f_ms_attrs *)attrs);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	f_attrs->header.attrs_type = USBG_F_ATTRS_MS;
-
-	return USBG_SUCCESS;
-out:
-	return ret;
+	return usbg_f_ms_get_attrs(usbg_to_ms_function(f),
+				  (struct usbg_f_ms_attrs *)f_attrs);
 }
 
 #ifdef HAS_LIBCONFIG

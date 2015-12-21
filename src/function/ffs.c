@@ -27,44 +27,22 @@ GENERIC_ALLOC_INST(ffs, struct usbg_f_fs, func);
 
 GENERIC_FREE_INST(ffs, struct usbg_f_fs, func);
 
-static int ffs_set_attrs(struct usbg_function *f,
-			 const usbg_function_attrs *f_attrs)
+static int ffs_set_attrs(struct usbg_function *f, void *f_attrs)
 {
-	const usbg_f_ffs_attrs *ffs_attrs = &(f_attrs->attrs.ffs);
-	int ret = USBG_ERROR_INVALID_PARAM;
+	const char *dev_name = *(const char **)f_attrs;
 
-	if (f_attrs->header.attrs_type &&
-	    f_attrs->header.attrs_type != USBG_F_ATTRS_FFS)
-		goto out;
-
-	ret = ffs_attrs->dev_name && ffs_attrs->dev_name[0] ?
-		USBG_ERROR_INVALID_PARAM : USBG_SUCCESS;
-
-out:
-	return ret;
+	return dev_name && dev_name[0] ? USBG_ERROR_INVALID_PARAM
+		: USBG_SUCCESS;
 }
 
-static int ffs_get_attrs(struct usbg_function *f,
-			 usbg_function_attrs *f_attrs)
+static int ffs_get_attrs(struct usbg_function *f, void *f_attrs)
 {
-	usbg_f_ffs_attrs *ffs_attrs = &(f_attrs->attrs.ffs);
-	int ret = USBG_SUCCESS;
-
-	ret = usbg_f_fs_get_dev_name(usbg_to_fs_function(f),
-				     (char **)&ffs_attrs->dev_name);
-	if (ret)
-		goto out;
-
-	f_attrs->header.attrs_type = USBG_F_ATTRS_FFS;
-out:
-	return ret;
+	return usbg_f_fs_get_dev_name(usbg_to_fs_function(f), f_attrs);
 }
 
-static void ffs_cleanup_attrs(struct usbg_function *f,
-			      usbg_function_attrs *f_attrs)
+static void ffs_cleanup_attrs(struct usbg_function *f, void *f_attrs)
 {
-	free((char*)f_attrs->attrs.ffs.dev_name);
-	f_attrs->attrs.ffs.dev_name = NULL;
+	free(*(char **)f_attrs);
 }
 
 static int ffs_libconfig_import(struct usbg_function *f,
