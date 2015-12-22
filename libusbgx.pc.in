@@ -5,7 +5,7 @@ includedir=@includedir@
 
 Name: libusbgx
 Description: USB gadget-configfs library
-Requires:
+Requires: libconfig
 Version: @PACKAGE_VERSION@
 Libs: -L${libdir} -lusbg
 Cflags: -I${includedir}
