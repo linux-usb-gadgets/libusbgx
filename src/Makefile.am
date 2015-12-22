@@ -1,5 +1,5 @@
 lib_LTLIBRARIES = libusbgx.la
-libusbgx_la_SOURCES = usbg.c usbg_error.c 
+libusbgx_la_SOURCES = usbg.c usbg_error.c usbg_common.c
 if TEST_GADGET_SCHEMES
 libusbgx_la_SOURCES += usbg_schemes_libconfig.c
 else

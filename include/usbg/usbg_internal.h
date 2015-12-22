@@ -170,5 +170,44 @@ int usbg_translate_error(int error);
 
 char *usbg_ether_ntoa_r(const struct ether_addr *addr, char *buf);
 
+int usbg_read_buf(const char *path, const char *name,
+		  const char *file, char *buf);
+
+int usbg_read_int(const char *path, const char *name, const char *file,
+		  int base, int *dest);
+
+#define usbg_read_dec(p, n, f, d)	usbg_read_int(p, n, f, 10, d)
+#define usbg_read_hex(p, n, f, d)	usbg_read_int(p, n, f, 16, d)
+
+int usbg_read_bool(const char *path, const char *name,
+		   const char *file, bool *dest);
+
+int usbg_read_string(const char *path, const char *name,
+		     const char *file, char *buf);
+
+int usbg_read_string_alloc(const char *path, const char *name,
+			   const char *file, const char **dest);
+
+int usbg_write_buf(const char *path, const char *name,
+		   const char *file, const char *buf);
+int usbg_write_int(const char *path, const char *name, const char *file,
+		   int value, const char *str);
+
+#define usbg_write_dec(p, n, f, v)	usbg_write_int(p, n, f, v, "%d\n")
+#define usbg_write_hex(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%x\n")
+#define usbg_write_hex16(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%04x\n")
+#define usbg_write_hex8(p, n, f, v)	usbg_write_int(p, n, f, v, "0x%02x\n")
+#define usbg_write_bool(p, n, f, v)	usbg_write_dec(p, n, f, !!v)
+
+int usbg_write_string(const char *path, const char *name,
+		      const char *file, const char *buf);
+
+int ubsg_rm_file(const char *path, const char *name);
+
+int usbg_rm_dir(const char *path, const char *name);
+
+int usbg_rm_all_dirs(const char *path);
+
+int usbg_check_dir(const char *path);
 #endif /* USBG_INTERNAL_H */
 
