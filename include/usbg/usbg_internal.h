@@ -252,5 +252,38 @@ int usbg_check_dir(const char *path);
 #define usbg_config_is_string(node) \
 	(config_setting_type(node) == CONFIG_TYPE_STRING)
 
+typedef int (*usbg_attr_get_func)(const char *, const char *, const char *, void *);
+typedef int (*usbg_attr_set_func)(const char *, const char *, const char *, void *);
+
+static inline int usbg_get_dec(const char *path, const char *name,
+			   const char *attr, void *val)
+{
+	return usbg_read_dec(path, name, attr, (int *)val);
+}
+
+static inline int usbg_set_dec(const char *path, const char *name,
+			   const char *attr, void *val)
+{
+	return usbg_write_dec(path, name, attr, *((int *)val));
+}
+
+/*
+ * return:
+ * 0 - if not found
+ * usbg_error on error (less than 0)
+ * above 0 when found suitable value
+ */
+typedef int (*usbg_import_node_func)(config_setting_t *root,
+				  const char *node_name, void *val);
+
+/* return 0 on success, usbg_error otherwise */
+typedef int (*usbg_export_node_func)(config_setting_t *root,
+				  const char *node_name, void *val);
+
+int usbg_get_config_node_int(config_setting_t *root,
+					   const char *node_name, void *val);
+
+int usbg_set_config_node_int(config_setting_t *root,
+					   const char *node_name, void *val);
 #endif /* USBG_INTERNAL_H */
 

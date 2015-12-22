@@ -266,3 +266,36 @@ int usbg_check_dir(const char *path)
 }
 
 
+
+int usbg_get_config_node_int(config_setting_t *root,
+					   const char *node_name, void *val)
+{
+	config_setting_t *node;
+
+	node = config_setting_get_member(root, node_name);
+	if (!node)
+		return 0;
+
+	if (!usbg_config_is_int(node))
+		return USBG_ERROR_INVALID_TYPE;
+
+	*(int *)val = config_setting_get_int(node);
+
+	return 1;
+}
+
+int usbg_set_config_node_int(config_setting_t *root,
+					   const char *node_name, void *val)
+{
+	config_setting_t *node;
+	int ret = 0;
+
+	node = config_setting_add(root, node_name, CONFIG_TYPE_INT);
+	if (!node)
+		return USBG_ERROR_NO_MEM;
+
+	ret = config_setting_set_int(node, *(int *)val);
+
+	return ret == CONFIG_TRUE ? 0 : USBG_ERROR_OTHER_ERROR;
+}
+
