@@ -1,4 +1,4 @@
-AC_INIT([libusbgx], [0.0.1], [k.opasiak@samsung.com])
+AC_INIT([libusbgx], [0.1.0], [k.opasiak@samsung.com])
 AM_INIT_AUTOMAKE([1.12 -Wall -Werror foreign serial-tests])
 AC_PROG_CC
 AM_PROG_AR

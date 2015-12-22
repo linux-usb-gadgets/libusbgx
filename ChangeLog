@@ -1,2 +1,12 @@
+Wed, 23 Dec 2015 Krzysztof Opasiak <k.opasiak@samsung.com> 0.1.0
+	- Rework most of the API to be more flexible and usable
+	- Introduce internal API for adding function support
+	- Add support for FunctionFS
+	- Add support for Mass Storage
+	- Add support for MIDI
+	- Add support for Loopback
+	- Add spec file for generating rpm package
+	- Add test suit and various test cases
+
 Tue, 22 Dec 2015 Krzysztof Opasiak <k.opasiak@samsung.com> 0.0.1
 	- Initial fork from libusbg
