@@ -1,8 +1,3 @@
-/*
- This is just a temporary fix which should be removed
-         when we start building tests with automake
-*/
-#define HAS_GADGET_SCHEMES
 #include <usbg/usbg.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -13,9 +8,16 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <getopt.h>
+
+#ifdef HAS_LIBCONFIG
 #include <libconfig.h>
+#endif
 
 #include "usbg-test.h"
+
+/**
+ * @file tests/test.c
+ */
 
 #define USBG_TEST(name, test, setup, teardown) \
 	{"setup "#test, setup, UNIT_TEST_FUNCTION_TYPE_SETUP}, \
@@ -503,6 +505,10 @@ static UnitTest tests[] = {
 };
 
 #define TESTS_TAG "tests"
+/* for autotools compability */
+#define SKIPPED_CODE 77
+
+#ifdef HAS_LIBCONFIG
 
 int gen_test_config(FILE *output)
 {
@@ -510,7 +516,7 @@ int gen_test_config(FILE *output)
 	config_setting_t *root;
 	config_setting_t *tests_node, *node;
 	int i;
-	int ret = 0, cfg_ret = 0;
+	int ret = SKIPPED_CODE, cfg_ret = 0;
 
 	config_init(&cfg);
 	config_set_tab_width(&cfg, 4);
@@ -545,6 +551,16 @@ out:
 	return ret;
 }
 
+#else
+
+int gen_test_config(FILE *output)
+{
+	fprintf(stderr, "Libconfig is not supported\n");
+	return -ENOTSUP;
+}
+
+#endif /* HAS_LIBCONFIG */
+
 int lookup_test(const char *name)
 {
 	int i;
@@ -556,6 +572,7 @@ int lookup_test(const char *name)
 	return -1;
 }
 
+#ifdef HAS_LIBCONFIG
 int apply_test_config(FILE *input)
 {
 	config_t cfg;
@@ -631,6 +648,16 @@ out:
 	config_destroy(&cfg);
 	return ret;
 }
+
+#else
+
+int apply_test_config(FILE *input)
+{
+	fprintf(stderr, "Libconfig is not supported\n");
+	return -ENOTSUP;
+}
+
+#endif /* HAS_LIBCONFIG */
 
 void print_skipped_tests(FILE *stream)
 {

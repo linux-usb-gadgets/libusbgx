@@ -1,5 +1,4 @@
 #include <usbg/usbg.h>
-#include <libconfig.h>
 #include <sys/queue.h>
 #include "usbg/usbg_internal.h"
 

@@ -17,7 +17,7 @@
 #include <string.h>
 #include <usbg/usbg.h>
 
-#ifdef HAS_GADGET_SCHEMES
+#ifdef HAS_LIBCONFIG
 #include <libconfig.h>
 #else
 	typedef struct _should_not_be_used config_t;

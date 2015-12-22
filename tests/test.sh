@@ -1,8 +1,17 @@
 #!/bin/bash
 
-USE_CONFIG=0
-GENERATE_CONFIG=0
-HELP=0
+#USE_CONFIG=0
+#GENERATE_CONFIG=0
+#HELP=$HELP
+
+# for autotools compability (config can be passed by environment variable)
+if [[ -n $USE_CONFIG ]]
+then
+	CONFIG_FILE=$USE_CONFIG
+elif [[ -n $GENERATE_CONFIG ]]
+then
+	CONFIG_FILE=$GENERATE_CONFIG
+fi
 
 function usage {
 	echo "libusbgx test suit"
@@ -53,16 +62,17 @@ done
 
 # Run test with io functions ovverride
 
-if [ $USE_CONFIG -ne 0 ]
+if [[ -n $USE_CONFIG ]]
 then
-	LD_LIBRARY_PATH=. LD_PRELOAD=./usbg-io-wrappers.so ./test --use-config < $CONFIG_FILE
-elif [ $GENERATE_CONFIG -ne 0 ]
+	LD_LIBRARY_PATH=. ./test --use-config < $CONFIG_FILE
+elif [[ -n $GENERATE_CONFIG ]]
 then
-	LD_LIBRARY_PATH=. LD_PRELOAD=./usbg-io-wrappers.so ./test --generate-config > $CONFIG_FILE
-elif [ $HELP -ne 0 ]
+	LD_LIBRARY_PATH=. ./test --generate-config > $CONFIG_FILE
+elif [[ -n $HELP ]]
 then
 	usage
+	exit 77	# autotools consider it skipped
 else
-	LD_LIBRARY_PATH=. LD_PRELOAD=./usbg-io-wrappers.so ./test
+	LD_LIBRARY_PATH=. ./test
 fi
 

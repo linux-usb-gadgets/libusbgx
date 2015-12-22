@@ -1,8 +1,3 @@
-/*
- This is just a temporary fix which should be removed
-	 when we start building tests with automake
-*/
-#define HAS_GADGET_SCHEMES
 #include <usbg/usbg.h>
 #include <stdio.h>
 #include <stdarg.h>
