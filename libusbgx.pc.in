@@ -3,7 +3,7 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libusbg
+Name: libusbgx
 Description: USB gadget-configfs library
 Requires:
 Version: @PACKAGE_VERSION@

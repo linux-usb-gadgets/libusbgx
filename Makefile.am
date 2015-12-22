@@ -5,4 +5,4 @@ EXTRA_DIST = doxygen.cfg
 library_includedir=$(includedir)/usbg
 library_include_HEADERS = include/usbg/usbg.h
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libusbg.pc
+pkgconfig_DATA = libusbgx.pc

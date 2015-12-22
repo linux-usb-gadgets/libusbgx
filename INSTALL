@@ -1,4 +1,4 @@
-Installing libusbg:
+Installing libusbgx:
 
 $ autoreconf -i
 $ ./configure

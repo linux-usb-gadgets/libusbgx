@@ -25,7 +25,7 @@
  */
 
 /**
- * @addtogroup libusbg
+ * @addtogroup libusbgx
  * Public API for USB gadget-configfs library
  * @{
  */
@@ -193,14 +193,14 @@ struct binding
 /* Library init and cleanup */
 
 /**
- * @brief Initialize the libusbg library state
+ * @brief Initialize the libusbgx library state
  * @param configfs_path Path to the mounted configfs filesystem
  * @return Pointer to a state structure
  */
 extern struct state *usbg_init(char *configfs_path);
 
 /**
- * @brief Clean up the libusbg library state
+ * @brief Clean up the libusbgx library state
  * @param s Pointer to state
  */
 extern void usbg_cleanup(struct state *s);
