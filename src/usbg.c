@@ -33,29 +33,41 @@
  * @file usbg.c
  */
 
+extern struct usbg_function_type usbg_f_type_acm;
+extern struct usbg_function_type usbg_f_type_serial;
+extern struct usbg_function_type usbg_f_type_obex;
+extern struct usbg_function_type usbg_f_type_ecm;
+extern struct usbg_function_type usbg_f_type_subset;
+extern struct usbg_function_type usbg_f_type_ncm;
+extern struct usbg_function_type usbg_f_type_eem;
+extern struct usbg_function_type usbg_f_type_rndis;
+extern struct usbg_function_type usbg_f_type_ffs;
+extern struct usbg_function_type usbg_f_type_midi;
+extern struct usbg_function_type usbg_f_type_ms;
+extern struct usbg_function_type usbg_f_type_phonet;
+extern struct usbg_function_type usbg_f_type_loopback;
 
 /**
- * @var function_names
- * @brief Name strings for supported USB function types
+ * @var function_types
+ * @brief Types of functions supported by library
  */
-const char *function_names[] =
-{
-	"gser",
-	"acm",
-	"obex",
-	"ecm",
-	"geth",
-	"ncm",
-	"eem",
-	"rndis",
-	"phonet",
-	"ffs",
-	"mass_storage",
-	"midi",
-	"Loopback",
+struct usbg_function_type* function_types[] = {
+	[F_ACM] = &usbg_f_type_acm,
+	[F_SERIAL] = &usbg_f_type_serial,
+	[F_OBEX] = &usbg_f_type_obex,
+	[F_ECM] = &usbg_f_type_ecm,
+	[F_SUBSET] = &usbg_f_type_subset,
+	[F_NCM] = &usbg_f_type_ncm,
+	[F_EEM] = &usbg_f_type_eem,
+	[F_RNDIS] = &usbg_f_type_rndis,
+	[F_FFS] = &usbg_f_type_ffs,
+	[F_MIDI] = &usbg_f_type_midi,
+	[F_MASS_STORAGE] = &usbg_f_type_ms,
+	[F_PHONET] = &usbg_f_type_phonet,
+	[F_LOOPBACK] = &usbg_f_type_loopback,
 };
 
-ARRAY_SIZE_SENTINEL(function_names, USBG_FUNCTION_TYPE_MAX);
+ARRAY_SIZE_SENTINEL(function_types, USBG_FUNCTION_TYPE_MAX);
 
 const char *gadget_attr_names[] =
 {
@@ -127,7 +139,7 @@ int usbg_lookup_function_type(const char *name)
 		return USBG_ERROR_INVALID_PARAM;
 
 	do {
-		if (!strcmp(name, function_names[i]))
+		if (!strcmp(name, function_types[i]->name))
 			return i;
 		i++;
 	} while (i != USBG_FUNCTION_TYPE_MAX);
@@ -139,7 +151,7 @@ const char *usbg_get_function_type_str(usbg_function_type type)
 {
 	return type >= USBG_FUNCTION_TYPE_MIN &&
 		type < USBG_FUNCTION_TYPE_MAX ?
-		function_names[type] : NULL;
+		function_types[type]->name : NULL;
 }
 
 int usbg_lookup_gadget_attr(const char *name)
@@ -188,7 +200,7 @@ const char *usbg_get_gadget_str_name(usbg_gadget_str str)
 		gadget_str_names[str] : NULL;
 }
 
-static usbg_error usbg_split_function_instance_type(const char *full_name,
+static int usbg_split_function_instance_type(const char *full_name,
 		usbg_function_type *f_type, const char **instance)
 {
 	const char *dot;
@@ -281,6 +293,7 @@ static inline void usbg_free_function(usbg_function *f)
 static void usbg_free_config(usbg_config *c)
 {
 	usbg_binding *b;
+
 	while (!TAILQ_EMPTY(&c->bindings)) {
 		b = TAILQ_FIRST(&c->bindings);
 		TAILQ_REMOVE(&c->bindings, b, bnode);
@@ -413,8 +426,6 @@ out:
 	return c;
 }
 
-static int usbg_rm_ms_function(usbg_function *f, int opts);
-
 static usbg_function *usbg_allocate_function(const char *path,
 		usbg_function_type type, const char *instance, usbg_gadget *parent)
 {
@@ -444,16 +455,7 @@ static usbg_function *usbg_allocate_function(const char *path,
 	f->path = strdup(path);
 	f->parent = parent;
 	f->type = type;
-
-	/* only composed functions (with subdirs) require this callback */
-	switch (usbg_lookup_function_attrs_type(type)) {
-	case USBG_F_ATTRS_MS:
-		f->rm_callback = usbg_rm_ms_function;
-		break;
-	default:
-		f->rm_callback = NULL;
-		break;
-	}
+	f->ops = function_types[type];
 
 	if (!(f->path)) {
 		free(f->name);
@@ -515,311 +517,6 @@ char *usbg_ether_ntoa_r(const struct ether_addr *addr, char *buf)
 		addr->ether_addr_octet[2], addr->ether_addr_octet[3],
 		addr->ether_addr_octet[4], addr->ether_addr_octet[5]);
 	return buf;
-}
-
-static int usbg_parse_function_net_attrs(usbg_function *f,
-		usbg_f_net_attrs *f_net_attrs)
-{
-	struct ether_addr *addr;
-	struct ether_addr addr_buf;
-	char str_addr[USBG_MAX_STR_LENGTH];
-	int ret;
-
-	ret = usbg_read_string(f->path, f->name, "dev_addr", str_addr);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	addr = ether_aton_r(str_addr, &addr_buf);
-	if (addr) {
-		f_net_attrs->dev_addr = *addr;
-	} else {
-		ret = USBG_ERROR_IO;
-		goto out;
-	}
-
-	ret = usbg_read_string(f->path, f->name, "host_addr", str_addr);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	addr = ether_aton_r(str_addr, &addr_buf);
-	if (addr) {
-		f_net_attrs->host_addr = *addr;
-	} else {
-		ret = USBG_ERROR_IO;
-		goto out;
-	}
-
-	ret = usbg_read_dec(f->path, f->name, "qmult", &(f_net_attrs->qmult));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_string_alloc(f->path, f->name, "ifname",
-				     &(f_net_attrs->ifname));
-out:
-	return ret;
-}
-
-static int usbg_parse_function_ms_lun_attrs(const char *path, const char *lun,
-					    usbg_f_ms_lun_attrs *lun_attrs)
-{
-	int ret;
-
-	memset(lun_attrs, 0, sizeof(*lun_attrs));
-
-	ret = sscanf(lun, "lun.%d", &lun_attrs->id);
-	if (ret != 1)
-		goto out;
-
-	ret = usbg_read_bool(path, lun, "cdrom", &(lun_attrs->cdrom));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_bool(path, lun, "ro", &(lun_attrs->ro));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_bool(path, lun, "nofua", &(lun_attrs->nofua));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_bool(path, lun, "removable", &(lun_attrs->removable));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_string_alloc(path, lun, "file",
-				     &(lun_attrs->filename));
-
-out:
-	return ret;
-}
-
-static inline int lun_select(const struct dirent *dent)
-{
-	int ret;
-	int id;
-
-	ret = file_select(dent);
-	if (!ret)
-		goto out;
-
-	ret = sscanf(dent->d_name, "lun.%d", &id);
-out:
-	return ret;
-}
-
-static inline int lun_sort(const struct dirent **d1, const struct dirent **d2)
-{
-	int ret;
-	int id1, id2;
-
-	ret = sscanf((*d1)->d_name, "lun.%d", &id1);
-	if (ret != 1)
-		goto err;
-
-	ret = sscanf((*d2)->d_name, "lun.%d", &id2);
-	if (ret != 1)
-		goto err;
-
-	if (id1 < id2)
-		ret = 1;
-
-	return id1 < id2 ? -1 : id1 > id2;
-err:
-	/*
-	 * This should not happened because dentries has been
-	 * already checked by lun_select function. This
-	 * error procedure is just in case.
-	 */
-	return -1;
-}
-
-static int usbg_parse_function_ms_attrs(usbg_function *f,
-		usbg_f_ms_attrs *f_ms_attrs)
-{
-	int ret;
-	int nmb;
-	int i = 0;
-	char fpath[USBG_MAX_PATH_LENGTH];
-	usbg_f_ms_lun_attrs *lun_attrs;
-	usbg_f_ms_lun_attrs **luns;
-	struct dirent **dent;
-
-	ret = usbg_read_bool(f->path, f->name, "stall",
-			     &(f_ms_attrs->stall));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-
-	nmb = snprintf(fpath, sizeof(fpath), "%s/%s/",
-		       f->path, f->name);
-	if (nmb >= sizeof(fpath)) {
-		ret = USBG_ERROR_PATH_TOO_LONG;
-		goto out;
-	}
-
-	nmb = scandir(fpath, &dent, lun_select, lun_sort);
-	if (nmb < 0) {
-		ret = usbg_translate_error(errno);
-		goto out;
-	}
-
-	luns = calloc(nmb + 1, sizeof(*luns));
-	if (!luns) {
-		ret = USBG_ERROR_NO_MEM;
-		goto err;
-	}
-
-	f_ms_attrs->luns = luns;
-	f_ms_attrs->nluns = nmb;
-
-	for (i = 0; i < nmb; i++) {
-		lun_attrs = malloc(sizeof(*lun_attrs));
-		if (!lun_attrs) {
-			ret = USBG_ERROR_NO_MEM;
-			goto err;
-		}
-
-		ret = usbg_parse_function_ms_lun_attrs(fpath, dent[i]->d_name,
-						       lun_attrs);
-		if (ret != USBG_SUCCESS) {
-			free(lun_attrs);
-			goto err;
-		}
-
-		luns[i] = lun_attrs;
-		free(dent[i]);
-	}
-	free(dent);
-
-	return USBG_SUCCESS;
-
-err:
-	while (i < nmb) {
-		free(dent[i]);
-		++i;
-	}
-	free(dent);
-
-	usbg_cleanup_function_attrs(
-		container_of((usbg_f_attrs *)f_ms_attrs,
-			     usbg_function_attrs, attrs));
-out:
-	return ret;
-}
-
-static int usbg_parse_function_midi_attrs(usbg_function *f,
-		usbg_f_midi_attrs *attrs)
-{
-	int ret;
-
-	ret = usbg_read_dec(f->path, f->name, "index", &(attrs->index));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_string_alloc(f->path, f->name, "id", &(attrs->id));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_dec(f->path, f->name, "in_ports", (int*)&(attrs->in_ports));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_dec(f->path, f->name, "out_ports", (int*)&(attrs->out_ports));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_dec(f->path, f->name, "buflen", (int*)&(attrs->buflen));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_dec(f->path, f->name, "qlen", (int*)&(attrs->qlen));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-out:
-	return ret;
-}
-
-static int usbg_parse_function_loopback_attrs(usbg_function *f,
-		usbg_f_loopback_attrs *attrs)
-{
-	int ret;
-
-	ret = usbg_read_dec(f->path, f->name, "buflen", (int *)&(attrs->buflen));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_dec(f->path, f->name, "qlen", (int *)&(attrs->qlen));
-
-out:
-	return ret;
-}
-
-static int usbg_parse_function_attrs(usbg_function *f,
-		usbg_function_attrs *f_attrs)
-{
-	int ret;
-	int attrs_type;
-
-	attrs_type = usbg_lookup_function_attrs_type(f->type);
-	if (attrs_type < 0) {
-		ret = attrs_type;
-		goto out;
-	}
-
-	switch (attrs_type) {
-	case USBG_F_ATTRS_SERIAL:
-		f_attrs->header.attrs_type = USBG_F_ATTRS_SERIAL;
-		ret = usbg_read_dec(f->path, f->name, "port_num",
-				&(f_attrs->attrs.serial.port_num));
-		break;
-
-	case USBG_F_ATTRS_NET:
-		f_attrs->header.attrs_type = USBG_F_ATTRS_NET;
-		ret = usbg_parse_function_net_attrs(f, &(f_attrs->attrs.net));
-		break;
-
-	case USBG_F_ATTRS_PHONET:
-		f_attrs->header.attrs_type = USBG_F_ATTRS_PHONET;
-		ret = usbg_read_string_alloc(f->path, f->name, "ifname",
-					     &(f_attrs->attrs.phonet.ifname));
-		break;
-
-	case USBG_F_ATTRS_FFS:
-	{
-		usbg_f_ffs_attrs *ffs_attrs = &(f_attrs->attrs.ffs);
-
-		f_attrs->header.attrs_type = USBG_F_ATTRS_FFS;
-		ffs_attrs->dev_name = strdup(f->instance);
-		if (!ffs_attrs->dev_name)
-			ret = USBG_ERROR_NO_MEM;
-		else
-			ret = USBG_SUCCESS;
-		break;
-	}
-
-	case USBG_F_ATTRS_MS:
-		f_attrs->header.attrs_type = USBG_F_ATTRS_MS;
-		ret = usbg_parse_function_ms_attrs(f, &(f_attrs->attrs.ms));
-		break;
-
-	case USBG_F_ATTRS_MIDI:
-		f_attrs->header.attrs_type = USBG_F_ATTRS_MIDI;
-		ret = usbg_parse_function_midi_attrs(f, &(f_attrs->attrs.midi));
-		break;
-
-	case USBG_F_ATTRS_LOOPBACK:
-		f_attrs->header.attrs_type = USBG_F_ATTRS_LOOPBACK;
-		ret = usbg_parse_function_loopback_attrs(f, &(f_attrs->attrs.loopback));
-		break;
-
-	default:
-		ERROR("Unsupported function type\n");
-		ret = USBG_ERROR_NOT_SUPPORTED;
-		break;
-	}
-out:
-	return ret;
 }
 
 static int usbg_parse_functions(const char *path, usbg_gadget *g)
@@ -1502,45 +1199,6 @@ out:
 	return ret;
 }
 
-static int usbg_rm_ms_function(usbg_function *f, int opts)
-{
-	int ret;
-	int nmb;
-	int i;
-	char lpath[USBG_MAX_PATH_LENGTH];
-	struct dirent **dent;
-
-	ret = snprintf(lpath, sizeof(lpath), "%s/%s/", f->path, f->name);
-	if (ret >= sizeof(lpath)) {
-		ret = USBG_ERROR_PATH_TOO_LONG;
-		goto out;
-	}
-
-	nmb = scandir(lpath, &dent, lun_select, lun_sort);
-	if (nmb < 0) {
-		ret = usbg_translate_error(errno);
-		goto out;
-	}
-
-	for (i = nmb - 1; i > 0; --i) {
-		ret = usbg_rm_dir(lpath, dent[i]->d_name);
-		free(dent[i]);
-		if (ret)
-			goto err_free_dent_loop;
-	}
-	free(dent[0]);
-	free(dent);
-
-	return USBG_SUCCESS;
-
-err_free_dent_loop:
-	while (--i >= 0)
-		free(dent[i]);
-	free(dent[i]);
-out:
-	return ret;
-}
-
 int usbg_rm_function(usbg_function *f, int opts)
 {
 	int ret = USBG_ERROR_INVALID_PARAM;
@@ -1574,8 +1232,8 @@ int usbg_rm_function(usbg_function *f, int opts)
 		} /* TAILQ_FOREACH */
 	}
 
-	if (f->rm_callback) {
-		ret = f->rm_callback(f, opts);
+	if (f->ops->remove) {
+		ret = f->ops->remove(f, opts);
 		if (ret != USBG_SUCCESS)
 			goto out;
 	}
@@ -2190,14 +1848,6 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 	if (!g || !f)
 		return ret;
 
-	/* if attrs type is set, check if it has correct type */
-	if (f_attrs && f_attrs->header.attrs_type) {
-		int attrs_type;
-		attrs_type = usbg_lookup_function_attrs_type(type);
-		if (attrs_type < 0 || attrs_type != f_attrs->header.attrs_type)
-			return ret;
-	}
-
 	if (!instance) {
 		/* If someone creates ffs function and doesn't pass instance name
 		   this means that device name from attrs should be used */
@@ -2233,24 +1883,31 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 
 	free_space = sizeof(fpath) - n;
 	n = snprintf(&(fpath[n]), free_space, "/%s", func->name);
-	if (n < free_space) {
-		ret = mkdir(fpath, S_IRWXU | S_IRWXG | S_IRWXO);
-		if (!ret) {
-			/* Success */
-			ret = USBG_SUCCESS;
-			if (f_attrs)
-				ret = usbg_set_function_attrs(func, f_attrs);
-		} else {
-			ret = usbg_translate_error(errno);
-		}
+	if (n >= free_space) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto free_func;
 	}
 
-	if (ret == USBG_SUCCESS)
-		INSERT_TAILQ_STRING_ORDER(&g->functions, fhead, name,
-				func, fnode);
-	else
-		usbg_free_function(func);
+	ret = mkdir(fpath, S_IRWXU | S_IRWXG | S_IRWXO);
+	if (ret) {
+		ret = usbg_translate_error(errno);
+		goto free_func;
+	}
 
+	if (f_attrs) {
+		ret = usbg_set_function_attrs(func, f_attrs);
+		if (ret != USBG_SUCCESS)
+			goto remove_dir;
+	}
+
+	INSERT_TAILQ_STRING_ORDER(&g->functions, fhead, name, func, fnode);
+
+	return USBG_SUCCESS;
+
+remove_dir:
+	usbg_rm_dir(fpath, "");
+free_func:
+	usbg_free_function(func);
 out:
 	return ret;
 }
@@ -2593,7 +2250,7 @@ usbg_function_type usbg_get_function_type(usbg_function *f)
 
 int usbg_get_function_attrs(usbg_function *f, usbg_function_attrs *f_attrs)
 {
-	return f && f_attrs ? usbg_parse_function_attrs(f, f_attrs)
+	return f && f_attrs ? f->ops->get_attrs(f, f_attrs)
 			: USBG_ERROR_INVALID_PARAM;
 }
 
@@ -2670,309 +2327,16 @@ void usbg_cleanup_function_attrs(usbg_function_attrs *f_attrs)
 	}
 }
 
-int usbg_set_function_net_attrs(usbg_function *f, const usbg_f_net_attrs *attrs)
-{
-	int ret = USBG_SUCCESS;
-	char addr_buf[USBG_MAX_STR_LENGTH];
-	char *addr;
-
-	/* ifname is read only so we accept only empty string for this param */
-	if (attrs->ifname && attrs->ifname[0]) {
-		ret = USBG_ERROR_INVALID_PARAM;
-		goto out;
-	}
-
-	addr = usbg_ether_ntoa_r(&attrs->dev_addr, addr_buf);
-	ret = usbg_write_string(f->path, f->name, "dev_addr", addr);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	addr = usbg_ether_ntoa_r(&attrs->host_addr, addr_buf);
-	ret = usbg_write_string(f->path, f->name, "host_addr", addr);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_dec(f->path, f->name, "qmult", attrs->qmult);
-
-out:
-	return ret;
-}
-
-static int usbg_set_f_ms_lun_attrs(const char *path, const char *lun,
-				   usbg_f_ms_lun_attrs *lun_attrs)
-{
-	int ret;
-
-	ret = usbg_write_bool(path, lun, "cdrom", lun_attrs->cdrom);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_bool(path, lun, "ro", lun_attrs->ro);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_bool(path, lun, "nofua", lun_attrs->nofua);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_bool(path, lun, "removable", lun_attrs->removable);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_string(path, lun, "file",
-				      lun_attrs->filename);
-
-out:
-	return ret;
-}
-
-static int usbg_set_function_ms_attrs(usbg_function *f,
-				      const usbg_f_ms_attrs *f_attrs)
-{
-	int ret;
-	int i, nmb;
-	int space_left;
-	char *new_lun_mask;
-	char lpath[USBG_MAX_PATH_LENGTH];
-	char *lpath_end;
-	DIR *dir;
-	struct dirent **dent;
-
-	ret = usbg_write_bool(f->path, f->name, "stall", f_attrs->stall);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	/* lun0 cannot be removed */
-	if (!f_attrs->luns || f_attrs->nluns <= 0)
-		goto out;
-
-	ret = snprintf(lpath, sizeof(lpath), "%s/%s/", f->path, f->name);
-	if (ret >= sizeof(lpath)) {
-		ret = USBG_ERROR_PATH_TOO_LONG;
-		goto out;
-	}
-
-	lpath_end = lpath + strlen(lpath);
-	space_left = sizeof(lpath) - (lpath_end - lpath);
-
-	new_lun_mask = calloc(f_attrs->nluns, sizeof (char));
-	if (!new_lun_mask) {
-		ret = USBG_ERROR_NO_MEM;
-		goto out;
-	}
-
-	for (i = 0; i < f_attrs->nluns; ++i) {
-		usbg_f_ms_lun_attrs *lun = f_attrs->luns[i];
-
-		/*
-		 * id may be left unset in lun attrs but
-		 * if it is set it has to be equal to position
-		 * in lun array
-		 */
-		if (lun && lun->id >= 0 && lun->id != i) {
-			ret = USBG_ERROR_INVALID_PARAM;
-			goto err_lun_loop;
-		}
-
-		ret = snprintf(lpath_end, space_left, "/lun.%d/", i);
-		if (ret >= space_left) {
-			ret = USBG_ERROR_PATH_TOO_LONG;
-			goto err_lun_loop;
-		}
-
-		/*
-		 * Check if dir exist and create it if needed
-		 */
-		dir = opendir(lpath);
-		if (dir) {
-			closedir(dir);
-		} else if (errno != ENOENT) {
-			ret = usbg_translate_error(errno);
-			goto err_lun_loop;
-		} else {
-			ret = mkdir(lpath, S_IRWXU|S_IRWXG|S_IRWXO);
-			if (!ret) {
-				/*
-				 * If we have created a new directory in
-				 * this function let's mark it so we can
-				 * cleanup in case of error
-				 */
-				new_lun_mask[i] = 1;
-			} else {
-				ret = usbg_translate_error(errno);
-				goto err_lun_loop;
-			}
-		}
-
-		/* if attributes has not been provided just go to next one */
-		if (!lun)
-			continue;
-
-		ret = usbg_set_f_ms_lun_attrs(lpath, "", lun);
-		if (ret != USBG_SUCCESS)
-			goto err_lun_loop;
-	}
-
-	/* Check if function has more luns and remove them */
-	*lpath_end = '\0';
-	i = 0;
-	nmb = scandir(lpath, &dent, lun_select, lun_sort);
-	if (nmb < 0) {
-		ret = usbg_translate_error(errno);
-		goto err_lun_loop;
-	}
-
-	for (i = 0; i < f_attrs->nluns; ++i)
-		free(dent[i]);
-
-	for (; i < nmb; ++i) {
-		ret = usbg_rm_dir(lpath, dent[i]->d_name);
-		free(dent[i]);
-		/* There is no good way to recover form this */
-		if (ret != USBG_SUCCESS)
-			goto err_rm_loop;
-	}
-	free(dent);
-	free(new_lun_mask);
-
-	return USBG_SUCCESS;
-
-err_rm_loop:
-	while (++i < nmb)
-		free(dent[i]);
-	free(dent);
-
-	i = f_attrs->nluns;
-err_lun_loop:
-	/* array is null terminated so we may access lun[nluns] */
-	for (; i >= 0; --i) {
-		if (!new_lun_mask[i])
-			continue;
-
-		ret = snprintf(lpath_end, space_left, "/lun.%d/", i);
-		if (ret >= space_left) {
-			/*
-			 * This should not happen because if we were
-			 * able to create this directory we should be
-			 * also able to remove it.
-			 */
-			continue;
-		}
-		rmdir(lpath);
-	}
-	free(new_lun_mask);
-
-out:
-	return ret;
-}
-
-int usbg_set_function_midi_attrs(usbg_function *f,
-				 const usbg_f_midi_attrs *attrs)
-{
-	int ret;
-
-	ret = usbg_write_dec(f->path, f->name, "index", attrs->index);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_string(f->path, f->name, "id", attrs->id);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_dec(f->path, f->name, "in_ports", attrs->in_ports);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_dec(f->path, f->name, "out_ports", attrs->out_ports);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_dec(f->path, f->name, "buflen", attrs->buflen);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_dec(f->path, f->name, "qlen", attrs->qlen);
-
-out:
-	return ret;
-}
-
-int usbg_set_function_loopback_attrs(usbg_function *f,
-				 const usbg_f_loopback_attrs *attrs)
-{
-	int ret;
-
-	ret = usbg_write_dec(f->path, f->name, "buflen", attrs->buflen);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_dec(f->path, f->name, "qlen", attrs->qlen);
-
-out:
-	return ret;
-}
-
 int usbg_set_function_attrs(usbg_function *f,
 			    const usbg_function_attrs *f_attrs)
 {
 	int ret = USBG_ERROR_INVALID_PARAM;
-	int attrs_type;
 
 	if (!f || !f_attrs)
 		return ret;
 
-	attrs_type = usbg_lookup_function_attrs_type(f->type);
-	if (attrs_type < 0)
-		return ret;
-
-	/* if attrs type is set, check if it has correct type */
-	if (f_attrs->header.attrs_type && attrs_type != f_attrs->header.attrs_type)
-		return ret;
-
-	switch (attrs_type) {
-	case USBG_F_ATTRS_SERIAL:
-		/* port_num attribute is read only so we accept only 0
-		 * and do nothing with it */
-		ret = f_attrs->attrs.serial.port_num ? USBG_ERROR_INVALID_PARAM
-			: USBG_SUCCESS;
-		break;
-
-	case USBG_F_ATTRS_NET:
-		ret = usbg_set_function_net_attrs(f, &f_attrs->attrs.net);
-		break;
-
-	case USBG_F_ATTRS_PHONET:
-		/* ifname attribute is read only
-		 * so we accept only empty string */
-		ret = f_attrs->attrs.phonet.ifname && f_attrs->attrs.phonet.ifname[0] ?
-			USBG_ERROR_INVALID_PARAM : USBG_SUCCESS;
-		break;
-
-	case USBG_F_ATTRS_FFS:
-		/* dev_name is a virtual attribute so allow only to use empty
-		 * empty string which means nop */
-		ret = f_attrs->attrs.ffs.dev_name && f_attrs->attrs.ffs.dev_name[0] ?
-			USBG_ERROR_INVALID_PARAM : USBG_SUCCESS;
-		break;
-
-	case USBG_F_ATTRS_MS:
-		ret = usbg_set_function_ms_attrs(f, &f_attrs->attrs.ms);
-		break;
-
-	case USBG_F_ATTRS_MIDI:
-		ret = usbg_set_function_midi_attrs(f, &f_attrs->attrs.midi);
-		break;
-
-	case USBG_F_ATTRS_LOOPBACK:
-		ret = usbg_set_function_loopback_attrs(f, &f_attrs->attrs.loopback);
-		break;
-
-	default:
-		ERROR("Unsupported function type\n");
-		ret = USBG_ERROR_NOT_SUPPORTED;
-		break;
-	}
-
+	ret = f->ops->set_attrs(f, f_attrs);
+out:
 	return ret;
 }
 

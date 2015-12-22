@@ -21,6 +21,7 @@
 #include <libconfig.h>
 #else
 	typedef struct _should_not_be_used config_t;
+	typedef struct _should_not_be_used config_setting_t;
 	void config_destroy(config_t *config);
 #endif
 
@@ -38,6 +39,37 @@
                         (type *)( (char *)member - offsetof(type, field) ); \
                 })
 #endif /* container_of */
+
+struct usbg_function_type
+{
+	/* Name of this function type */
+	char *name;
+
+	/*
+	 * Called when user would like to remove this function.
+	 * If this callback is provided it will be always called
+	 * before rmdir on function directory. This function
+	 * should check received flags and remove composed function
+	 * attributes (directories) only if USBG_RM_RECURSE flag
+	 * has been passed.
+	 */
+	int (*remove)(struct usbg_function *, int);
+
+	/* Set the value of all given attributes */
+	int (*set_attrs)(struct usbg_function *, const usbg_function_attrs *);
+
+	/* Get the value of all function attributes */
+	int (*get_attrs)(struct usbg_function *, usbg_function_attrs *);
+
+	/* Free the additional memory allocated for function attributes */
+	void (*cleanup_attrs)(struct usbg_function *, usbg_function_attrs *);
+
+	/* Should import all function attributes from libconfig format */
+	int (*import)(struct usbg_function *, config_setting_t *);
+
+	/* Should export all functions attributes to libconfig format */
+	int (*export)(struct usbg_function *, config_setting_t *);
+};
 
 struct usbg_state
 {
@@ -74,8 +106,6 @@ struct usbg_config
 	int id;
 };
 
-typedef int (*usbg_rm_function_callback)(usbg_function *, int);
-
 struct usbg_function
 {
 	TAILQ_ENTRY(usbg_function) fnode;
@@ -87,7 +117,7 @@ struct usbg_function
 	/* Only for internal library usage */
 	char *label;
 	usbg_function_type type;
-	usbg_rm_function_callback rm_callback;
+	struct usbg_function_type *ops;
 };
 
 struct usbg_binding
@@ -170,6 +200,8 @@ int usbg_translate_error(int error);
 
 char *usbg_ether_ntoa_r(const struct ether_addr *addr, char *buf);
 
+
+
 int usbg_read_buf(const char *path, const char *name,
 		  const char *file, char *buf);
 
@@ -209,5 +241,9 @@ int usbg_rm_dir(const char *path, const char *name);
 int usbg_rm_all_dirs(const char *path);
 
 int usbg_check_dir(const char *path);
+#define usbg_config_is_int(node) (config_setting_type(node) == CONFIG_TYPE_INT)
+#define usbg_config_is_string(node) \
+	(config_setting_type(node) == CONFIG_TYPE_STRING)
+
 #endif /* USBG_INTERNAL_H */
 
