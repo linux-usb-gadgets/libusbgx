@@ -12,6 +12,7 @@
 
 #include "usbg/usbg.h"
 #include "usbg/usbg_internal.h"
+#include "usbg/function/serial.h"
 
 #ifdef HAS_LIBCONFIG
 #include <libconfig.h>
@@ -45,8 +46,8 @@ static int serial_get_attrs(struct usbg_function *f,
 {
 	int ret;
 
-	ret = usbg_read_dec(f->path, f->name, "port_num",
-				&(f_attrs->attrs.serial.port_num));
+	ret = usbg_f_serial_get_port_num(usbg_to_serial_function(f),
+					 &(f_attrs->attrs.serial.port_num));
 	if (ret != USBG_SUCCESS)
 		goto out;
 
@@ -55,69 +56,60 @@ out:
 	return ret;
 }
 
-#ifdef HAS_LIBCONFIG
-
-static int serial_libconfig_export(struct usbg_function *f,
-				  config_setting_t *root)
-{
-	config_setting_t *node;
-	usbg_function_attrs f_attrs;
-	usbg_f_serial_attrs *attrs = &f_attrs.attrs.serial;
-	int cfg_ret;
-	int ret = USBG_ERROR_NO_MEM;
-
-	ret = serial_get_attrs(f, &f_attrs);
-	if (ret)
-		goto out;		
-
-	node = config_setting_add(root, "port_num", CONFIG_TYPE_INT);
-	if (!node) {
-		ret = USBG_ERROR_NO_MEM;
-		goto out;
-	}
-
-	cfg_ret = config_setting_set_int(node, attrs->port_num);
-	ret = cfg_ret == CONFIG_TRUE ? 0 : USBG_ERROR_OTHER_ERROR;
-
-out:
-	return ret;
-}
-
-#define SERIAL_LIBCONFIG_DEP_OPS		\
-	.export = serial_libconfig_export
-
-#else
-
-#define SERIAL_LIBCONFIG_DEP_OPS
-
-#endif /* HAS_LIBCONFIG */
-
 static int serial_libconfig_import(struct usbg_function *f,
 				  config_setting_t *root)
 {
 	return USBG_SUCCESS;
 }
 
-/* We don' import port_num as it is read only */
+static int serial_libconfig_export(struct usbg_function *f,
+				  config_setting_t *root)
+{
+	return USBG_SUCCESS;
+}
+
+/* We don' import nor export port_num as it is read only */
 #define SERIAL_FUNCTION_OPTS			\
 	.alloc_inst = serial_alloc_inst,	\
 	.free_inst = serial_free_inst,	        \
 	.set_attrs = serial_set_attrs,	        \
 	.get_attrs = serial_get_attrs,	        \
-	SERIAL_LIBCONFIG_DEP_OPS,	        \
+	.export = serial_libconfig_export,	\
 	.import = serial_libconfig_import
 
 struct usbg_function_type usbg_f_type_acm = {
 	.name = "acm",
-	SERIAL_FUNCTION_OPTS
+	SERIAL_FUNCTION_OPTS,
 };
 
 struct usbg_function_type usbg_f_type_serial = {
 	.name = "gser",
-	SERIAL_FUNCTION_OPTS
+	SERIAL_FUNCTION_OPTS,
 };
 
 struct usbg_function_type usbg_f_type_obex = {
 	.name = "obex",
-	SERIAL_FUNCTION_OPTS
+	SERIAL_FUNCTION_OPTS,
 };
+
+/* API implementation */
+
+usbg_f_serial *usbg_to_serial_function(usbg_function *f)
+{
+	return f->ops == &usbg_f_type_acm ||
+		f->ops == &usbg_f_type_serial ||
+		f->ops == &usbg_f_type_obex ?
+		container_of(f, struct usbg_f_serial, func) : NULL;
+}
+
+usbg_function *usbg_from_serial_function(usbg_f_serial *sf)
+{
+	return &sf->func;
+}
+
+int usbg_f_serial_get_port_num(usbg_f_serial *sf, int *port_num)
+{
+	return usbg_read_dec(sf->func.path, sf->func.name,
+			     "port_num", port_num);
+}
+
