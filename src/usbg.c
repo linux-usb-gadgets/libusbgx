@@ -3,6 +3,10 @@
  *
  * Matt Porter <mporter@linaro.org>
  *
+ * Copyright (C) 2013 - 2015 Samsung Electronics
+ *
+ * Krzysztof Opasiak <k.opasiak@samsung.com>
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
