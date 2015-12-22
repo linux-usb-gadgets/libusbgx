@@ -18,6 +18,14 @@
 #include <libconfig.h>
 #endif
 
+struct usbg_f_midi {
+	struct usbg_function func;
+};
+
+GENERIC_ALLOC_INST(midi, struct usbg_f_midi, func);
+
+GENERIC_FREE_INST(midi, struct usbg_f_midi, func);
+
 static int midi_set_attrs(struct usbg_function *f,
 			  const usbg_function_attrs *f_attrs)
 {
@@ -216,6 +224,8 @@ out:
 
 struct usbg_function_type usbg_f_type_midi = {
 	.name = "midi",
+	.alloc_inst = midi_alloc_inst,
+	.free_inst = midi_free_inst,
 	.set_attrs = midi_set_attrs,
 	.get_attrs = midi_get_attrs,
 	.cleanup_attrs = midi_cleanup_attrs,

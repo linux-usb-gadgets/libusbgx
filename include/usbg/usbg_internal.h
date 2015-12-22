@@ -46,6 +46,14 @@ struct usbg_function_type
 	/* Name of this function type */
 	char *name;
 
+	/* Called to allocate instance of function */
+	int (*alloc_inst)(struct usbg_function_type *, usbg_function_type,
+			  const char *, const char *, usbg_gadget *,
+			  struct usbg_function **);
+
+	/* Called to free memory used by function */
+	void (*free_inst)(struct usbg_function_type *, struct usbg_function *);
+
 	/*
 	 * Called when user would like to remove this function.
 	 * If this callback is provided it will be always called
@@ -251,6 +259,55 @@ int usbg_check_dir(const char *path);
 #define usbg_config_is_int(node) (config_setting_type(node) == CONFIG_TYPE_INT)
 #define usbg_config_is_string(node) \
 	(config_setting_type(node) == CONFIG_TYPE_STRING)
+
+int usbg_init_function(struct usbg_function *f,
+		       struct usbg_function_type *ops,
+		       usbg_function_type type,
+		       const char *type_name,
+		       const char *instance,
+		       const char *path,
+		       struct usbg_gadget *parent);
+
+int usbg_cleanup_function(struct usbg_function *f);
+
+#define GENERIC_ALLOC_INST(prefix, _type, _member)			\
+	static int prefix##_alloc_inst(struct usbg_function_type *type, \
+				       usbg_function_type type_code,	\
+				       const char *instance, const char *path, \
+				       struct usbg_gadget *parent,	\
+				       struct usbg_function **f)	\
+	{								\
+		_type *ff;						\
+		int ret;						\
+									\
+		ff = malloc(sizeof(*ff));				\
+		if (!ff)						\
+			return USBG_ERROR_NO_MEM;			\
+									\
+		ret = usbg_init_function(&ff->_member, type, type_code,	\
+					 type->name, instance, path, parent); \
+		if (ret != USBG_SUCCESS)				\
+			goto free_func;					\
+									\
+		*f = &ff->_member;					\
+									\
+		return ret;						\
+									\
+	free_func:							\
+		free(ff);						\
+	out:								\
+		return ret;						\
+	}
+
+#define GENERIC_FREE_INST(prefix, _type, _member)			\
+	static void prefix##_free_inst(struct usbg_function_type *type,	\
+				       struct usbg_function *f)		\
+	{								\
+		_type *ff = container_of(f, _type, _member);		\
+									\
+		usbg_cleanup_function(&ff->_member);			\
+		free(ff);						\
+	}
 
 typedef int (*usbg_attr_get_func)(const char *, const char *, const char *, void *);
 typedef int (*usbg_attr_set_func)(const char *, const char *, const char *, void *);

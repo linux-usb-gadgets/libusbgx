@@ -18,6 +18,14 @@
 #include <libconfig.h>
 #endif
 
+struct usbg_f_phonet {
+	struct usbg_function func;
+};
+
+GENERIC_ALLOC_INST(phonet, struct usbg_f_phonet, func);
+
+GENERIC_FREE_INST(phonet, struct usbg_f_phonet, func);
+
 static int phonet_set_attrs(struct usbg_function *f,
 			    const usbg_function_attrs *f_attrs)
 {
@@ -71,6 +79,8 @@ static int phonet_libconfig_export(struct usbg_function *f,
 
 struct usbg_function_type usbg_f_type_phonet = {
 	.name = "phonet",
+	.alloc_inst = phonet_alloc_inst,
+	.free_inst = phonet_free_inst,
 	.set_attrs = phonet_set_attrs,
 	.get_attrs = phonet_get_attrs,
 	.cleanup_attrs = phonet_cleanup_attrs,

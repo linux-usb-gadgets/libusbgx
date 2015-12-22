@@ -18,6 +18,14 @@
 #include <libconfig.h>
 #endif
 
+struct usbg_f_ether {
+	struct usbg_function func;
+};
+
+GENERIC_ALLOC_INST(ether, struct usbg_f_ether, func);
+
+GENERIC_FREE_INST(ether, struct usbg_f_ether, func);
+
 static int ether_set_attrs(struct usbg_function *f,
 			   const usbg_function_attrs *f_attrs)
 {
@@ -216,6 +224,8 @@ out:
 #endif /* HAS_LIBCONFIG */
 
 #define ETHER_FUNCTION_OPTS			\
+	.alloc_inst = ether_alloc_inst,		\
+	.free_inst = ether_free_inst,		\
 	.set_attrs = ether_set_attrs,		\
 	.get_attrs = ether_get_attrs,		\
 	.cleanup_attrs = ether_cleanup_attrs,	\

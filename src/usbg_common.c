@@ -265,7 +265,30 @@ int usbg_check_dir(const char *path)
 	return ret;
 }
 
+int usbg_init_function(struct usbg_function *f,
+		       struct usbg_function_type *ops,
+		       usbg_function_type type,
+		       const char *type_name,
+		       const char *instance,
+		       const char *path,
+		       struct usbg_gadget *parent)
+{
+	int ret;
 
+	ret = asprintf(&(f->name), "%s.%s", type_name, instance);
+	if (ret < 0)
+		return USBG_ERROR_NO_MEM;
+
+	f->instance = f->name + strlen(type_name) + 1;
+	f->path = strdup(path);
+	f->parent = parent;
+	f->type = type;
+	f->ops = ops;
+	f->label = NULL;
+	memset(&f->fnode, 0, sizeof(f->fnode));
+
+	return 0;
+}
 
 int usbg_get_ether_addr(const char *path, const char *name,
 			      const char *attr, void *val)
@@ -423,3 +446,9 @@ int usbg_set_config_node_ether_addr(config_setting_t *root,
 	return usbg_set_config_node_string(root, node_name, &ptr);
 }
 
+int usbg_cleanup_function(struct usbg_function *f)
+{
+	free(f->path);
+	free(f->name);
+	free(f->label);
+}

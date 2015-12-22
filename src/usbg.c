@@ -284,10 +284,8 @@ static inline void usbg_free_binding(usbg_binding *b)
 
 static inline void usbg_free_function(usbg_function *f)
 {
-	free(f->path);
-	free(f->name);
-	free(f->label);
-	free(f);
+	if (f->ops->free_inst)
+		f->ops->free_inst(f->ops, f);
 }
 
 static void usbg_free_config(usbg_config *c)
@@ -426,46 +424,16 @@ out:
 	return c;
 }
 
-static usbg_function *usbg_allocate_function(const char *path,
-		usbg_function_type type, const char *instance, usbg_gadget *parent)
+static usbg_function *
+usbg_allocate_function(const char *path, usbg_function_type type,
+		       const char *instance, usbg_gadget *parent)
 {
 	usbg_function *f;
-	const char *type_name;
 	int ret;
 
-	f = malloc(sizeof(*f));
-	if (!f)
-		goto out;
-
-	f->label = NULL;
-	type_name = usbg_get_function_type_str(type);
-	if (!type_name) {
-		free(f);
-		f = NULL;
-		goto out;
-	}
-
-	ret = asprintf(&(f->name), "%s.%s", type_name, instance);
-	if (ret < 0) {
-		free(f);
-		f = NULL;
-		goto out;
-	}
-	f->instance = f->name + strlen(type_name) + 1;
-	f->path = strdup(path);
-	f->parent = parent;
-	f->type = type;
-	f->ops = function_types[type];
-
-	if (!(f->path)) {
-		free(f->name);
-		free(f->path);
-		free(f);
-		f = NULL;
-	}
-
-out:
-	return f;
+	ret = function_types[type]->alloc_inst(function_types[type], type,
+					       instance, path, parent, &f);
+	return ret == 0 ? f : NULL;
 }
 
 static usbg_binding *usbg_allocate_binding(const char *path, const char *name,

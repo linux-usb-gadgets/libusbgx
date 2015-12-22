@@ -21,6 +21,14 @@
 #include <libconfig.h>
 #endif
 
+struct usbg_f_ms {
+	struct usbg_function func;
+};
+
+GENERIC_ALLOC_INST(ms, struct usbg_f_ms, func);
+
+GENERIC_FREE_INST(ms, struct usbg_f_ms, func);
+
 static inline int lun_select(const struct dirent *dent)
 {
 	int ret;
@@ -652,6 +660,8 @@ out:
 
 struct usbg_function_type usbg_f_type_ms = {
 	.name = "mass_storage",
+	.alloc_inst = ms_alloc_inst,
+	.free_inst = ms_free_inst,
 	.set_attrs = ms_set_attrs,
 	.get_attrs = ms_get_attrs,
 	.cleanup_attrs = ms_cleanup_attrs,

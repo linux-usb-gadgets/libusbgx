@@ -17,6 +17,14 @@
 #include <libconfig.h>
 #endif
 
+struct usbg_f_loopback {
+	struct usbg_function func;
+};
+
+GENERIC_ALLOC_INST(loopback, struct usbg_f_loopback, func);
+
+GENERIC_FREE_INST(loopback, struct usbg_f_loopback, func);
+
 static int loopback_set_attrs(struct usbg_function *f,
 			    const usbg_function_attrs *f_attrs)
 {
@@ -141,6 +149,8 @@ out:
 
 struct usbg_function_type usbg_f_type_loopback = {
 	.name = "loopback",
+	.alloc_inst = loopback_alloc_inst,
+	.free_inst = loopback_free_inst,
 	.set_attrs = loopback_set_attrs,
 	.get_attrs = loopback_get_attrs,
 #ifdef HAS_LIBCONFIG

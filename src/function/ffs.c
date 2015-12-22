@@ -17,6 +17,14 @@
 #include <libconfig.h>
 #endif
 
+struct usbg_f_fs {
+	struct usbg_function func;
+};
+
+GENERIC_ALLOC_INST(ffs, struct usbg_f_fs, func);
+
+GENERIC_FREE_INST(ffs, struct usbg_f_fs, func);
+
 static int ffs_set_attrs(struct usbg_function *f,
 			 const usbg_function_attrs *f_attrs)
 {
@@ -72,6 +80,8 @@ static int ffs_libconfig_export(struct usbg_function *f,
 
 struct usbg_function_type usbg_f_type_ffs = {
 	.name = "ffs",
+	.alloc_inst = ffs_alloc_inst,
+	.free_inst = ffs_free_inst,
 	.set_attrs = ffs_set_attrs,
 	.get_attrs = ffs_get_attrs,
 	.cleanup_attrs = ffs_cleanup_attrs,

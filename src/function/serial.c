@@ -17,6 +17,14 @@
 #include <libconfig.h>
 #endif
 
+struct usbg_f_serial {
+	struct usbg_function func;
+};
+
+GENERIC_ALLOC_INST(serial, struct usbg_f_serial, func);
+
+GENERIC_FREE_INST(serial, struct usbg_f_serial, func);
+
 static int serial_set_attrs(struct usbg_function *f,
 			    const usbg_function_attrs *f_attrs)
 {
@@ -92,8 +100,10 @@ static int serial_libconfig_import(struct usbg_function *f,
 
 /* We don' import port_num as it is read only */
 #define SERIAL_FUNCTION_OPTS			\
-	.set_attrs = serial_set_attrs,		\
-	.get_attrs = serial_get_attrs,		\
+	.alloc_inst = serial_alloc_inst,	\
+	.free_inst = serial_free_inst,	        \
+	.set_attrs = serial_set_attrs,	        \
+	.get_attrs = serial_get_attrs,	        \
 	SERIAL_LIBCONFIG_DEP_OPS,	        \
 	.import = serial_libconfig_import
 
