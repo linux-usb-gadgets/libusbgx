@@ -24,6 +24,11 @@
 	void config_destroy(config_t *config);
 #endif
 
+/**
+ * @file include/usbg/usbg_internal.h
+ */
+
+
 struct usbg_state
 {
 	char *path;

@@ -7,6 +7,10 @@
 
 /* Simple structures for defining gadgets. All arrays should be null-terminated.*/
 
+/**
+ * @file tests/usbg-test.h
+ */
+
 struct test_function
 {
 	usbg_function_type type;

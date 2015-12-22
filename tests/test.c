@@ -454,55 +454,117 @@ void teardown_state(void **state)
 #define USBG_TEST_TS(name, test, setup) \
 	USBG_TEST(name, test, setup, teardown_state)
 
+/**
+ * @page usbg_tests Tests
+ * @brief This is list of test cases
+ * @tests_start
+ */
+
+#ifndef DOXYGEN
 static UnitTest tests[] = {
-	/* Check if init was successfull on simple configfs state */
+#endif
+
+	/**
+	 * @usbg_test
+	 * @test_desc{test_init_simple,
+	 * Check if init was successfull on simple configfs state,
+	 * usbg_init}
+	 */
 	USBG_TEST_TS("test_init_simple",
 		     test_init, setup_simple_state),
-
-	/* Check if init was successfull when all avaible functions
-	 * are present in configfs */
+	/**
+	 * @usbg_test
+	 * @test_desc{test_init_all_funcs,
+	 * Check if init was successfull when all avaible functions
+	 * are present in configfs,
+	 * usbg_init}
+	 */
 	USBG_TEST_TS("test_init_all_funcs",
 		     test_init, setup_all_funcs_state),
-
-	/* Check if simple gadget will be correcty returned */
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_gadget_simple,
+	 * Check if simple gadget will be correcty returned,
+	 * usbg_get_gadget}
+	 */
 	USBG_TEST_TS("test_get_gadget_simple",
 		     test_get_gadget, setup_simple_state),
-
-	/* Check if getting non-existing and wrong gadgets cause
-	 * expected failure and error codes are correct */
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_gadget_fail_simple,
+	 * Check if getting non-existing and wrong gadgets cause
+	 * expected failure and error codes are correct,
+	 * usbg_get_gadget}
+	 */
 	USBG_TEST_TS("test_get_gadget_fail_simple",
 		     test_get_gadget_fail, setup_simple_state),
-
-	/* Check if gadget returned by get_first_gadget
-	 * is actually first one */
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_first_gadget_simple,
+	 * Check if gadget returned by get_first_gadget
+	 * is actually first one,
+	 * usbg_get_first_gadget}
+	 */
 	USBG_TEST_TS("test_get_first_gadget_simple",
 		     test_get_first_gadget, setup_simple_state),
-
-	/* Check if getting first gadget from state returns NULL when
-	 * invalid parameters are passed */
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_first_gadget_fail,
+	 * Check if getting first gadget from state returns NULL when
+	 * invalid parameters are passed,
+	 * usbg_get_first_gadget}
+	 */
 	unit_test(test_get_first_gadget_fail),
-
-	/* Check if returned gadget name matches expected value */
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_gadget_name_simple,
+	 * Check if returned gadget name matches expected value,
+	 * usbg_get_gadget_name}
+	 */
 	USBG_TEST_TS("test_get_gadget_name_simple",
 		     test_get_gadget_name, setup_simple_state),
-
-	/* Check if returned simple gadget name length matches expected value */
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_gadget_name_len,
+	 * Check if returned simple gadget name length matches expected value,
+	 * usbg_get_gadget_name}
+	 */
 	USBG_TEST_TS("test_get_gadget_name_len_simple",
 		     test_get_gadget_name_len, setup_simple_state),
-
-	/* Check if trying to get name of invalid gadget
-	 * cause expected failure (name is null) */
+	/**
+	 * @usbg_test
+	 * @test_desc{test_get_gadget_name_fail,
+	 * Check if trying to get name of invalid gadget
+	 * cause expected failure (name is null),
+	 * usbg_get_gadget_name}
+	 */
 	unit_test(test_get_gadget_name_fail),
-
-	/* Check if getting simple gadget name into buffer work as expected*/
+	/**
+	 * @usbg_test
+	 * @test_desc{test_cpy_gadget_name_simple,
+	 * Check if getting simple gadget name into buffer work as expected,
+	 * usbg_cpy_gadget_name}
+	 */
 	USBG_TEST_TS("test_cpy_gadget_name_simple",
 		     test_cpy_gadget_name, setup_simple_state),
-
-	/* Check if writting gadget name into buffer fail when
-	 * invalid parameters are passed */
+	/**
+	 * @usbg_test
+	 * @test_desc{test_cpy_gadget_name_fail_simple,
+	 * Check if writting gadget name into buffer fail when
+	 * invalid parameters are passed,
+	 * usbg_cpy_gadget_name}
+	 */
 	USBG_TEST_TS("test_cpy_gadget_name_fail_simple",
 		     test_cpy_gadget_name_fail, setup_simple_state),
+
+#ifndef DOXYGEN
 };
+#endif
+
+/**
+ * @usbg_test
+ * @tests_end
+ */
 
 #define TESTS_TAG "tests"
 /* for autotools compability */
