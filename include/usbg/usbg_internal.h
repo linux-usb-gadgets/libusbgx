@@ -279,6 +279,12 @@ static inline int usbg_set_string(const char *path, const char *name,
 	return usbg_write_string(path, name, attr, *(char **)val);
 }
 
+int usbg_get_ether_addr(const char *path, const char *name, const char *attr,
+			void *val);
+
+int usbg_set_ether_addr(const char *path, const char *name, const char *attr,
+			void *val);
+
 /*
  * return:
  * 0 - if not found
@@ -298,10 +304,16 @@ int usbg_get_config_node_int(config_setting_t *root,
 int usbg_get_config_node_string(config_setting_t *root,
 					      const char *node_name, void *val);
 
+int usbg_get_config_node_ether_addr(config_setting_t *root,
+					      const char *node_name, void *val);
+
 int usbg_set_config_node_int(config_setting_t *root,
 					   const char *node_name, void *val);
 
 int usbg_set_config_node_string(config_setting_t *root,
+					      const char *node_name, void *val);
+
+int usbg_set_config_node_ether_addr(config_setting_t *root,
 					      const char *node_name, void *val);
 
 #endif /* USBG_INTERNAL_H */

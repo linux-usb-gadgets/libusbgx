@@ -267,6 +267,31 @@ int usbg_check_dir(const char *path)
 
 
 
+int usbg_get_ether_addr(const char *path, const char *name,
+			      const char *attr, void *val)
+{
+	struct ether_addr *addr;
+	char str_addr[USBG_MAX_STR_LENGTH];
+	int ret;
+
+	ret = usbg_read_string_limited(path, name, attr,
+				       str_addr, sizeof(str_addr));
+	if (ret)
+		return ret;
+
+	addr = ether_aton_r(str_addr, val);
+	return addr ? 0 : USBG_ERROR_IO;
+}
+
+int usbg_set_ether_addr(const char *path, const char *name,
+			      const char *attr, void *val)
+{
+	char str_addr[USBG_MAX_STR_LENGTH];
+
+	usbg_ether_ntoa_r(val, str_addr);
+	return usbg_write_string(path, name, attr, str_addr);
+}
+
 int usbg_get_config_node_int(config_setting_t *root,
 					   const char *node_name, void *val)
 {
@@ -301,6 +326,22 @@ int usbg_get_config_node_string(config_setting_t *root,
 	return 1;
 }
 
+int usbg_get_config_node_ether_addr(config_setting_t *root,
+					      const char *node_name, void *val)
+{
+	const char *str_addr;
+	struct ether_addr *addr;
+	int ret;
+
+	ret = usbg_get_config_node_string(root, node_name, &str_addr);
+	if (ret)
+		return ret;
+
+	addr = usbg_ether_ntoa_r(str_addr, val);
+
+	return addr ? 0 : USBG_ERROR_INVALID_VALUE;
+}
+
 int usbg_set_config_node_int(config_setting_t *root,
 					   const char *node_name, void *val)
 {
@@ -329,5 +370,15 @@ int usbg_set_config_node_string(config_setting_t *root,
 	ret = config_setting_set_string(node, *(char **)val);
 
 	return ret == CONFIG_TRUE ? 0 : USBG_ERROR_OTHER_ERROR;
+}
+
+int usbg_set_config_node_ether_addr(config_setting_t *root,
+					      const char *node_name, void *val)
+{
+	char str_addr[USBG_MAX_STR_LENGTH];
+	char *ptr = str_addr;
+
+	usbg_ether_ntoa_r(val, str_addr);
+	return usbg_set_config_node_string(root, node_name, &ptr);
 }
 
