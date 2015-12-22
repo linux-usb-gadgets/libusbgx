@@ -262,20 +262,15 @@ extern void usbg_cleanup(usbg_state *s);
 extern const char *usbg_get_configfs_path(usbg_state *s);
 
 /**
- * @brief Get ConfigFS path length
- * @param s Pointer to state
- * @return Length of path or usbg_error if error occurred.
+ * @brief Get ConfigFS path into user buffer
+ * @param[in] s Pointer to state
+ * @param[out] buf Place where path should be stored
+ * @param[in] len Size of buffer
+ * @return Number of bytes placed into buf (excluding '\0') or the number of
+ *         characters which would have been written to the buffer if enough
+ *         space had been available. (just like snprintf() family).
  */
-extern size_t usbg_get_configfs_path_len(usbg_state *s);
-
-/**
- * @brief Copy ConfigFS path to buffer
- * @param s Pointer to state
- * @param buf Buffer where path should be copied
- * @param len Length of given buffer
- * @return 0 on success or usbg_error if error occurred.
- */
-extern int usbg_cpy_configfs_path(usbg_state *s, char *buf, size_t len);
+extern int usbg_get_configfs_path_s(usbg_state *s, char *buf, int len);
 
 /* USB gadget queries */
 
@@ -478,20 +473,15 @@ extern int usbg_get_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs);
 extern const char *usbg_get_gadget_name(usbg_gadget *g);
 
 /**
- * @brief Get gadget name length
- * @param g Gadget which name length should be returned
- * @return Length of name string or usbg_error if error occurred.
+ * @brief Get gadget name into user buffer
+ * @param[in] g Pointer to state
+ * @param[out] buf Place where name should be stored
+ * @param[in] len Size of buffer
+ * @return Number of bytes placed into buf (excluding '\0') or the number of
+ *         characters which would have been written to the buffer if enough
+ *         space had been available. (just like snprintf() family).
  */
-extern size_t usbg_get_gadget_name_len(usbg_gadget *g);
-
-/**
- * @brief Copy gadget name
- * @param g Pointer to gadget
- * @param buf Buffer where name should be copied
- * @param len Length of given buffer
- * @return 0 on success or usbg_error if error occurred.
- */
-extern int usbg_cpy_gadget_name(usbg_gadget *g, char *buf, size_t len);
+extern int usbg_get_gadget_name_s(usbg_gadget *g, char *buf, int len);
 
 /**
  * @brief Set the USB gadget vendor id
@@ -649,20 +639,15 @@ extern int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 extern const char *usbg_get_function_instance(usbg_function *f);
 
 /**
- * @brief Get function instance name length
- * @param f function which name length should be returned
- * @return Length of name string or usbg_error if error occurred.
+ * @brief Get function instance name into user buffer
+ * @param[in] f Pointer to function
+ * @param[out] buf Place where instance name should be stored
+ * @param[in] len Size of buffer
+ * @return Number of bytes placed into buf (excluding '\0') or the number of
+ *         characters which would have been written to the buffer if enough
+ *         space had been available. (just like snprintf() family).
  */
-extern size_t usbg_get_function_instance_len(usbg_function *f);
-
-/**
- * @brief Copy function instance name
- * @param f Pointer to function
- * @param buf Buffer where instance name should be copied
- * @param len Length of given buffer
- * @return 0 on success or usbg_error if error occurred.
- */
-extern int usbg_cpy_function_instance(usbg_function *f, char *buf, size_t len);
+extern int usbg_get_function_instance_s(usbg_function *f, char *buf, int len);
 
 /**
  * @brief Get function type as a string
@@ -744,20 +729,15 @@ extern int usbg_create_config(usbg_gadget *g, int id, const char *label,
 extern const char *usbg_get_config_label(usbg_config *c);
 
 /**
- * @brief Get config label length
- * @param c Config which label length should be returned
- * @return Length of label or usbg_error if error occurred.
+ * @brief Get config label into user buffer
+ * @param[in] c Pointer to config
+ * @param[out] buf Place where label should be stored
+ * @param[in] len Size of buffer
+ * @return Number of bytes placed into buf (excluding '\0') or the number of
+ *         characters which would have been written to the buffer if enough
+ *         space had been available. (just like snprintf() family).
  */
-extern size_t usbg_get_config_label_len(usbg_config *c);
-
-/**
- * @brief Copy config label
- * @param c Pointer to config
- * @param buf Buffer where label should be copied
- * @param len Length of given buffer
- * @return 0 on success or usbg_error if error occurred.
- */
-extern int usbg_cpy_config_label(usbg_config *c, char *buf, size_t len);
+extern int usbg_get_config_label_s(usbg_config *c, char *buf, int len);
 
 /**
  * @brief Get config id
@@ -856,20 +836,15 @@ extern usbg_function *usbg_get_binding_target(usbg_binding *b);
 extern const char *usbg_get_binding_name(usbg_binding *b);
 
 /**
- * @brief Get binding name length
- * @param b Binding which name length should be returned
- * @return Length of name string or usbg_error if error occurred.
+ * @brief Get binding name into user buffer
+ * @param[in] b Pointer to binding
+ * @param[out] buf Place where binding name should be stored
+ * @param[in] len Size of buffer
+ * @return Number of bytes placed into buf (excluding '\0') or the number of
+ *         characters which would have been written to the buffer if enough
+ *         space had been available. (just like snprintf() family).
  */
-extern size_t usbg_get_binding_name_len(usbg_binding *b);
-
-/**
- * @brief Copy binding name
- * @param b Pointer to binding
- * @param buf Buffer where name should be copied
- * @param len Length of given buffer
- * @return 0 on success or usbg_error if error occurred.
- */
-extern int usbg_cpy_binding_name(usbg_binding *b, char *buf, size_t len);
+extern int usbg_get_binding_name_s(usbg_binding *b, char *buf, int len);
 
 /* USB gadget setup and teardown */
 
@@ -900,21 +875,15 @@ extern int usbg_disable_gadget(usbg_gadget *g);
 extern const char *usbg_get_udc_name(usbg_udc *u);
 
 /**
- * @brief Get gadget name length
- * @param g Gadget which name length should be returned
- * @return Length of name string or usbg_error if error occurred.
- * @note If gadget isn't enabled on any udc returned size is 0.
+ * @brief Get udc name into user buffer
+ * @param[in] u Pointer to udc
+ * @param[out] buf Place where udc name should be stored
+ * @param[in] len Size of buffer
+ * @return Number of bytes placed into buf (excluding '\0') or the number of
+ *         characters which would have been written to the buffer if enough
+ *         space had been available. (just like snprintf() family).
  */
-extern size_t usbg_get_gadget_udc_len(usbg_gadget *g);
-
-/**
- * @brief Copy name of udc
- * @param u Pointer to udc
- * @param buf Buffer where udc name should be copied
- * @param len Length of given buffer
- * @return 0 on success or usbg_error if error occurred.
- */
-extern int usbg_cpy_udc_name(usbg_udc *u, char *buf, size_t len);
+extern int usbg_get_udc_name_s(usbg_udc *u, char *buf, int len);
 
 /**
  * @brief Get udc to which gadget is bound
