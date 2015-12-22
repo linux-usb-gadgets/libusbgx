@@ -660,10 +660,11 @@ static void test_get_gadget_name(void **state)
 static void try_get_gadget_name_len(usbg_gadget *g, struct test_gadget *tg)
 {
 	int len;
+	char buf;
 	int expected;
 
 	expected = strlen(tg->name);
-	len = usbg_get_gadget_name_len(g);
+	len = usbg_get_gadget_name_s(g, &buf, 0);
 	assert_int_equal(len, expected);
 }
 
@@ -693,13 +694,13 @@ static void test_get_gadget_name_fail(void **state)
 	assert_null(name);
 }
 
-static void try_cpy_gadget_name(usbg_gadget *g, struct test_gadget *tg)
+static void try_get_gadget_name_s(usbg_gadget *g, struct test_gadget *tg)
 {
 	char name[USBG_MAX_NAME_LENGTH];
 	int ret;
 
-	ret = usbg_cpy_gadget_name(g, name, USBG_MAX_NAME_LENGTH);
-	assert_int_equal(ret, USBG_SUCCESS);
+	ret = usbg_get_gadget_name_s(g, name, USBG_MAX_NAME_LENGTH);
+	assert_int_equal(ret, strlen(tg->name));
 	assert_string_equal(name, tg->name);
 }
 
@@ -707,13 +708,13 @@ static void try_cpy_gadget_name(usbg_gadget *g, struct test_gadget *tg)
  * @brief Tests copying gadget's name
  * @details Check if copying gadget name copy actual name correctly
  */
-static void test_cpy_gadget_name(void **state)
+static void test_get_gadget_name_s(void **state)
 {
 	usbg_state *s = NULL;
 	struct test_state *ts;
 
 	safe_init_with_state(state, &ts, &s);
-	for_each_test_gadget(ts, s, try_cpy_gadget_name);
+	for_each_test_gadget(ts, s, try_get_gadget_name_s);
 }
 
 /**
@@ -722,7 +723,7 @@ static void test_cpy_gadget_name(void **state)
  * or give invalid buffer length, or invalid gadget will be handled by library
  * and return correct error codes
  */
-static void test_cpy_gadget_name_fail(void **state)
+static void test_get_gadget_name_s_fail(void **state)
 {
 	usbg_gadget *g = NULL;
 	usbg_state *s = NULL;
@@ -737,14 +738,11 @@ static void test_cpy_gadget_name_fail(void **state)
 		g = usbg_get_gadget(s, st->gadgets[i].name);
 		assert_non_null(g);
 
-		ret = usbg_cpy_gadget_name(g, name, 0);
-		assert_int_equal(ret, USBG_ERROR_INVALID_PARAM);
-
-		ret = usbg_cpy_gadget_name(g, NULL, USBG_MAX_NAME_LENGTH);
+		ret = usbg_get_gadget_name_s(g, NULL, USBG_MAX_NAME_LENGTH);
 		assert_int_equal(ret, USBG_ERROR_INVALID_PARAM);
 	}
 
-	ret = usbg_cpy_gadget_name(NULL, name, USBG_MAX_NAME_LENGTH);
+	ret = usbg_get_gadget_name_s(NULL, name, USBG_MAX_NAME_LENGTH);
 	assert_int_equal(ret, USBG_ERROR_INVALID_PARAM);
 }
 
@@ -923,18 +921,18 @@ static void test_get_function_instance(void **state)
  * @param[in] f Usbg function
  * @param[in] tf Test function which should match f
  */
-static void try_cpy_function_instance(usbg_function *f, struct test_function *tf)
+static void try_get_function_instance_s(usbg_function *f, struct test_function *tf)
 {
 	char str[USBG_MAX_NAME_LENGTH];
 	int ret;
 	int small_len = 2;
 
-	ret = usbg_cpy_function_instance(f, str, USBG_MAX_NAME_LENGTH);
-	assert_int_equal(ret, USBG_SUCCESS);
+	ret = usbg_get_function_instance_s(f, str, USBG_MAX_NAME_LENGTH);
+	assert_int_equal(ret, strlen(tf->instance));
 	assert_string_equal(str, tf->instance);
 
-	ret = usbg_cpy_function_instance(f, str, small_len);
-	assert_int_equal(ret, USBG_SUCCESS);
+	ret = usbg_get_function_instance_s(f, str, small_len);
+	assert_int_equal(ret, strlen(tf->instance));
 	assert_memory_equal(str, tf->instance, small_len - 1);
 	assert_int_equal(str[small_len - 1], '\0');
 }
@@ -944,13 +942,13 @@ static void try_cpy_function_instance(usbg_function *f, struct test_function *tf
  * @param[in] state Pointer to pointer to correctly initialized state
  * @details Check if buffer contains expected string
  */
-static void test_cpy_function_instance(void **state)
+static void test_get_function_instance_s(void **state)
 {
 	usbg_state *s = NULL;
 	struct test_state *ts;
 
 	safe_init_with_state(state, &ts, &s);
-	for_each_test_function(ts, s, try_cpy_function_instance);
+	for_each_test_function(ts, s, try_get_function_instance_s);
 }
 
 /**
@@ -989,7 +987,9 @@ static void test_get_function_type(void **state)
 static void try_get_function_instance_len(usbg_function *f, struct test_function *tf)
 {
 	size_t len;
-	len = usbg_get_function_instance_len(f);
+	char buf;
+
+	len = usbg_get_function_instance_s(f, &buf, 0);
 	assert_int_equal(len, strlen(tf->instance));
 }
 
@@ -1034,11 +1034,12 @@ static void test_get_configfs_path_len(void **state)
 {
 	usbg_state *s = NULL;
 	struct test_state *st;
+	char buf;
 	int ret, len;
 
 	safe_init_with_state(state, &st, &s);
 
-	ret = usbg_get_configfs_path_len(s);
+	ret = usbg_get_configfs_path_s(s, &buf, 0);
 	len = strlen(st->configfs_path);
 	assert_int_equal(ret, len);
 }
@@ -1048,7 +1049,7 @@ static void test_get_configfs_path_len(void **state)
  * @param[in,out] state Pointer to pointer to correctly initialized test state.
  * When finished, it contains pointer to usbg_state which should be cleaned.
  */
-static void test_cpy_configfs_path(void **state)
+static void test_get_configfs_path_s(void **state)
 {
 	usbg_state *s = NULL;
 	struct test_state *st;
@@ -1057,8 +1058,8 @@ static void test_cpy_configfs_path(void **state)
 
 	safe_init_with_state(state, &st, &s);
 
-	ret = usbg_cpy_configfs_path(s, path, PATH_MAX);
-	assert_int_equal(ret, USBG_SUCCESS);
+	ret = usbg_get_configfs_path_s(s, path, PATH_MAX);
+	assert_int_equal(ret, strlen(st->configfs_path));
 	assert_path_equal(path, st->configfs_path);
 }
 
@@ -1534,8 +1535,9 @@ static void test_get_binding_name(void **state)
 static void try_get_binding_name_len(struct test_binding *tb, usbg_binding *b)
 {
 	int n;
+	char buf;
 
-	n = usbg_get_binding_name_len(b);
+	n = usbg_get_binding_name_s(b, &buf, 0);
 	assert_int_equal(n, strlen(tb->name));
 }
 
@@ -1953,21 +1955,21 @@ static struct CMUnitTest tests[] = {
 	unit_test(test_get_gadget_name_fail),
 	/**
 	 * @usbg_test
-	 * @test_desc{test_cpy_gadget_name_simple,
+	 * @test_desc{test_get_gadget_name_s_simple,
 	 * Check if getting simple gadget name into buffer work as expected,
-	 * usbg_cpy_gadget_name}
+	 * usbg_get_gadget_name_s}
 	 */
-	USBG_TEST_TS("test_cpy_gadget_name_simple",
-		     test_cpy_gadget_name, setup_simple_state),
+	USBG_TEST_TS("test_get_gadget_name_s_simple",
+		     test_get_gadget_name_s, setup_simple_state),
 	/**
 	 * @usbg_test
-	 * @test_desc{test_cpy_gadget_name_fail_simple,
+	 * @test_desc{test_get_gadget_name_s_fail_simple,
 	 * Check if writting gadget name into buffer fail when
 	 * invalid parameters are passed,
-	 * usbg_cpy_gadget_name}
+	 * usbg_get_gadget_name_s}
 	 */
-	USBG_TEST_TS("test_cpy_gadget_name_fail_simple",
-		     test_cpy_gadget_name_fail, setup_simple_state),
+	USBG_TEST_TS("test_get_gadget_name_s_fail_simple",
+		     test_get_gadget_name_s_fail, setup_simple_state),
 	/**
 	* @usbg_test
 	 * @test_desc{test_get_function_simple,
@@ -2012,12 +2014,12 @@ static struct CMUnitTest tests[] = {
 		     test_get_function_instance, setup_simple_state),
 	/**
 	 * @usbg_test
-	 * @test_desc{test_cpy_function_instance_simple,
+	 * @test_desc{test_get_function_instance_s_simple,
 	 * Check if copying simple instance into buffer returns what expected,
-	 * usbg_cpy_function_instance}
+	 * usbg_get_function_instance_s}
 	 */
-	USBG_TEST_TS("test_cpy_function_instance_simple",
-		     test_cpy_function_instance, setup_all_funcs_state),
+	USBG_TEST_TS("test_get_function_instance_s_simple",
+		     test_get_function_instance_s, setup_all_funcs_state),
 	/**
 	 * @usbg_test
 	 * @test_desc{test_get_function_type_simple,
@@ -2074,12 +2076,12 @@ static struct CMUnitTest tests[] = {
 		     test_get_configfs_path_len, setup_simple_state),
 	/**
 	 * @usbg_test
-	 * @test_desc{test_cpy_configfs_path_simple,
+	 * @test_desc{test_get_configfs_path_s_simple,
 	 * Copy simple configfs path into buffer and compare with original,
-	 * usbg_cpy_configfs_path}
+	 * usbg_get_configfs_path_s}
 	 */
-	USBG_TEST_TS("test_cpy_configfs_path_simple",
-		     test_cpy_configfs_path, setup_simple_state),
+	USBG_TEST_TS("test_get_configfs_path_s_simple",
+		     test_get_configfs_path_s, setup_simple_state),
 	/**
 	 * @usbg_test
 	 * @test_desc{test_get_config_simple,
