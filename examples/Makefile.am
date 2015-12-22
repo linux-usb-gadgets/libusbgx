@@ -5,5 +5,5 @@ gadget_vid_pid_remove_SOURCES = gadget-vid-pid-remove.c
 gadget_ffs_SOURCES = gadget-ffs.c
 gadget_export_SOURCE = gadget-export.c
 gadget_import_SOURCE = gadget-import.c
-AM_CPPFLAGS=-I../include/
+AM_CPPFLAGS=-I$(top_srcdir)/include/
 AM_LDFLAGS=-L../src/ -lusbgx
