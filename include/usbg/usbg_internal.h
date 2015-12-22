@@ -13,7 +13,13 @@
 #include <sys/queue.h>
 #include <string.h>
 #include <usbg/usbg.h>
+
+#ifdef HAS_GADGET_SCHEMES
 #include <libconfig.h>
+#else
+	typedef struct _should_not_be_used config_t;
+	void config_destroy(config_t *config);
+#endif
 
 struct usbg_state
 {

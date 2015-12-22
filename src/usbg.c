@@ -26,8 +26,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <libconfig.h>
-
 #include "usbg/usbg_internal.h"
 
 /**

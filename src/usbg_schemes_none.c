@@ -87,3 +87,8 @@ int usbg_get_gadget_import_error_line(__attribute__ ((unused)) usbg_state *s)
 {
 	return USBG_ERROR_NOT_SUPPORTED;
 }
+
+void config_destroy(__attribute__ ((unused)) config_t *config)
+{
+	return;
+}
