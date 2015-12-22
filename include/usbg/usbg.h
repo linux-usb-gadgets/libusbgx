@@ -236,7 +236,7 @@ typedef struct {
  * @typedef usbg_f_ms_attrs
  * @brief Attributes for mass storage functions
  */
-typedef struct usbg_f_ms_lun_attrs {
+typedef struct {
 	int id;
 	bool cdrom;
 	bool ro;
