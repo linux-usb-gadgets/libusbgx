@@ -12,7 +12,9 @@
 
 #include "usbg/usbg.h"
 #include "usbg/usbg_internal.h"
+#include "usbg/function/ffs.h"
 
+#include <malloc.h>
 #ifdef HAS_LIBCONFIG
 #include <libconfig.h>
 #endif
@@ -48,11 +50,10 @@ static int ffs_get_attrs(struct usbg_function *f,
 	usbg_f_ffs_attrs *ffs_attrs = &(f_attrs->attrs.ffs);
 	int ret = USBG_SUCCESS;
 
-	ffs_attrs->dev_name = strdup(f->instance);
-	if (!ffs_attrs->dev_name) {
-		ret = USBG_ERROR_NO_MEM;
+	ret = usbg_f_fs_get_dev_name(usbg_to_fs_function(f),
+				     (char **)&ffs_attrs->dev_name);
+	if (ret)
 		goto out;
-	}
 
 	f_attrs->header.attrs_type = USBG_F_ATTRS_FFS;
 out:
@@ -88,3 +89,37 @@ struct usbg_function_type usbg_f_type_ffs = {
 	.import = ffs_libconfig_import,
 	.export = ffs_libconfig_export,
 };
+
+/* API implementation */
+
+usbg_f_fs *usbg_to_fs_function(usbg_function *f)
+{
+	return f->ops == &usbg_f_type_ffs ?
+		container_of(f, struct usbg_f_fs, func) : NULL;
+}
+
+usbg_function *usbg_from_fs_function(usbg_f_fs *ff)
+{
+	return &ff->func;
+}
+
+int usbg_f_fs_get_dev_name(usbg_f_fs *ff, char **dev_name)
+{
+	if (!ff || !dev_name)
+		return USBG_ERROR_INVALID_PARAM;
+
+	*dev_name = strdup(ff->func.instance);
+	if (!*dev_name)
+		return USBG_ERROR_NO_MEM;
+
+	return 0;
+}
+
+int usbg_f_fs_get_dev_name_s(usbg_f_fs *ff, char *buf, int len)
+{
+	if (!ff || !buf)
+		return USBG_ERROR_INVALID_PARAM;
+
+	return snprintf(buf, len, "%s", ff->func.instance);
+}
+
