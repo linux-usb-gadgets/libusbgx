@@ -12,6 +12,7 @@
 
 #include "usbg/usbg.h"
 #include "usbg/usbg_internal.h"
+#include "usbg/function/phonet.h"
 
 #include <malloc.h>
 #ifdef HAS_LIBCONFIG
@@ -48,8 +49,8 @@ static int phonet_get_attrs(struct usbg_function *f,
 {
 	int ret;
 
-	ret = usbg_read_string_alloc(f->path, f->name, "ifname",
-				     &(f_attrs->attrs.phonet.ifname));
+	ret = usbg_f_phonet_get_ifname(usbg_to_phonet_function(f),
+				       (char **)&(f_attrs->attrs.phonet.ifname));
 	if (ret != USBG_SUCCESS)
 		goto out;
 
@@ -87,3 +88,48 @@ struct usbg_function_type usbg_f_type_phonet = {
 	.import = phonet_libconfig_import,
 	.export = phonet_libconfig_export,
 };
+
+/* API implementation */
+
+usbg_f_phonet *usbg_to_phonet_function(usbg_function *f)
+{
+	return f->ops == &usbg_f_type_phonet ?
+		container_of(f, struct usbg_f_phonet, func) : NULL;
+}
+
+usbg_function *usbg_from_phonet_function(usbg_f_phonet *pf)
+{
+	return &pf->func;
+}
+
+int usbg_f_phonet_get_ifname(usbg_f_phonet *pf, char **ifname)
+{
+	struct usbg_function *f = &pf->func;
+
+	if (!pf || !ifname)
+		return USBG_ERROR_INVALID_PARAM;
+
+	return usbg_read_string_alloc(f->path, f->name, "ifname", ifname);
+}
+
+int usbg_f_phonet_get_ifname_s(usbg_f_phonet *pf, char *buf, int len)
+{
+	struct usbg_function *f = &pf->func;
+	int ret;
+
+	if (!pf || !buf)
+		return USBG_ERROR_INVALID_PARAM;
+
+	/*
+	 * TODO:
+	 * Rework usbg_common to make this function consistent with doc.
+	 * This below is only an ugly hack
+	 */
+	ret = usbg_read_string_limited(f->path, f->name, "ifname", buf, len);
+	if (ret)
+		goto out;
+
+	ret = strlen(buf);
+out:	
+	return ret;
+}
