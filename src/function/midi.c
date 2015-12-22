@@ -12,6 +12,7 @@
 
 #include "usbg/usbg.h"
 #include "usbg/usbg_internal.h"
+#include "usbg/function/midi.h"
 
 #include <malloc.h>
 #ifdef HAS_LIBCONFIG
@@ -22,6 +23,45 @@ struct usbg_f_midi {
 	struct usbg_function func;
 };
 
+#define MIDI_DEC_ATTR(_name)						\
+	{								\
+		.name = #_name,						\
+		.offset = offsetof(struct usbg_f_midi_attrs, _name),    \
+		.get = usbg_get_dec,				        \
+		.set = usbg_set_dec,				        \
+		.import = usbg_get_config_node_string,	                \
+		.export = usbg_set_config_node_string,		        \
+	}
+
+#define MIDI_STRING_ATTR(_name)						\
+	{								\
+		.name = #_name,						\
+		.offset = offsetof(struct usbg_f_midi_attrs, _name),    \
+		.get = usbg_get_string,				        \
+		.set = usbg_set_string,				        \
+		.import = usbg_get_config_node_string,		        \
+		.export = usbg_set_config_node_string,		        \
+	}
+
+struct {
+	const char *name;
+	size_t offset;
+	usbg_attr_get_func get;
+	usbg_attr_set_func set;
+	usbg_import_node_func import;
+	usbg_export_node_func export;
+} midi_attr[USBG_F_MIDI_ATTR_MAX] = {
+	[USBG_F_MIDI_INDEX] = MIDI_DEC_ATTR(index),
+	[USBG_F_MIDI_ID] = MIDI_STRING_ATTR(id),
+	[USBG_F_MIDI_IN_PORTS] = MIDI_DEC_ATTR(in_ports),
+	[USBG_F_MIDI_OUT_PORTS] = MIDI_DEC_ATTR(out_ports),
+	[USBG_F_MIDI_BUFLEN] = MIDI_DEC_ATTR(buflen),
+	[USBG_F_MIDI_QLEN] = MIDI_DEC_ATTR(qlen),
+};
+
+#undef MIDI_DEC_ATTR
+#undef MIDI_STRING_ATTR
+
 GENERIC_ALLOC_INST(midi, struct usbg_f_midi, func);
 
 GENERIC_FREE_INST(midi, struct usbg_f_midi, func);
@@ -30,37 +70,13 @@ static int midi_set_attrs(struct usbg_function *f,
 			  const usbg_function_attrs *f_attrs)
 {
 	const usbg_f_midi_attrs *attrs = &f_attrs->attrs.midi;
-	int ret = USBG_ERROR_INVALID_PARAM;
 
 	if (f_attrs->header.attrs_type &&
 	    f_attrs->header.attrs_type != USBG_F_ATTRS_MIDI)
-		goto out;
+		return USBG_ERROR_INVALID_PARAM;
 
-	ret = usbg_write_dec(f->path, f->name, "index", attrs->index);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_string(f->path, f->name, "id", attrs->id);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_dec(f->path, f->name, "in_ports", attrs->in_ports);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_dec(f->path, f->name, "out_ports", attrs->out_ports);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_dec(f->path, f->name, "buflen", attrs->buflen);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_dec(f->path, f->name, "qlen", attrs->qlen);
-
-out:
-	return ret;
-
+	return usbg_f_midi_set_attrs(usbg_to_midi_function(f),
+				    (struct usbg_f_midi_attrs *)attrs);
 }
 
 static int midi_get_attrs(struct usbg_function *f,
@@ -69,27 +85,8 @@ static int midi_get_attrs(struct usbg_function *f,
 	int ret;
 	usbg_f_midi_attrs *attrs = &f_attrs->attrs.midi;
 
-	ret = usbg_read_dec(f->path, f->name, "index", &(attrs->index));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_string_alloc(f->path, f->name, "id", &(attrs->id));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_dec(f->path, f->name, "in_ports", (int*)&(attrs->in_ports));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_dec(f->path, f->name, "out_ports", (int*)&(attrs->out_ports));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_dec(f->path, f->name, "buflen", (int*)&(attrs->buflen));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_dec(f->path, f->name, "qlen", (int*)&(attrs->qlen));
+	ret = usbg_f_midi_get_attrs(usbg_to_midi_function(f),
+				    (struct usbg_f_midi_attrs *)attrs);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
@@ -110,113 +107,46 @@ static void midi_cleanup_attrs(struct usbg_function *f,
 static int midi_libconfig_import(struct usbg_function *f,
 				  config_setting_t *root)
 {
-	config_setting_t *node;
-	int ret = USBG_ERROR_NO_MEM;
-	int tmp;
-	usbg_function_attrs attrs;
-	usbg_f_midi_attrs *midi_attrs = &attrs.attrs.midi;
+	struct usbg_f_midi *mf = usbg_to_midi_function(f);
+	union usbg_f_midi_attr_val val;
+	int i;
+	int ret = 0;
 
-	attrs.header.attrs_type = USBG_F_ATTRS_MIDI;
+	for (i = USBG_F_MIDI_ATTR_MIN; i < USBG_F_MIDI_ATTR_MAX; ++i) {
+		ret = midi_attr[i].import(root, midi_attr[i].name, &val);
+		/* node not  found */
+		if (ret == 0)
+			continue;
+		/* error */
+		if (ret < 0)
+			break;
 
-#define ADD_F_MIDI_INT_ATTR(attr, defval, minval)			\
-	do {								\
-		node = config_setting_get_member(root, #attr);		\
-		if (node) {						\
-			if (!usbg_config_is_int(node)) {		\
-				ret = USBG_ERROR_INVALID_TYPE;		\
-				goto out;				\
-			}						\
-			tmp = config_setting_get_int(node);		\
-			if (tmp < minval) {				\
-				ret = USBG_ERROR_INVALID_VALUE;		\
-				goto out;				\
-			}						\
-			midi_attrs->attr = tmp;				\
-		} else {						\
-			midi_attrs->attr = defval;			\
-		}							\
-	} while (0)
-
-	ADD_F_MIDI_INT_ATTR(index, -1, INT_MIN);
-	ADD_F_MIDI_INT_ATTR(in_ports, 1, 0);
-	ADD_F_MIDI_INT_ATTR(out_ports, 1, 0);
-	ADD_F_MIDI_INT_ATTR(buflen, 256, 0);
-	ADD_F_MIDI_INT_ATTR(qlen, 32, 0);
-
-#undef ADD_F_MIDI_INT_ATTR
-
-	node = config_setting_get_member(root, "id");
-	if (node) {
-		if (!usbg_config_is_string(node)) {
-			ret = USBG_ERROR_INVALID_TYPE;
-			goto out;
-		}
-
-		midi_attrs->id = config_setting_get_string(node);
-	} else {
-		midi_attrs->id = "";
+		ret = usbg_f_midi_set_attr_val(mf, i, val);
+		if (ret)
+			break;
 	}
 
-
-	ret = usbg_set_function_attrs(f, &attrs);
-out:
 	return ret;
 }
 
 static int midi_libconfig_export(struct usbg_function *f,
 				  config_setting_t *root)
 {
-	config_setting_t *node;
-	int cfg_ret, usbg_ret;
-	usbg_function_attrs f_attrs;
-	usbg_f_midi_attrs *attrs = &f_attrs.attrs.midi;
-	int ret = USBG_ERROR_NO_MEM;
+	struct usbg_f_midi *mf = usbg_to_midi_function(f);
+	union usbg_f_midi_attr_val val;
+	int i;
+	int ret = 0;
 
-	usbg_ret = midi_get_attrs(f, &f_attrs);
-	if (usbg_ret != USBG_SUCCESS) {
-		ret = usbg_ret;
-		goto out;
+	for (i = USBG_F_MIDI_ATTR_MIN; i < USBG_F_MIDI_ATTR_MAX; ++i) {
+		ret = usbg_f_midi_get_attr_val(mf, i, &val);
+		if (ret)
+			break;
+
+		ret = midi_attr[i].export(root, midi_attr[i].name, &val);
+		if (ret)
+			break;
 	}
 
-#define ADD_F_MIDI_INT_ATTR(attr, minval)				\
-	do { 								\
-		if ((int)attrs->attr < minval) {			\
-			ret = USBG_ERROR_INVALID_VALUE;			\
-			goto cleanup;					\
-		}							\
-		node = config_setting_add(root, #attr, CONFIG_TYPE_INT);\
-		if (!node) 						\
-			goto cleanup; 					\
-		cfg_ret = config_setting_set_int(node, attrs->attr); 	\
-		if (cfg_ret != CONFIG_TRUE) { 				\
-			ret = USBG_ERROR_OTHER_ERROR; 			\
-			goto cleanup; 					\
-		}							\
-	} while (0)
-
-	ADD_F_MIDI_INT_ATTR(index, INT_MIN);
-
-	node = config_setting_add(root, "id", CONFIG_TYPE_STRING);
-	if (!node)
-		goto cleanup;
-
-	cfg_ret = config_setting_set_string(node, attrs->id);
-	if (cfg_ret != CONFIG_TRUE) {
-		ret = USBG_ERROR_OTHER_ERROR;
-		goto cleanup;
-	}
-
-	ADD_F_MIDI_INT_ATTR(in_ports, 0);
-	ADD_F_MIDI_INT_ATTR(out_ports, 0);
-	ADD_F_MIDI_INT_ATTR(buflen, 0);
-	ADD_F_MIDI_INT_ATTR(qlen, 0);
-
-#undef ADD_F_MIDI_INT_ATTR
-
-	ret = USBG_SUCCESS;
-cleanup:
-	midi_cleanup_attrs(f, &f_attrs);
-out:
 	return ret;
 }
 
@@ -236,3 +166,90 @@ struct usbg_function_type usbg_f_type_midi = {
 #endif
 };
 
+/* API implementation */
+
+usbg_f_midi *usbg_to_midi_function(usbg_function *f)
+{
+	return f->ops == &usbg_f_type_midi ?
+		container_of(f, struct usbg_f_midi, func) : NULL;
+}
+
+usbg_function *usbg_from_midi_function(usbg_f_midi *mf)
+{
+	return &mf->func;
+}
+
+int usbg_f_midi_get_attrs(usbg_f_midi *mf,
+			  struct usbg_f_midi_attrs *attrs)
+{
+	int i;
+	int ret = 0;
+
+	for (i = USBG_F_MIDI_ATTR_MIN; i < USBG_F_MIDI_ATTR_MAX; ++i) {
+		ret = usbg_f_midi_get_attr_val(mf, i,
+					       (union usbg_f_midi_attr_val *)
+					       ((char *)attrs
+						+ midi_attr[i].offset));
+		if (ret)
+			break;
+	}
+
+	return ret;
+
+}
+
+int usbg_f_midi_set_attrs(usbg_f_midi *mf,
+			 const struct usbg_f_midi_attrs *attrs)
+{
+	int i;
+	int ret = 0;
+
+	for (i = USBG_F_MIDI_ATTR_MIN; i < USBG_F_MIDI_ATTR_MAX; ++i) {
+		ret = usbg_f_midi_set_attr_val(mf, i,
+					       *(union usbg_f_midi_attr_val *)
+					       ((char *)attrs
+						+ midi_attr[i].offset));
+		if (ret)
+			break;
+	}
+
+	return ret;
+
+}
+
+int usbg_f_midi_get_attr_val(usbg_f_midi *mf, enum usbg_f_midi_attr attr,
+			    union usbg_f_midi_attr_val *val)
+{
+	return midi_attr[attr].get(mf->func.path, mf->func.name,
+				    midi_attr[attr].name, val);
+}
+
+int usbg_f_midi_set_attr_val(usbg_f_midi *mf, enum usbg_f_midi_attr attr,
+			    union usbg_f_midi_attr_val val)
+{
+	return midi_attr[attr].set(mf->func.path, mf->func.name,
+				    midi_attr[attr].name, &val);
+}
+
+int usbg_f_midi_get_id_s(usbg_f_midi *mf, char *buf, int len)
+{
+	struct usbg_function *f;
+	int ret;
+
+	if (!mf || !buf)
+		return USBG_ERROR_INVALID_PARAM;
+
+	f = &mf->func;
+	/*
+	 * TODO:
+	 * Rework usbg_common to make this function consistent with doc.
+	 * This below is only an ugly hack
+	 */
+	ret = usbg_read_string_limited(f->path, f->name, "id", buf, len);
+	if (ret)
+		goto out;
+
+	ret = strlen(buf);
+out:
+	return ret;
+}
