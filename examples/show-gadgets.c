@@ -19,6 +19,12 @@
 #include <string.h>
 #include <netinet/ether.h>
 #include <usbg/usbg.h>
+#include <usbg/function/ms.h>
+#include <usbg/function/net.h>
+#include <usbg/function/ffs.h>
+#include <usbg/function/phonet.h>
+#include <usbg/function/midi.h>
+
 
 /**
  * @file show-gadgets.c
@@ -91,7 +97,14 @@ void show_function(usbg_function *f)
 	const char *instance;
 	usbg_function_type type;
 	int usbg_ret;
-	usbg_function_attrs f_attrs;
+	union {
+		struct usbg_f_net_attrs net;
+		char *ffs_dev_name;
+		struct usbg_f_ms_attrs ms;
+		struct usbg_f_midi_attrs midi;
+		int serial_port_num;
+		char *phonet_ifname;
+	} f_attrs;
 
 	instance = usbg_get_function_instance(f);
 	if (!instance) {
@@ -110,15 +123,21 @@ void show_function(usbg_function *f)
 	fprintf(stdout, "  Function, type: %s instance: %s\n",
 			usbg_get_function_type_str(type), instance);
 
-	switch (f_attrs.header.attrs_type) {
-	case USBG_F_ATTRS_SERIAL:
+	switch (type) {
+	case F_ACM:
+	case F_OBEX:
+	case F_SERIAL:
 		fprintf(stdout, "    port_num\t\t%d\n",
-				f_attrs.attrs.serial.port_num);
+				f_attrs.serial_port_num);
 		break;
 
-	case USBG_F_ATTRS_NET:
+	case F_ECM:
+	case F_SUBSET:
+	case F_NCM:
+	case F_EEM:
+	case F_RNDIS:
 	{
-		usbg_f_net_attrs *f_net_attrs = &f_attrs.attrs.net;
+		struct usbg_f_net_attrs *f_net_attrs = &f_attrs.net;
 
 		fprintf(stdout, "    dev_addr\t\t%s\n",
 			ether_ntoa(&f_net_attrs->dev_addr));
@@ -129,17 +148,17 @@ void show_function(usbg_function *f)
 		break;
 	}
 
-	case USBG_F_ATTRS_PHONET:
-		fprintf(stdout, "    ifname\t\t%s\n", f_attrs.attrs.phonet.ifname);
+	case F_PHONET:
+		fprintf(stdout, "    ifname\t\t%s\n", f_attrs.phonet_ifname);
 		break;
 
-	case USBG_F_ATTRS_FFS:
-		fprintf(stdout, "    dev_name\t\t%s\n", f_attrs.attrs.ffs.dev_name);
+	case F_FFS:
+		fprintf(stdout, "    dev_name\t\t%s\n", f_attrs.ffs_dev_name);
 		break;
 
-	case USBG_F_ATTRS_MS:
+	case F_MASS_STORAGE:
 	{
-		usbg_f_ms_attrs *attrs = &f_attrs.attrs.ms;
+		struct usbg_f_ms_attrs *attrs = &f_attrs.ms;
 		int i;
 
 		fprintf(stdout, "    stall\t\t%d\n", attrs->stall);
@@ -150,14 +169,14 @@ void show_function(usbg_function *f)
 			fprintf(stdout, "      ro\t\t%d\n", attrs->luns[i]->ro);
 			fprintf(stdout, "      nofua\t\t%d\n", attrs->luns[i]->nofua);
 			fprintf(stdout, "      removable\t\t%d\n", attrs->luns[i]->removable);
-			fprintf(stdout, "      file\t\t%s\n", attrs->luns[i]->filename);
+			fprintf(stdout, "      file\t\t%s\n", attrs->luns[i]->file);
 		}
 		break;
 	}
 
-	case USBG_F_ATTRS_MIDI:
+	case F_MIDI:
 	{
-		usbg_f_midi_attrs *attrs = &f_attrs.attrs.midi;
+		struct usbg_f_midi_attrs *attrs = &f_attrs.midi;
 
 		fprintf(stdout, "    index\t\t%d\n", attrs->index);
 		fprintf(stdout, "    id\t\t\t%s\n", attrs->id);
@@ -172,7 +191,7 @@ void show_function(usbg_function *f)
 		fprintf(stdout, "    UNKNOWN\n");
 	}
 
-	usbg_cleanup_function_attrs(&f_attrs);
+	usbg_cleanup_function_attrs(f, &f_attrs);
 }
 
 void show_config(usbg_config *c)

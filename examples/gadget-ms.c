@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <linux/usb/ch9.h>
 #include <usbg/usbg.h>
+#include <usbg/function/ms.h>
 
 #define VENDOR          0x1d6b
 #define PRODUCT         0x0104
@@ -55,25 +56,25 @@ int main(int argc, char **argv)
 		.str_prd = "Bar Gadget" /* Product string */
 	};
 
-	usbg_f_ms_lun_attrs f_ms_luns_array[] = {
+	struct usbg_f_ms_lun_attrs f_ms_luns_array[] = {
 		{
 			.id = -1, /* allows to place in any position */
 			.cdrom = 1,
 			.ro = 0,
 			.nofua = 0,
 			.removable = 1,
-			.filename = "",
+			.file = "",
 		}, {
 			.id = -1, /* allows to place in any position */
 			.cdrom = 0,
 			.ro = 0,
 			.nofua = 0,
 			.removable = 1,
-			.filename = argv[1],
+			.file = argv[1],
 		}
 	};
 
-	usbg_f_ms_lun_attrs *f_ms_luns[] = {
+	struct usbg_f_ms_lun_attrs *f_ms_luns[] = {
 		/*
 		 * When id in lun structure is below 0 we can place it in any
 		 * arbitrary position
@@ -83,13 +84,10 @@ int main(int argc, char **argv)
 		NULL,
 	};
 
-	usbg_function_attrs f_attrs = {
-		.header.attrs_type = USBG_F_ATTRS_MS,
-		.attrs.ms = {
-			.stall = 0,
-			.nluns = 2,
-			.luns = f_ms_luns,
-		},
+	struct usbg_f_ms_attrs f_attrs = {
+		.stall = 0,
+		.nluns = 2,
+		.luns = f_ms_luns,
 	};
 
 	usbg_config_strs c_strs = {

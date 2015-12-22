@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <linux/usb/ch9.h>
 #include <usbg/usbg.h>
+#include <usbg/function/midi.h>
 
 #define VENDOR          0x1d6b
 #define PRODUCT         0x0104
@@ -51,16 +52,13 @@ int main() {
 		.configuration = "1xMIDI"
 	};
 
-	usbg_function_attrs f_attrs = {
-		.header.attrs_type = USBG_F_ATTRS_MIDI,
-		.attrs.midi = {
-			.index = 0,
-			.id = "usb0",
-			.buflen = 128,
-			.qlen = 16,
-			.in_ports = 2,
-			.out_ports = 3,
-		},
+	struct usbg_f_midi_attrs f_attrs = {
+		.index = 0,
+		.id = "usb0",
+		.buflen = 128,
+		.qlen = 16,
+		.in_ports = 2,
+		.out_ports = 3,
 	};
 
 	usbg_ret = usbg_init("/sys/kernel/config", &s);

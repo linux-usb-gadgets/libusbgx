@@ -63,12 +63,6 @@ int main(void)
 		.configuration = "2xFFS"
 	};
 
-	usbg_function_attrs f_attrs = {
-		.attrs.ffs = {
-			.dev_name = "my_awesome_dev_name",
-		},
-	};
-
 	usbg_ret = usbg_init("/sys/kernel/config", &s);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error on USB gadget init\n");
@@ -93,9 +87,8 @@ int main(void)
 		goto out2;
 	}
 
-	/* When NULL is passed as instance name, dev_name take from f_attrs
-	   is used as instance name for this function */
-	usbg_ret = usbg_create_function(g, F_FFS, NULL, &f_attrs, &f_ffs2);
+	usbg_ret = usbg_create_function(g, F_FFS, "my_other_dev_name",
+					NULL, &f_ffs2);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating ffs2 function\n");
 		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
