@@ -12,6 +12,7 @@
 
 #include "usbg/usbg.h"
 #include "usbg/usbg_internal.h"
+#include "usbg/function/loopback.h"
 
 #ifdef HAS_LIBCONFIG
 #include <libconfig.h>
@@ -21,6 +22,17 @@ struct usbg_f_loopback {
 	struct usbg_function func;
 };
 
+static const char *loopback_attr_names[USBG_F_LOOPBACK_ATTR_MAX] = {
+	[USBG_F_LOOPBACK_BUFLEN] = "buflen",
+	[USBG_F_LOOPBACK_QLEN] = "qlen",
+};
+
+static size_t loopback_offsets[USBG_F_LOOPBACK_ATTR_MAX] = {
+	[USBG_F_LOOPBACK_BUFLEN] = offsetof(struct usbg_f_loopback_attrs,
+					    buflen),
+	[USBG_F_LOOPBACK_QLEN] = offsetof(struct usbg_f_loopback_attrs, qlen),
+};
+
 GENERIC_ALLOC_INST(loopback, struct usbg_f_loopback, func);
 
 GENERIC_FREE_INST(loopback, struct usbg_f_loopback, func);
@@ -28,34 +40,24 @@ GENERIC_FREE_INST(loopback, struct usbg_f_loopback, func);
 static int loopback_set_attrs(struct usbg_function *f,
 			    const usbg_function_attrs *f_attrs)
 {
-	int ret = USBG_ERROR_INVALID_PARAM;
 	const usbg_f_loopback_attrs *attrs = &f_attrs->attrs.loopback;
 
 	if (f_attrs->header.attrs_type &&
 	    f_attrs->header.attrs_type != USBG_F_ATTRS_LOOPBACK)
-		goto out;
+		return USBG_ERROR_INVALID_PARAM;
 
-	ret = usbg_write_dec(f->path, f->name, "buflen", attrs->buflen);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_dec(f->path, f->name, "qlen", attrs->qlen);
-
- out:
-	return ret;
+	return usbg_f_loopback_set_attrs(usbg_to_loopback_function(f),
+					(const struct usbg_f_loopback_attrs *)attrs);
 }
 
 static int loopback_get_attrs(struct usbg_function *f,
 			    usbg_function_attrs *f_attrs)
 {
 	int ret;
-	const usbg_f_loopback_attrs *attrs = &f_attrs->attrs.loopback;
+	usbg_f_loopback_attrs *attrs = &f_attrs->attrs.loopback;
 
-	ret = usbg_read_dec(f->path, f->name, "buflen", (int *)&(attrs->buflen));
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_read_dec(f->path, f->name, "qlen", (int *)&(attrs->qlen));
+	ret = usbg_f_loopback_get_attrs(usbg_to_loopback_function(f),
+					(struct usbg_f_loopback_attrs *)attrs);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
@@ -69,79 +71,61 @@ out:
 static int loopback_libconfig_export(struct usbg_function *f,
 				  config_setting_t *root)
 {
+	struct usbg_f_loopback *lf = usbg_to_loopback_function(f);
 	config_setting_t *node;
-	usbg_function_attrs f_attrs;
-	usbg_f_loopback_attrs *attrs = &f_attrs.attrs.loopback;
-	int cfg_ret;
-	int ret = USBG_ERROR_NO_MEM;
+	int i, tmp, cfg_ret;
+	int ret = 0;
 
-	ret = loopback_get_attrs(f, &f_attrs);
-	if (ret)
-		goto out;		
+	for (i = USBG_F_LOOPBACK_ATTR_MIN; i < USBG_F_LOOPBACK_ATTR_MAX; ++i) {
+		ret = usbg_f_loopback_get_attr_val(lf, i, &tmp);
+		if (ret)
+			break;
 
-#define ADD_F_LOOPBACK_INT_ATTR(attr, minval)				\
-	do { 								\
-		if ((int)attrs->attr < minval) {			\
-			ret = USBG_ERROR_INVALID_VALUE;			\
-			goto out;					\
-		}							\
-		node = config_setting_add(root, #attr, CONFIG_TYPE_INT);\
-		if (!node) 						\
-			goto out; 					\
-		cfg_ret = config_setting_set_int(node, attrs->attr); 	\
-		if (cfg_ret != CONFIG_TRUE) { 				\
-			ret = USBG_ERROR_OTHER_ERROR; 			\
-			goto out; 					\
-		}							\
-	} while (0)
+		if (tmp < 0) {
+			ret = USBG_ERROR_INVALID_VALUE;
+			break;
+		}
+		node = config_setting_add(root, loopback_attr_names[i],
+					  CONFIG_TYPE_INT);
+		if (!node) {
+			ret = USBG_ERROR_NO_MEM;
+			break;
+		}
 
-	ADD_F_LOOPBACK_INT_ATTR(buflen, 0);
-	ADD_F_LOOPBACK_INT_ATTR(qlen, 0);
+		cfg_ret = config_setting_set_int(node, tmp);
+		if (cfg_ret != CONFIG_TRUE) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			break;
+		}
+	}
 
-#undef ADD_F_LOOPBACK_INT_ATTR
-
-	ret = USBG_SUCCESS;
-out:
 	return ret;
 }
 
 static int loopback_libconfig_import(struct usbg_function *f,
 				  config_setting_t *root)
 {
+	struct usbg_f_loopback *lf = usbg_to_loopback_function(f);
 	config_setting_t *node;
-	int ret = USBG_ERROR_NO_MEM;
-	int tmp;
-	usbg_function_attrs attrs;
-	usbg_f_loopback_attrs *loopback_attrs = &attrs.attrs.loopback;
+	int i, tmp;
+	int ret = 0;
 
-	attrs.header.attrs_type = USBG_F_ATTRS_LOOPBACK;
+	for (i = USBG_F_LOOPBACK_ATTR_MIN; i < USBG_F_LOOPBACK_ATTR_MAX; ++i) {
+		node = config_setting_get_member(root, loopback_attr_names[i]);
+		if (!node)
+			continue;
 
-#define ADD_F_LOOPBACK_INT_ATTR(attr, defval, minval)			\
-	do {								\
-		node = config_setting_get_member(root, #attr);		\
-		if (node) {						\
-			if (!usbg_config_is_int(node)) {		\
-				ret = USBG_ERROR_INVALID_TYPE;		\
-				goto out;				\
-			}						\
-			tmp = config_setting_get_int(node);		\
-			if (tmp < minval) {				\
-				ret = USBG_ERROR_INVALID_VALUE;		\
-				goto out;				\
-			}						\
-			loopback_attrs->attr = tmp;				\
-		} else {						\
-			loopback_attrs->attr = defval;			\
-		}							\
-	} while (0)
+		tmp = config_setting_get_int(node);
+		if (tmp < 0) {
+			ret = USBG_ERROR_INVALID_PARAM;
+			break;
+		}
 
-	ADD_F_LOOPBACK_INT_ATTR(buflen, 4096, 0);
-	ADD_F_LOOPBACK_INT_ATTR(qlen, 32, 0);
+		ret = usbg_f_loopback_set_attr_val(lf, i, tmp);
+		if (ret)
+			break;
+	}
 
-#undef ADD_F_LOOPBACK_INT_ATTR
-
-	ret = usbg_set_function_attrs(f, &attrs);
-out:
 	return ret;
 }
 
@@ -158,4 +142,67 @@ struct usbg_function_type usbg_f_type_loopback = {
 	.export = loopback_libconfig_export,
 #endif
 };
+
+/* API implementation */
+
+usbg_f_loopback *usbg_to_loopback_function(usbg_function *f)
+{
+	return f->ops == &usbg_f_type_loopback ?
+		container_of(f, struct usbg_f_loopback, func) : NULL;
+}
+
+usbg_function *usbg_from_loopback_function(usbg_f_loopback *lf)
+{
+	return &lf->func;
+}
+
+int usbg_f_loopback_get_attrs(usbg_f_loopback *lf,
+			      struct usbg_f_loopback_attrs *attrs)
+{
+	int i;
+	int ret = 0;
+
+	for (i = USBG_F_LOOPBACK_ATTR_MIN; i < USBG_F_LOOPBACK_ATTR_MAX; ++i) {
+		ret = usbg_f_loopback_get_attr_val(lf,
+						   i,
+						   (int *)((char *)attrs
+						    + loopback_offsets[i]));
+		if (ret)
+			break;
+	}
+
+	return ret;
+}
+
+int usbg_f_loopback_set_attrs(usbg_f_loopback *lf,
+			 const struct usbg_f_loopback_attrs *attrs)
+{
+	int i;
+	int ret;
+
+	for (i = USBG_F_LOOPBACK_ATTR_MIN; i < USBG_F_LOOPBACK_ATTR_MAX; ++i) {
+		ret = usbg_f_loopback_set_attr_val(lf,
+						   i,
+						   *(int *)((char *)attrs
+						     + loopback_offsets[i]));
+		if (ret)
+			break;
+	}
+
+	return ret;
+}
+
+int usbg_f_loopback_get_attr_val(usbg_f_loopback *lf,
+				 enum usbg_f_loopback_attr attr, int *val)
+{
+	return usbg_read_dec(lf->func.path, lf->func.name,
+			     loopback_attr_names[attr], val);
+}
+
+int usbg_f_loopback_set_attr_val(usbg_f_loopback *lf,
+				 enum usbg_f_loopback_attr attr, int val)
+{
+	return usbg_write_dec(lf->func.path, lf->func.name,
+			     loopback_attr_names[attr], val);
+}
 
