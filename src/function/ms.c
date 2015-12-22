@@ -545,7 +545,7 @@ int usbg_f_ms_create_lun(usbg_f_ms *mf, int lun_id,
 	return 0;
 
 remove_lun:
-	unlink(lpath);
+	rmdir(lpath);
 	return ret;
 }
 
@@ -567,7 +567,7 @@ int usbg_f_ms_rm_lun(usbg_f_ms *mf, int lun_id)
 	if (ret >= sizeof(lpath))
 		return USBG_ERROR_PATH_TOO_LONG;
 
-	ret = unlink(lpath);
+	ret = rmdir(lpath);
 	if (ret)
 		return usbg_translate_error(errno);
 

@@ -1313,7 +1313,7 @@ static int usbg_create_empty_gadget(usbg_state *s, const char *name,
 
 	return 0;
 rm_gdir:
-	unlink(gpath);
+	rmdir(gpath);
 free_gadget:
 	usbg_free_gadget(*g);
 	*g = NULL;
@@ -1905,7 +1905,7 @@ int usbg_create_config(usbg_gadget *g, int id, const char *label,
 
 	return 0;
 rm_config:
-	unlink(cpath);
+	rmdir(cpath);
 free_config:
 	usbg_free_config(conf);
 out:
