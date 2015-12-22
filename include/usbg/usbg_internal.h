@@ -128,3 +128,14 @@ struct usbg_udc
 #define STRINGS_DIR "strings"
 #define CONFIGS_DIR "configs"
 #define FUNCTIONS_DIR "functions"
+
+static inline int file_select(const struct dirent *dent)
+{
+	if ((strcmp(dent->d_name, ".") == 0) || (strcmp(dent->d_name, "..") == 0))
+		return 0;
+	else
+		return 1;
+}
+
+int usbg_translate_error(int error);
+
