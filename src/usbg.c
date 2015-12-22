@@ -329,24 +329,27 @@ static usbg_gadget *usbg_allocate_gadget(const char *path, const char *name,
 	usbg_gadget *g;
 
 	g = malloc(sizeof(*g));
-	if (g) {
-		TAILQ_INIT(&g->functions);
-		TAILQ_INIT(&g->configs);
-		g->last_failed_import = NULL;
-		g->name = strdup(name);
-		g->path = strdup(path);
-		g->parent = parent;
-		g->udc = NULL;
+	if (!g)
+		goto out;
 
-		if (!(g->name) || !(g->path)) {
-			free(g->name);
-			free(g->path);
-			free(g);
-			g = NULL;
-		}
-	}
+	TAILQ_INIT(&g->functions);
+	TAILQ_INIT(&g->configs);
+	g->last_failed_import = NULL;
+	g->name = strdup(name);
+	g->path = strdup(path);
+	g->parent = parent;
+	g->udc = NULL;
+
+	if (!(g->name) || !(g->path))
+		goto cleanup;
 
 	return g;
+cleanup:
+	free(g->name);
+	free(g->path);
+	free(g);
+out:
+	return NULL;
 }
 
 static usbg_config *usbg_allocate_config(const char *path, const char *label,
@@ -362,27 +365,26 @@ static usbg_config *usbg_allocate_config(const char *path, const char *label,
 	TAILQ_INIT(&c->bindings);
 
 	ret = asprintf(&(c->name), "%s.%d", label, id);
-	if (ret < 0) {
-		free(c);
-		c = NULL;
-		goto out;
-	}
+	if (ret < 0)
+		goto free_config;
 
 	c->path = strdup(path);
 	c->label = strdup(label);
 	c->parent = parent;
 	c->id = id;
 
-	if (!(c->path) || !(c->label)) {
-		free(c->name);
-		free(c->path);
-		free(c->label);
-		free(c);
-		c = NULL;
-	}
+	if (!(c->path) || !(c->label))
+		goto cleanup;
 
-out:
 	return c;
+cleanup:
+	free(c->name);
+	free(c->path);
+	free(c->label);
+free_config:
+	free(c);
+out:
+	return NULL;
 }
 
 static usbg_function *
@@ -403,20 +405,23 @@ static usbg_binding *usbg_allocate_binding(const char *path, const char *name,
 	usbg_binding *b;
 
 	b = malloc(sizeof(*b));
-	if (b) {
-		b->name = strdup(name);
-		b->path = strdup(path);
-		b->parent = parent;
+	if (!b)
+		goto out;
 
-		if (!(b->name) || !(b->path)) {
-			free(b->name);
-			free(b->path);
-			free(b);
-			b = NULL;
-		}
-	}
+	b->name = strdup(name);
+	b->path = strdup(path);
+	b->parent = parent;
+
+	if (!(b->name) || !(b->path))
+		goto cleanup;
 
 	return b;
+cleanup:
+	free(b->name);
+	free(b->path);
+	free(b);
+out:
+	return NULL;
 }
 
 static usbg_udc *usbg_allocate_udc(usbg_state *parent, const char *name)
@@ -430,22 +435,14 @@ static usbg_udc *usbg_allocate_udc(usbg_state *parent, const char *name)
 	u->gadget = NULL;
 	u->parent = parent;
 	u->name = strdup(name);
-	if (!u->name) {
-		free(u);
-		u = NULL;
-	}
+	if (!u->name)
+		goto cleanup;
 
- out:
 	return u;
-}
-
-char *usbg_ether_ntoa_r(const struct ether_addr *addr, char *buf)
-{
-	sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x",
-		addr->ether_addr_octet[0], addr->ether_addr_octet[1],
-		addr->ether_addr_octet[2], addr->ether_addr_octet[3],
-		addr->ether_addr_octet[4], addr->ether_addr_octet[5]);
-	return buf;
+cleanup:
+	free(u);
+out:
+	return NULL;
 }
 
 static int usbg_parse_functions(const char *path, usbg_gadget *g)
@@ -520,20 +517,23 @@ static int usbg_parse_config_strs(const char *path, const char *name,
 
 	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s/0x%x", path, name,
 			STRINGS_DIR, lang);
-	if (nmb < sizeof(spath)) {
-		/* Check if directory exist */
-		dir = opendir(spath);
-		if (dir) {
-			closedir(dir);
-			ret = usbg_read_string(spath, "", "configuration",
-					c_strs->configuration);
-		} else {
-			ret = usbg_translate_error(errno);
-		}
-	} else {
+	if (nmb >= sizeof(spath)) {
 		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+	    
+	/* Check if directory exist */
+	dir = opendir(spath);
+	if (!dir) {
+		ret = usbg_translate_error(errno);
+		goto out;
 	}
 
+	closedir(dir);
+	ret = usbg_read_string(spath, "", "configuration",
+			       c_strs->configuration);
+
+out:
 	return ret;
 }
 
@@ -575,12 +575,12 @@ static int usbg_parse_config_binding(usbg_config *c, char *bpath, int path_size)
 	bpath[path_size] = '\0';
 	/* path_to_config_dir \0 config_name */
 	b = usbg_allocate_binding(bpath, bpath + path_size + 1, c);
-	if (b) {
-		b->target = f;
-		TAILQ_INSERT_TAIL(&c->bindings, b, bnode);
-	} else {
+	if (!b) {
 		ret = USBG_ERROR_NO_MEM;
+		goto out;
 	}
+	b->target = f;
+	TAILQ_INSERT_TAIL(&c->bindings, b, bnode);
 
 out:
 	return ret;
@@ -641,11 +641,15 @@ static int usbg_parse_config(const char *path, const char *name,
 	}
 
 	ret = usbg_parse_config_bindings(c);
-	if (ret == USBG_SUCCESS)
-		TAILQ_INSERT_TAIL(&g->configs, c, cnode);
-	else
-		usbg_free_config(c);
+	if (ret != USBG_SUCCESS)
+		goto free_config;
 
+	TAILQ_INSERT_TAIL(&g->configs, c, cnode);
+
+	return USBG_SUCCESS;
+
+free_config:
+	usbg_free_config(c);
 out:
 	free(label);
 	return ret;
@@ -759,22 +763,23 @@ static int usbg_parse_gadget_strs(const char *path, const char *name, int lang,
 
 	/* Check if directory exist */
 	dir = opendir(spath);
-	if (dir) {
-		closedir(dir);
-		ret = usbg_read_string(spath, "", "serialnumber", g_strs->str_ser);
-		if (ret != USBG_SUCCESS)
-			goto out;
-
-		ret = usbg_read_string(spath, "", "manufacturer", g_strs->str_mnf);
-		if (ret != USBG_SUCCESS)
-			goto out;
-
-		ret = usbg_read_string(spath, "", "product", g_strs->str_prd);
-		if (ret != USBG_SUCCESS)
-			goto out;
-	} else {
+	if (!dir) {
 		ret = usbg_translate_error(errno);
+		goto out;
 	}
+
+	closedir(dir);
+	ret = usbg_read_string(spath, "", "serialnumber", g_strs->str_ser);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_read_string(spath, "", "manufacturer", g_strs->str_mnf);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_read_string(spath, "", "product", g_strs->str_prd);
+	if (ret != USBG_SUCCESS)
+		goto out;
 
 out:
 	return ret;
@@ -811,30 +816,32 @@ static int usbg_parse_gadgets(const char *path, usbg_state *s)
 	struct dirent **dent;
 
 	n = scandir(path, &dent, file_select, alphasort);
-	if (n >= 0) {
-		for (i = 0; i < n; i++) {
-			/* Check if earlier gadgets
-			 * has been created correctly */
-			if (ret == USBG_SUCCESS) {
-				/* Create new gadget and insert it into list */
-				g = usbg_allocate_gadget(path, dent[i]->d_name, s);
-				if (g) {
-					ret = usbg_parse_gadget(g);
-					if (ret == USBG_SUCCESS)
-						TAILQ_INSERT_TAIL(&s->gadgets, g, gnode);
-					else
-						usbg_free_gadget(g);
-				} else {
-					ret = USBG_ERROR_NO_MEM;
-				}
-			}
-			free(dent[i]);
-		}
-		free(dent);
-	} else {
+	if (n < 0) {
 		ret = usbg_translate_error(errno);
+		goto out;
 	}
 
+	for (i = 0; i < n; i++) {
+		/* Check if earlier gadgets
+		 * has been created correctly */
+		if (ret == USBG_SUCCESS) {
+			/* Create new gadget and insert it into list */
+			g = usbg_allocate_gadget(path, dent[i]->d_name, s);
+			if (g) {
+				ret = usbg_parse_gadget(g);
+				if (ret == USBG_SUCCESS)
+					TAILQ_INSERT_TAIL(&s->gadgets, g, gnode);
+				else
+					usbg_free_gadget(g);
+			} else {
+				ret = USBG_ERROR_NO_MEM;
+			}
+		}
+		free(dent[i]);
+	}
+	free(dent);
+
+out:
 	return ret;
 }
 
@@ -1074,11 +1081,13 @@ int usbg_rm_binding(usbg_binding *b)
 	c = b->parent;
 
 	ret = ubsg_rm_file(b->path, b->name);
-	if (ret == USBG_SUCCESS) {
-		TAILQ_REMOVE(&(c->bindings), b, bnode);
-		usbg_free_binding(b);
-	}
+	if (ret)
+		goto out;
 
+	TAILQ_REMOVE(&(c->bindings), b, bnode);
+	usbg_free_binding(b);
+
+out:
 	return ret;
 }
 
@@ -1294,26 +1303,28 @@ static int usbg_create_empty_gadget(usbg_state *s, const char *name,
 	gad = *g; /* alias only */
 
 	ret = mkdir(gpath, S_IRWXU|S_IRWXG|S_IRWXO);
-	if (ret == 0) {
-		/* Should be empty but read the default */
-		ret = usbg_read_string(gad->path, gad->name,
-				       "UDC", buf);
-		if (ret != USBG_SUCCESS) {
-			rmdir(gpath);
-		} else {
-			gad->udc = usbg_get_udc(s, buf);
-			if (gad->udc)
-				gad->udc->gadget = gad;
-		}
-	} else {
+	if (ret != 0) {
 		ret = usbg_translate_error(errno);
+		goto free_gadget;
 	}
 
-	if (ret != USBG_SUCCESS) {
-		usbg_free_gadget(*g);
-		*g = NULL;
-	}
 
+	/* Should be empty but read the default */
+	ret = usbg_read_string(gad->path, gad->name,
+			       "UDC", buf);
+	if (ret != USBG_SUCCESS)
+		goto rm_gdir;
+
+	gad->udc = usbg_get_udc(s, buf);
+	if (gad->udc)
+		gad->udc->gadget = gad;
+
+	return 0;
+rm_gdir:
+	unlink(gpath);
+free_gadget:
+	usbg_free_gadget(*g);
+	*g = NULL;
 out:
 	return ret;
 }
@@ -1335,26 +1346,31 @@ int usbg_create_gadget_vid_pid(usbg_state *s, const char *name,
 
 	ret = usbg_create_empty_gadget(s, name, g);
 	gad = *g;
+	if (ret != USBG_SUCCESS)
+		goto out;
 
-	/* Check if gadget creation was successful and set attributes */
-	if (ret == USBG_SUCCESS) {
-		ret = usbg_write_hex16(s->path, name, "idVendor", idVendor);
-		if (ret == USBG_SUCCESS) {
-			ret = usbg_write_hex16(s->path, name, "idProduct", idProduct);
-			if (ret == USBG_SUCCESS)
-				INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name,
-						gad, gnode);
-			else
-				usbg_free_gadget(gad);
-		}
-	}
+	ret = usbg_write_hex16(s->path, name, "idVendor", idVendor);
+	if (ret != USBG_SUCCESS)
+		goto rm_gadget;
 
+	ret = usbg_write_hex16(s->path, name, "idProduct", idProduct);
+	if (ret != USBG_SUCCESS)
+		goto rm_gadget;
+
+	INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name, gad, gnode);
+
+	return 0;
+
+rm_gadget:
+	usbg_rm_dir(gad->path, gad->name);
+	usbg_free_gadget(gad);
+out:
 	return ret;
 }
 
 int usbg_create_gadget(usbg_state *s, const char *name,
-		       const usbg_gadget_attrs *g_attrs, const usbg_gadget_strs *g_strs,
-		       usbg_gadget **g)
+		       const usbg_gadget_attrs *g_attrs,
+		       const usbg_gadget_strs *g_strs, usbg_gadget **g)
 {
 	usbg_gadget *gad;
 	int ret;
@@ -1372,19 +1388,29 @@ int usbg_create_gadget(usbg_state *s, const char *name,
 	gad = *g;
 
 	/* Check if gadget creation was successful and set attrs and strings */
-	if (ret == USBG_SUCCESS) {
-		if (g_attrs)
-			ret = usbg_set_gadget_attrs(gad, g_attrs);
+	if (ret != USBG_SUCCESS)
+		goto out;
 
-		if (g_strs)
-			ret = usbg_set_gadget_strs(gad, LANG_US_ENG, g_strs);
 
-		if (ret == USBG_SUCCESS)
-			INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name,
-				gad, gnode);
-		else
-			usbg_free_gadget(gad);
+	if (g_attrs) {
+		ret = usbg_set_gadget_attrs(gad, g_attrs);
+		if (ret != USBG_SUCCESS)
+			goto rm_gadget;
 	}
+
+	if (g_strs) {
+		ret = usbg_set_gadget_strs(gad, LANG_US_ENG, g_strs);
+		if (ret != USBG_SUCCESS)
+			goto rm_gadget;
+	}
+
+	INSERT_TAILQ_STRING_ORDER(&s->gadgets, ghead, name, gad, gnode);
+
+	return 0;
+rm_gadget:
+	usbg_rm_dir(gad->path, gad->name);
+	usbg_free_gadget(gad);
+out:
 	return ret;
 }
 
@@ -1475,8 +1501,10 @@ out:
 usbg_udc *usbg_get_gadget_udc(usbg_gadget *g)
 {
 	usbg_udc *u = NULL;
+	char buf[USBG_MAX_STR_LENGTH];
+	int ret;
 
-	if (!g)
+	if (!g || !g->udc)
 		goto out;
 	/*
 	 * if gadget was enabled we have to check if kernel
@@ -1484,24 +1512,18 @@ usbg_udc *usbg_get_gadget_udc(usbg_gadget *g)
 	 * For example some FFS daemon could just get
 	 * a segmentation fault or sth
 	 */
-	if (g->udc) {
-		char buf[USBG_MAX_STR_LENGTH];
-		int ret;
+	ret = usbg_read_string(g->path, g->name, "UDC", buf);
+	if (ret != USBG_SUCCESS)
+		goto out;
 
-		ret = usbg_read_string(g->path, g->name, "UDC", buf);
-		if (ret != USBG_SUCCESS)
-			goto out;
-
-		if (!strcmp(g->udc->name, buf)) {
-			/* Gadget is still assigned to this UDC */
-			u = g->udc;
-		} else {
-			/* Kernel decided to detach this gadget */
-			g->udc->gadget = NULL;
-			g->udc = NULL;
-		}
+	if (!strcmp(g->udc->name, buf)) {
+		/* Gadget is still assigned to this UDC */
+		u = g->udc;
+	} else {
+		/* Kernel decided to detach this gadget */
+		g->udc->gadget = NULL;
+		g->udc = NULL;
 	}
-
 out:
 	return u;
 }
@@ -1509,8 +1531,9 @@ out:
 usbg_gadget *usbg_get_udc_gadget(usbg_udc *u)
 {
 	usbg_gadget *g = NULL;
+	usbg_udc *u_checked;
 
-	if (!u)
+	if (!u || !u->gadget)
 		goto out;
 	/*
 	 * if gadget was enabled on this UDC we have to check if kernel
@@ -1518,16 +1541,12 @@ usbg_gadget *usbg_get_udc_gadget(usbg_udc *u)
 	 * For example some FFS daemon could just get a segmentation fault
 	 * what causes detach of gadget
 	 */
-	if (u->gadget) {
-		usbg_udc *u_checked;
-
-		u_checked = usbg_get_gadget_udc(u->gadget);
-		if (u_checked) {
-			g = u->gadget;
-		} else {
-			u->gadget->udc = NULL;
-			u->gadget = NULL;
-		}
+	u_checked = usbg_get_gadget_udc(u->gadget);
+	if (u_checked) {
+		g = u->gadget;
+	} else {
+		u->gadget->udc = NULL;
+		u->gadget = NULL;
 	}
 
 out:
@@ -1686,17 +1705,18 @@ int usbg_set_gadget_strs(usbg_gadget *g, int lang,
 	}
 
 	ret = usbg_check_dir(path);
-	if (ret == USBG_SUCCESS) {
-		ret = usbg_write_string(path, "", "serialnumber", g_strs->str_ser);
-		if (ret != USBG_SUCCESS)
-			goto out;
+	if (ret != USBG_SUCCESS)
+		goto out;
 
-		ret = usbg_write_string(path, "", "manufacturer", g_strs->str_mnf);
-		if (ret != USBG_SUCCESS)
-			goto out;
+	ret = usbg_write_string(path, "", "serialnumber", g_strs->str_ser);
+	if (ret != USBG_SUCCESS)
+		goto out;
 
-		ret = usbg_write_string(path, "", "product", g_strs->str_prd);
-	}
+	ret = usbg_write_string(path, "", "manufacturer", g_strs->str_mnf);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_string(path, "", "product", g_strs->str_prd);
 
 out:
 	return ret;
@@ -1704,64 +1724,73 @@ out:
 
 int usbg_set_gadget_serial_number(usbg_gadget *g, int lang, const char *serno)
 {
+	char path[USBG_MAX_PATH_LENGTH];
+	int nmb;
 	int ret = USBG_ERROR_INVALID_PARAM;
 
-	if (g && serno) {
-		char path[USBG_MAX_PATH_LENGTH];
-		int nmb;
-		nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", g->path,
-				g->name, STRINGS_DIR, lang);
-		if (nmb < sizeof(path)) {
-			ret = usbg_check_dir(path);
-			if (ret == USBG_SUCCESS)
-				ret = usbg_write_string(path, "", "serialnumber", serno);
-		} else {
-			ret = USBG_ERROR_PATH_TOO_LONG;
-		}
+	if (!g || !serno)
+		goto out;
+
+	nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", g->path,
+		       g->name, STRINGS_DIR, lang);
+	if (nmb >= sizeof(path)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
 	}
 
+	ret = usbg_check_dir(path);
+	if (ret == USBG_SUCCESS)
+		ret = usbg_write_string(path, "", "serialnumber", serno);
+
+out:
 	return ret;
 }
 
 int usbg_set_gadget_manufacturer(usbg_gadget *g, int lang, const char *mnf)
 {
+	char path[USBG_MAX_PATH_LENGTH];
+	int nmb;
 	int ret = USBG_ERROR_INVALID_PARAM;
 
-	if (g && mnf) {
-		char path[USBG_MAX_PATH_LENGTH];
-		int nmb;
-		nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", g->path,
-				g->name, STRINGS_DIR, lang);
-		if (nmb < sizeof(path)) {
-			ret = usbg_check_dir(path);
-			if (ret == USBG_SUCCESS)
-				ret = usbg_write_string(path, "", "manufacturer", mnf);
-		} else {
-			ret = USBG_ERROR_PATH_TOO_LONG;
-		}
+	if (!g || !mnf)
+		goto out;
+
+	nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", g->path,
+		       g->name, STRINGS_DIR, lang);
+	if (nmb >= sizeof(path)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
 	}
 
+	ret = usbg_check_dir(path);
+	if (ret == USBG_SUCCESS)
+		ret = usbg_write_string(path, "", "manufacturer", mnf);
+
+out:
 	return ret;
 }
 
 int usbg_set_gadget_product(usbg_gadget *g, int lang, const char *prd)
 {
+	char path[USBG_MAX_PATH_LENGTH];
+	int nmb;
 	int ret = USBG_ERROR_INVALID_PARAM;
 
-	if (g && prd) {
-		char path[USBG_MAX_PATH_LENGTH];
-		int nmb;
-		nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", g->path,
-				g->name, STRINGS_DIR, lang);
-		if (nmb < sizeof(path)) {
-			ret = usbg_check_dir(path);
-			if (ret == USBG_SUCCESS)
-				ret = usbg_write_string(path, "", "product", prd);
-		} else {
-			ret = USBG_ERROR_PATH_TOO_LONG;
-		}
+	if (!g || !prd)
+		goto out;
+
+	nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", g->path,
+		       g->name, STRINGS_DIR, lang);
+	if (nmb >= sizeof(path)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
 	}
 
+	ret = usbg_check_dir(path);
+	if (ret == USBG_SUCCESS)
+		ret = usbg_write_string(path, "", "product", prd);
+
+out:
 	return ret;
 }
 
@@ -1876,24 +1905,32 @@ int usbg_create_config(usbg_gadget *g, int id, const char *label,
 	}
 
 	ret = mkdir(cpath, S_IRWXU | S_IRWXG | S_IRWXO);
-	if (!ret) {
-		ret = USBG_SUCCESS;
-		if (c_attrs)
-			ret = usbg_set_config_attrs(conf, c_attrs);
-
-		if (ret == USBG_SUCCESS && c_strs)
-			ret = usbg_set_config_string(conf, LANG_US_ENG,
-					c_strs->configuration);
-	} else {
+	if (ret) {
 		ret = usbg_translate_error(errno);
+		goto free_config;
 	}
 
-	if (ret == USBG_SUCCESS)
-		INSERT_TAILQ_STRING_ORDER(&g->configs, chead, name,
-				conf, cnode);
-	else
-		usbg_free_config(conf);
+	if (c_attrs) {
+		ret = usbg_set_config_attrs(conf, c_attrs);
+		if (ret != USBG_SUCCESS)
+			goto rm_config;
+	}
 
+	if (c_strs) {
+		ret = usbg_set_config_string(conf, LANG_US_ENG,
+					     c_strs->configuration);
+		if (ret != USBG_SUCCESS)
+			goto rm_config;
+	}
+
+	INSERT_TAILQ_STRING_ORDER(&g->configs, chead, name,
+				  conf, cnode);
+
+	return 0;
+rm_config:
+	unlink(cpath);
+free_config:
+	usbg_free_config(conf);
 out:
 	return ret;
 }
@@ -1949,13 +1986,19 @@ int usbg_set_config_attrs(usbg_config *c, const usbg_config_attrs *c_attrs)
 {
 	int ret = USBG_ERROR_INVALID_PARAM;
 
-	if (c && c_attrs) {
-		ret = usbg_write_dec(c->path, c->name, "MaxPower", c_attrs->bMaxPower);
-		if (ret == USBG_SUCCESS)
-			ret = usbg_write_hex8(c->path, c->name, "bmAttributes",
-					c_attrs->bmAttributes);
-	}
+	if (!c || !c_attrs)
+		goto out;
 
+	ret = usbg_write_dec(c->path, c->name, "MaxPower", c_attrs->bMaxPower);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_hex8(c->path, c->name, "bmAttributes",
+			      c_attrs->bmAttributes);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+out:
 	return ret;
 }
 
@@ -1992,22 +2035,27 @@ int usbg_set_config_strs(usbg_config *c, int lang,
 
 int usbg_set_config_string(usbg_config *c, int lang, const char *str)
 {
+	char path[USBG_MAX_PATH_LENGTH];
+	int nmb;
 	int ret = USBG_ERROR_INVALID_PARAM;
 
-	if (c && str) {
-		char path[USBG_MAX_PATH_LENGTH];
-		int nmb;
-		nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", c->path,
-				c->name, STRINGS_DIR, lang);
-		if (nmb < sizeof(path)) {
-			ret = usbg_check_dir(path);
-			if (ret == USBG_SUCCESS)
-				ret = usbg_write_string(path, "", "configuration", str);
-		} else {
-			ret = USBG_ERROR_PATH_TOO_LONG;
-		}
-	}
+	if (!c || !str)
+		goto out;
 
+	nmb = snprintf(path, sizeof(path), "%s/%s/%s/0x%x", c->path,
+		       c->name, STRINGS_DIR, lang);
+	if (nmb >= sizeof(path)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+	ret = usbg_check_dir(path);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+
+	ret = usbg_write_string(path, "", "configuration", str);
+	
+out:
 	return ret;
 }
 
@@ -2016,8 +2064,8 @@ int usbg_add_config_function(usbg_config *c, const char *name, usbg_function *f)
 	char bpath[USBG_MAX_PATH_LENGTH];
 	char fpath[USBG_MAX_PATH_LENGTH];
 	usbg_binding *b;
+	int free_space, nmb;
 	int ret = USBG_SUCCESS;
-	int nmb;
 
 	if (!c || !f) {
 		ret = USBG_ERROR_INVALID_PARAM;
@@ -2054,34 +2102,32 @@ int usbg_add_config_function(usbg_config *c, const char *name, usbg_function *f)
 	}
 
 	b = usbg_allocate_binding(bpath, name, c);
-	if (b) {
-		int free_space = sizeof(bpath) - nmb;
-
-		b->target = f;
-		nmb = snprintf(&(bpath[nmb]), free_space, "/%s", name);
-		if (nmb < free_space) {
-
-			ret = symlink(fpath, bpath);
-			if (ret == 0) {
-				b->target = f;
-				INSERT_TAILQ_STRING_ORDER(&c->bindings, bhead,
-						name, b, bnode);
-			} else {
-				ERRORNO("%s -> %s\n", bpath, fpath);
-				ret = usbg_translate_error(errno);
-			}
-		} else {
-			ret = USBG_ERROR_PATH_TOO_LONG;
-		}
-
-		if (ret != USBG_SUCCESS) {
-			usbg_free_binding(b);
-			b = NULL;
-		}
-	} else {
+	if (!b) {
 		ret = USBG_ERROR_NO_MEM;
+		goto out;
 	}
 
+	free_space = sizeof(bpath) - nmb;
+	b->target = f;
+	nmb = snprintf(&(bpath[nmb]), free_space, "/%s", name);
+	if (nmb >= free_space) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto free_binding;
+	}
+
+	ret = symlink(fpath, bpath);
+	if (ret != 0) {
+		ret = usbg_translate_error(errno);
+		goto free_binding;
+	}
+
+	b->target = f;
+	INSERT_TAILQ_STRING_ORDER(&c->bindings, bhead,
+				  name, b, bnode);
+
+	return 0;
+free_binding:
+	usbg_free_binding(b);
 out:
 	return ret;
 }
@@ -2126,16 +2172,17 @@ int usbg_enable_gadget(usbg_gadget *g, usbg_udc *udc)
 	}
 
 	ret = usbg_write_string(g->path, g->name, "UDC", udc->name);
-	if (ret == USBG_SUCCESS) {
-		/* If gadget has been detached and we didn't noticed
-		 * it we have to clean up now.
-		 */
-		if (g->udc)
-			g->udc->gadget = NULL;
-		g->udc = udc;
-		udc->gadget = g;
-	}
-
+	if (ret != USBG_SUCCESS)
+		goto out;
+	/* If gadget has been detached and we didn't noticed
+	 * it we have to clean up now.
+	 */
+	if (g->udc)
+		g->udc->gadget = NULL;
+	g->udc = udc;
+	udc->gadget = g;
+	
+out:
 	return ret;
 }
 
@@ -2147,12 +2194,13 @@ int usbg_disable_gadget(usbg_gadget *g)
 		return ret;
 
 	ret = usbg_write_string(g->path, g->name, "UDC", "\n");
-	if (ret == USBG_SUCCESS) {
-		if (g->udc)
-			g->udc->gadget = NULL;
-		g->udc = NULL;
-	}
+	if (ret != USBG_SUCCESS)
+		goto out;
 
+	if (g->udc)
+		g->udc->gadget = NULL;
+	g->udc = NULL;
+out:
 	return ret;
 }
 

@@ -265,6 +265,15 @@ int usbg_check_dir(const char *path)
 	return ret;
 }
 
+char *usbg_ether_ntoa_r(const struct ether_addr *addr, char *buf)
+{
+	sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x",
+		addr->ether_addr_octet[0], addr->ether_addr_octet[1],
+		addr->ether_addr_octet[2], addr->ether_addr_octet[3],
+		addr->ether_addr_octet[4], addr->ether_addr_octet[5]);
+	return buf;
+}
+
 int usbg_init_function(struct usbg_function *f,
 		       struct usbg_function_type *ops,
 		       usbg_function_type type,
