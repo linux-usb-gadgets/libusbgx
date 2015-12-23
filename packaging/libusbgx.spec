@@ -56,6 +56,13 @@ make
 %manifest %{name}.manifest
 %defattr(-,root,root)
 %{_includedir}/usbg/usbg.h
+%{_includedir}/usbg/function/ffs.h
+%{_includedir}/usbg/function/loopback.h
+%{_includedir}/usbg/function/midi.h
+%{_includedir}/usbg/function/ms.h
+%{_includedir}/usbg/function/net.h
+%{_includedir}/usbg/function/phonet.h
+%{_includedir}/usbg/function/serial.h
 %{_libdir}/pkgconfig/libusbgx.pc
 %{_libdir}/libusbgx.so
 
