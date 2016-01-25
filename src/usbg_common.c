@@ -17,6 +17,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <malloc.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 int usbg_read_buf_limited(const char *path, const char *name,
 			  const char *file, char *buf, int len)

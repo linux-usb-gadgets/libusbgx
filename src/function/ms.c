@@ -14,6 +14,7 @@
 #include "usbg/usbg_internal.h"
 #include "usbg/function/ms.h"
 
+#include <unistd.h>
 #include <malloc.h>
 #include <errno.h>
 #include <sys/stat.h>
