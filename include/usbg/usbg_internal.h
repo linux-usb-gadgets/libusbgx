@@ -295,7 +295,6 @@ int usbg_cleanup_function(struct usbg_function *f);
 									\
 	free_func:							\
 		free(ff);						\
-	out:								\
 		return ret;						\
 	}
 
