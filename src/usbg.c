@@ -2190,9 +2190,7 @@ int usbg_set_function_attrs(usbg_function *f, void *f_attrs)
 	if (!f || !f_attrs)
 		return ret;
 
-	ret = f->ops->set_attrs(f, f_attrs);
-out:
-	return ret;
+	return f->ops->set_attrs(f, f_attrs);
 }
 
 usbg_gadget *usbg_get_first_gadget(usbg_state *s)
