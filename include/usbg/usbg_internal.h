@@ -268,7 +268,7 @@ int usbg_init_function(struct usbg_function *f,
 		       const char *path,
 		       struct usbg_gadget *parent);
 
-int usbg_cleanup_function(struct usbg_function *f);
+void usbg_cleanup_function(struct usbg_function *f);
 
 #define GENERIC_ALLOC_INST(prefix, _type, _member)			\
 	static int prefix##_alloc_inst(struct usbg_function_type *type, \

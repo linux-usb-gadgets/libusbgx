@@ -456,7 +456,7 @@ int usbg_set_config_node_ether_addr(config_setting_t *root,
 	return usbg_set_config_node_string(root, node_name, &ptr);
 }
 
-int usbg_cleanup_function(struct usbg_function *f)
+void usbg_cleanup_function(struct usbg_function *f)
 {
 	free(f->path);
 	free(f->name);
