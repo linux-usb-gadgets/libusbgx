@@ -7,5 +7,5 @@ Name: libusbgx
 Description: USB gadget-configfs library
 Requires: libconfig
 Version: @PACKAGE_VERSION@
-Libs: -L${libdir} -lusbg
+Libs: -L${libdir} -lusbgx
 Cflags: -I${includedir}
