@@ -232,7 +232,7 @@ static int ms_libconfig_import(struct usbg_function *f, config_setting_t *root)
 		goto out;
 
 	luns_node = config_setting_get_member(root, "luns");
-	if (!node) {
+	if (!luns_node) {
 		ret = USBG_ERROR_INVALID_PARAM;
 		goto out;
 	}
