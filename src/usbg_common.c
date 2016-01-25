@@ -392,12 +392,13 @@ int usbg_get_config_node_ether_addr(config_setting_t *root,
 	int ret;
 
 	ret = usbg_get_config_node_string(root, node_name, &str_addr);
-	if (ret)
+	/* if not found or error */
+	if (ret == 0 || ret < 0)
 		return ret;
 
 	addr = ether_aton_r(str_addr, val);
 
-	return addr ? 0 : USBG_ERROR_INVALID_VALUE;
+	return addr ? 1 : USBG_ERROR_INVALID_VALUE;
 }
 
 int usbg_set_config_node_int(config_setting_t *root,
