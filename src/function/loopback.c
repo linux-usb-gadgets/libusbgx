@@ -114,7 +114,7 @@ static int loopback_libconfig_import(struct usbg_function *f,
 #endif /* HAS_LIBCONFIG */
 
 struct usbg_function_type usbg_f_type_loopback = {
-	.name = "loopback",
+	.name = "Loopback",
 	.alloc_inst = loopback_alloc_inst,
 	.free_inst = loopback_free_inst,
 	.set_attrs = loopback_set_attrs,
