@@ -188,6 +188,7 @@ struct usbg_udc
 				if (strcmp((ToInsert)->NameField, _cur->NameField) > 0) \
 					continue; \
 				TAILQ_INSERT_BEFORE(_cur, (ToInsert), NodeField); \
+				break; \
 			} \
 		} \
 	} while (0)
