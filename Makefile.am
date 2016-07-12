@@ -1,5 +1,9 @@
 include $(top_srcdir)/aminclude.am
-SUBDIRS = src examples
+SUBDIRS = src
+
+if BUILD_EXAMPLES
+SUBDIRS += examples
+endif
 
 if BUILD_TESTS
 SUBDIRS += tests

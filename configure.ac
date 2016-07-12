@@ -10,6 +10,10 @@ AC_ARG_WITH([libconfig],
 	    AS_HELP_STRING([--without-libconfig], [build without using libconfig]),
 	                   [with_libconfig=$withval], [with_libconfig=yes])
 
+AC_ARG_ENABLE([examples],
+	      AS_HELP_STRING([--disable-examples], [build without examples]),
+	      [enable_examples=$enableval], [enable_examples=yes])
+
 AC_ARG_ENABLE([gadget-schemes],
 	      AS_HELP_STRING([--disable-gadget-schemes], [build without gadget-schemes support]),
 	      [enable_gadget_schemes=$enableval], [enable_gadget_schemes=yes])
@@ -33,6 +37,8 @@ AS_IF([test "x$with_libconfig" = xyes], [
 ], [
 	enable_gadget_schemes=no
 ])
+
+AM_CONDITIONAL(BUILD_EXAMPLES, [test "x$enable_examples" = xyes])
 
 AS_IF([test "x$enable_tests" = xyes], [
 	PKG_CHECK_MODULES([CMOCKA], [cmocka >= 1.0.0],
