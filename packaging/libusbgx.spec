@@ -48,7 +48,7 @@ make
 %files
 %manifest %{name}.manifest
 %defattr(-,root,root)
-%license COPYING COPYING.LGPL
+%license COPYING.LGPL
 %{_libdir}/libusbgx.so.*
 %{_libdir}/libusbgx.so.*.*.*
 
@@ -68,6 +68,7 @@ make
 
 %files examples
 %manifest %{name}.manifest
+%license COPYING
 %{_bindir}/gadget-acm-ecm
 %{_bindir}/show-gadgets
 %{_bindir}/gadget-vid-pid-remove
