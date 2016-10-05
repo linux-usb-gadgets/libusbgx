@@ -411,7 +411,7 @@ static int usbg_export_gadget_strs_lang(usbg_gadget *g, const char *lang_str,
 	usbg_gadget_strs strs;
 	int lang;
 	int usbg_ret, cfg_ret;
-	int ret = USBG_ERROR_NO_MEM;
+	int ret;
 
 	ret = sscanf(lang_str, "%x", &lang);
 	if (ret != 1) {

@@ -907,7 +907,7 @@ err:
 
 static int usbg_parse_state(usbg_state *s)
 {
-	int ret = USBG_SUCCESS;
+	int ret;
 
 	/*
 	 * USBG_ERROR_NOT_FOUND is returned if we are running on machine where
@@ -938,7 +938,7 @@ out:
 
 int usbg_init(const char *configfs_path, usbg_state **state)
 {
-	int ret = USBG_SUCCESS;
+	int ret;
 	DIR *dir;
 	char *path;
 	usbg_state *s;

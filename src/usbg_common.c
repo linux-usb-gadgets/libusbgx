@@ -128,7 +128,7 @@ int usbg_read_string_alloc(const char *path, const char *name,
 {
 	char buf[USBG_MAX_FILE_SIZE];
 	char *new_buf = NULL;
-	int ret = USBG_SUCCESS;
+	int ret;
 
 	ret = usbg_read_string(path, name, file, buf);
 	if (ret != USBG_SUCCESS)
