@@ -47,6 +47,10 @@ extern "C" {
                 })
 #endif /* container_of */
 
+#define USBG_MAX_PATH_LENGTH PATH_MAX
+/* ConfigFS just like SysFS uses page size as max size of file content */
+#define USBG_MAX_FILE_SIZE 4096
+
 struct usbg_function_type
 {
 	/* Name of this function type */

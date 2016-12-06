@@ -50,12 +50,9 @@ extern "C" {
 
 /* This one has to be at least 18 bytes to hold network address */
 #define USBG_MAX_STR_LENGTH 256
-#define USBG_MAX_PATH_LENGTH PATH_MAX
 #define USBG_MAX_NAME_LENGTH 40
 /* Dev name for ffs is a part of function name, we subtract 4 char for "ffs." */
 #define USBG_MAX_DEV_LENGTH (USBG_MAX_NAME_LENGTH - 4)
-/* ConfigFS just like SysFS uses page size as max size of file content */
-#define USBG_MAX_FILE_SIZE 4096
 
 /**
  * @brief Additional option for usbg_rm_* functions.
