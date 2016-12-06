@@ -17,6 +17,10 @@
 
 #include <malloc.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct usbg_f_net;
 typedef struct usbg_f_net usbg_f_net;
 
@@ -210,5 +214,9 @@ static inline int usbg_f_net_set_qmult(usbg_f_net *nf, int qmult)
 	return usbg_f_net_set_attr_val(nf, USBG_F_NET_QMULT,
 				       (union usbg_f_net_attr_val)qmult);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* USBG_FUNCTION_NET__ */

@@ -15,6 +15,10 @@
 
 #include <usbg/usbg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct usbg_f_phonet;
 typedef struct usbg_f_phonet usbg_f_phonet;
 
@@ -55,5 +59,9 @@ int usbg_f_phonet_get_ifname(usbg_f_phonet *pf, char **ifname);
  *         also return negative error code from usbg_error.
  */
 int usbg_f_phonet_get_ifname_s(usbg_f_phonet *pf, char *buf, int len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* USBG_FUNCTION_PHONET__ */

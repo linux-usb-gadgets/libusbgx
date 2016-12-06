@@ -15,6 +15,10 @@
 
 #include <usbg/usbg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct usbg_f_loopback;
 typedef struct usbg_f_loopback usbg_f_loopback;
 
@@ -134,5 +138,9 @@ static inline int usbg_f_loopback_set_qlen(usbg_f_loopback *lf, int qlen)
 {
 	return usbg_f_loopback_set_attr_val(lf, USBG_F_LOOPBACK_QLEN, qlen);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* USBG_FUNCTION_LOOPBACK__ */

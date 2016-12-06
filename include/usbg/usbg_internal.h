@@ -17,10 +17,16 @@
 #include <string.h>
 #include <usbg/usbg.h>
 #include <malloc.h>
-
 #ifdef HAS_LIBCONFIG
 #include <libconfig.h>
-#else
+#endif
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef HAS_LIBCONFIG
 	typedef struct _should_not_be_used config_t;
 	typedef struct _should_not_be_used config_setting_t;
 	void config_destroy(config_t *config);
@@ -390,5 +396,9 @@ int usbg_set_config_node_string(config_setting_t *root,
 
 int usbg_set_config_node_ether_addr(config_setting_t *root,
 					      const char *node_name, void *val);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* USBG_INTERNAL_H */

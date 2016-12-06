@@ -15,6 +15,10 @@
 
 #include <usbg/usbg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct usbg_f_fs;
 typedef struct usbg_f_fs usbg_f_fs;
 
@@ -55,5 +59,9 @@ int usbg_f_fs_get_dev_name(usbg_f_fs *ff, char **dev_name);
  *         also return negative error code from usbg_error.
  */
 int usbg_f_fs_get_dev_name_s(usbg_f_fs *ff, char *buf, int len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* USBG_FUNCTION_FS__ */

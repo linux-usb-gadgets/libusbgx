@@ -17,6 +17,10 @@
 
 #include <malloc.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct usbg_f_midi;
 typedef struct usbg_f_midi usbg_f_midi;
 
@@ -278,5 +282,9 @@ static inline int usbg_f_midi_set_qlen(usbg_f_midi *mf, int qlen)
 	return usbg_f_midi_set_attr_val(mf, USBG_F_MIDI_QLEN,
 					(union usbg_f_midi_attr_val)qlen);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* USBG_FUNCTION_MIDI__ */

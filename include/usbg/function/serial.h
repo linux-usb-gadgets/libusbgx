@@ -15,6 +15,10 @@
 
 #include <usbg/usbg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct usbg_f_serial;
 typedef struct usbg_f_serial usbg_f_serial;
 
@@ -40,5 +44,9 @@ usbg_function *usbg_from_serial_function(usbg_f_serial *sf);
  * @return 0 on success usbg_error if error occurred.
  */
 int usbg_f_serial_get_port_num(usbg_f_serial *sf, int *port_num);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* USBG_FUNCTION_SERIAL__ */

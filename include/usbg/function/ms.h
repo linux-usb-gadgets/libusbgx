@@ -17,6 +17,10 @@
 
 #include <malloc.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct usbg_f_ms usbg_f_ms;
 
 struct usbg_f_ms_lun_attrs {
@@ -366,5 +370,9 @@ int usbg_f_ms_set_stall(usbg_f_ms *mf, bool stall);
  * @return 0 on success usbg_error if error occurred.
  */
 int usbg_f_ms_get_nluns(usbg_f_ms *mf, int *nluns);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* USBG_FUNCTION_MS__ */
