@@ -837,9 +837,9 @@ static struct {
 	usbg_gadget_str code;
 	const char *name;
 } gadget_str_names[] = {
-	{STR_PRODUCT, "product"},
-	{STR_MANUFACTURER, "manufacturer"},
-	{STR_SERIAL_NUMBER, "serialnumber"},
+	{USBG_STR_PRODUCT, "product"},
+	{USBG_STR_MANUFACTURER, "manufacturer"},
+	{USBG_STR_SERIAL_NUMBER, "serialnumber"},
 };
 
 /**
@@ -1431,13 +1431,13 @@ static void test_set_gadget_strs(void **data)
 			pull_gadget_string(tg, LANG_US_ENG, i, get_gadget_str(ts->strs, i));
 
 
-		ret = usbg_set_gadget_str(g, STR_SERIAL_NUMBER, LANG_US_ENG, ts->strs->str_ser);
+		ret = usbg_set_gadget_str(g, USBG_STR_SERIAL_NUMBER, LANG_US_ENG, ts->strs->str_ser);
 		assert_int_equal(ret, 0);
 
-		ret = usbg_set_gadget_str(g, STR_MANUFACTURER, LANG_US_ENG, ts->strs->str_mnf);
+		ret = usbg_set_gadget_str(g, USBG_STR_MANUFACTURER, LANG_US_ENG, ts->strs->str_mnf);
 		assert_int_equal(ret, 0);
 
-		ret = usbg_set_gadget_str(g, STR_PRODUCT, LANG_US_ENG, ts->strs->str_prd);
+		ret = usbg_set_gadget_str(g, USBG_STR_PRODUCT, LANG_US_ENG, ts->strs->str_prd);
 		assert_int_equal(ret, 0);
 	}
 }
