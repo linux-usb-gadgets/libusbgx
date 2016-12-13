@@ -1343,14 +1343,14 @@ static void test_get_gadget_attr_str(void **state)
 		usbg_gadget_attr attr;
 		const char *str;
 	} attrs[] = {
-		{BCD_USB, "bcdUSB"},
-		{B_DEVICE_CLASS, "bDeviceClass"},
-		{B_DEVICE_SUB_CLASS, "bDeviceSubClass"},
-		{B_DEVICE_PROTOCOL, "bDeviceProtocol"},
-		{B_MAX_PACKET_SIZE_0, "bMaxPacketSize0"},
-		{ID_VENDOR, "idVendor"},
-		{ID_PRODUCT, "idProduct"},
-		{BCD_DEVICE, "bcdDevice"},
+		{USBG_BCD_USB, "bcdUSB"},
+		{USBG_B_DEVICE_CLASS, "bDeviceClass"},
+		{USBG_B_DEVICE_SUB_CLASS, "bDeviceSubClass"},
+		{USBG_B_DEVICE_PROTOCOL, "bDeviceProtocol"},
+		{USBG_B_MAX_PACKET_SIZE_0, "bMaxPacketSize0"},
+		{USBG_ID_VENDOR, "idVendor"},
+		{USBG_ID_PRODUCT, "idProduct"},
+		{USBG_BCD_DEVICE, "bcdDevice"},
 	};
 
 	const char *str;

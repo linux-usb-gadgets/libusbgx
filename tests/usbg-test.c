@@ -667,28 +667,28 @@ int get_gadget_attr(usbg_gadget_attrs *attrs, usbg_gadget_attr attr)
 	int ret = -1;
 
 	switch (attr) {
-	case BCD_USB:
+	case USBG_BCD_USB:
 		ret = attrs->bcdUSB;
 		break;
-	case B_DEVICE_CLASS:
+	case USBG_B_DEVICE_CLASS:
 		ret = attrs->bDeviceClass;
 		break;
-	case B_DEVICE_SUB_CLASS:
+	case USBG_B_DEVICE_SUB_CLASS:
 		ret = attrs->bDeviceSubClass;
 		break;
-	case B_DEVICE_PROTOCOL:
+	case USBG_B_DEVICE_PROTOCOL:
 		ret = attrs->bDeviceProtocol;
 		break;
-	case B_MAX_PACKET_SIZE_0:
+	case USBG_B_MAX_PACKET_SIZE_0:
 		ret = attrs->bMaxPacketSize0;
 		break;
-	case ID_VENDOR:
+	case USBG_ID_VENDOR:
 		ret = attrs->idVendor;
 		break;
-	case ID_PRODUCT:
+	case USBG_ID_PRODUCT:
 		ret = attrs->idProduct;
 		break;
-	case BCD_DEVICE:
+	case USBG_BCD_DEVICE:
 		ret = attrs->bcdDevice;
 		break;
 	default:
