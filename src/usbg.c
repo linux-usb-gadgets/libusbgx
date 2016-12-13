@@ -56,19 +56,19 @@ extern struct usbg_function_type usbg_f_type_loopback;
  * @brief Types of functions supported by library
  */
 struct usbg_function_type* function_types[] = {
-	[F_ACM] = &usbg_f_type_acm,
-	[F_SERIAL] = &usbg_f_type_serial,
-	[F_OBEX] = &usbg_f_type_obex,
-	[F_ECM] = &usbg_f_type_ecm,
-	[F_SUBSET] = &usbg_f_type_subset,
-	[F_NCM] = &usbg_f_type_ncm,
-	[F_EEM] = &usbg_f_type_eem,
-	[F_RNDIS] = &usbg_f_type_rndis,
-	[F_FFS] = &usbg_f_type_ffs,
-	[F_MIDI] = &usbg_f_type_midi,
-	[F_MASS_STORAGE] = &usbg_f_type_ms,
-	[F_PHONET] = &usbg_f_type_phonet,
-	[F_LOOPBACK] = &usbg_f_type_loopback,
+	[USBG_F_ACM] = &usbg_f_type_acm,
+	[USBG_F_SERIAL] = &usbg_f_type_serial,
+	[USBG_F_OBEX] = &usbg_f_type_obex,
+	[USBG_F_ECM] = &usbg_f_type_ecm,
+	[USBG_F_SUBSET] = &usbg_f_type_subset,
+	[USBG_F_NCM] = &usbg_f_type_ncm,
+	[USBG_F_EEM] = &usbg_f_type_eem,
+	[USBG_F_RNDIS] = &usbg_f_type_rndis,
+	[USBG_F_FFS] = &usbg_f_type_ffs,
+	[USBG_F_MIDI] = &usbg_f_type_midi,
+	[USBG_F_MASS_STORAGE] = &usbg_f_type_ms,
+	[USBG_F_PHONET] = &usbg_f_type_phonet,
+	[USBG_F_LOOPBACK] = &usbg_f_type_loopback,
 };
 
 ARRAY_SIZE_SENTINEL(function_types, USBG_FUNCTION_TYPE_MAX);

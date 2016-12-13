@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 		goto out2;
 	}
 
-	usbg_ret = usbg_create_function(g, F_MASS_STORAGE, "my_reader",
+	usbg_ret = usbg_create_function(g, USBG_F_MASS_STORAGE, "my_reader",
 					&f_attrs, &f_ms);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating mass storage function\n");

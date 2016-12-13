@@ -128,18 +128,18 @@ void show_function(usbg_function *f)
 			usbg_get_function_type_str(type), instance);
 
 	switch (type) {
-	case F_ACM:
-	case F_OBEX:
-	case F_SERIAL:
+	case USBG_F_ACM:
+	case USBG_F_OBEX:
+	case USBG_F_SERIAL:
 		fprintf(stdout, "    port_num\t\t%d\n",
 				f_attrs.serial_port_num);
 		break;
 
-	case F_ECM:
-	case F_SUBSET:
-	case F_NCM:
-	case F_EEM:
-	case F_RNDIS:
+	case USBG_F_ECM:
+	case USBG_F_SUBSET:
+	case USBG_F_NCM:
+	case USBG_F_EEM:
+	case USBG_F_RNDIS:
 	{
 		struct usbg_f_net_attrs *f_net_attrs = &f_attrs.net;
 
@@ -152,15 +152,15 @@ void show_function(usbg_function *f)
 		break;
 	}
 
-	case F_PHONET:
+	case USBG_F_PHONET:
 		fprintf(stdout, "    ifname\t\t%s\n", f_attrs.phonet_ifname);
 		break;
 
-	case F_FFS:
+	case USBG_F_FFS:
 		fprintf(stdout, "    dev_name\t\t%s\n", f_attrs.ffs_dev_name);
 		break;
 
-	case F_MASS_STORAGE:
+	case USBG_F_MASS_STORAGE:
 	{
 		struct usbg_f_ms_attrs *attrs = &f_attrs.ms;
 		int i;
@@ -178,7 +178,7 @@ void show_function(usbg_function *f)
 		break;
 	}
 
-	case F_MIDI:
+	case USBG_F_MIDI:
 	{
 		struct usbg_f_midi_attrs *attrs = &f_attrs.midi;
 

@@ -1064,22 +1064,22 @@ static void push_phonet_attrs(struct test_function *func,
 void push_function_attrs(struct test_function *func, void *function_attrs)
 {
 	switch (func->type) {
-	case F_ACM:
-	case F_OBEX:
-	case F_SERIAL:
+	case USBG_F_ACM:
+	case USBG_F_OBEX:
+	case USBG_F_SERIAL:
 		push_serial_attrs(func, function_attrs);
 		break;
-	case F_ECM:
-	case F_SUBSET:
-	case F_NCM:
-	case F_EEM:
-	case F_RNDIS:
+	case USBG_F_ECM:
+	case USBG_F_SUBSET:
+	case USBG_F_NCM:
+	case USBG_F_EEM:
+	case USBG_F_RNDIS:
 		push_net_attrs(func, function_attrs);
 		break;
-	case F_PHONET:
+	case USBG_F_PHONET:
 		push_phonet_attrs(func, function_attrs);
 		break;
-	case F_FFS:
+	case USBG_F_FFS:
 		// ffs does not exist in filesystem
 	default:
 		break;
@@ -1114,11 +1114,11 @@ static void pull_function_net_attrs(struct test_function *func,
 void pull_function_attrs(struct test_function *func, void *attrs)
 {
 	switch (func->type) {
-	case F_ECM:
-	case F_SUBSET:
-	case F_NCM:
-	case F_EEM:
-	case F_RNDIS:
+	case USBG_F_ECM:
+	case USBG_F_SUBSET:
+	case USBG_F_NCM:
+	case USBG_F_EEM:
+	case USBG_F_RNDIS:
 		pull_function_net_attrs(func, attrs);
 		break;
 	default:
@@ -1307,22 +1307,22 @@ void assert_function_attrs_equal(void *actual, void *expected,
 				 usbg_function_type type)
 {
 	switch (type) {
-	case F_ACM:
-	case F_OBEX:
-	case F_SERIAL:
+	case USBG_F_ACM:
+	case USBG_F_OBEX:
+	case USBG_F_SERIAL:
 		assert_f_serial_attrs_equal(actual, expected);
 		break;
-	case F_ECM:
-	case F_SUBSET:
-	case F_NCM:
-	case F_EEM:
-	case F_RNDIS:
+	case USBG_F_ECM:
+	case USBG_F_SUBSET:
+	case USBG_F_NCM:
+	case USBG_F_EEM:
+	case USBG_F_RNDIS:
 		assert_f_net_attrs_equal(actual, expected);
 		break;
-	case F_PHONET:
+	case USBG_F_PHONET:
 		assert_f_phonet_attrs_equal(actual, expected);
 		break;
-	case F_FFS:
+	case USBG_F_FFS:
 		assert_f_ffs_attrs_equal(actual, expected);
 		break;
 	default:

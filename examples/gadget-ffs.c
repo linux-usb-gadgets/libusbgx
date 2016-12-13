@@ -79,7 +79,7 @@ int main(void)
 		goto out2;
 	}
 
-	usbg_ret = usbg_create_function(g, F_FFS, "my_dev_name", NULL, &f_ffs1);
+	usbg_ret = usbg_create_function(g, USBG_F_FFS, "my_dev_name", NULL, &f_ffs1);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating ffs1 function\n");
 		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
@@ -87,7 +87,7 @@ int main(void)
 		goto out2;
 	}
 
-	usbg_ret = usbg_create_function(g, F_FFS, "my_other_dev_name",
+	usbg_ret = usbg_create_function(g, USBG_F_FFS, "my_other_dev_name",
 					NULL, &f_ffs2);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating ffs2 function\n");

@@ -107,8 +107,8 @@ static char *long_udcs[] = {
  * @details Used to go through init when testing other things
  */
 static struct test_function simple_funcs[] = {
-	FUNC_FROM_TYPE(F_ECM),
-	FUNC_FROM_TYPE(F_ACM),
+	FUNC_FROM_TYPE(USBG_F_ECM),
+	FUNC_FROM_TYPE(USBG_F_ACM),
 	TEST_FUNCTION_LIST_END
 };
 
@@ -118,23 +118,23 @@ static struct test_function simple_funcs[] = {
  * processed correctly
  */
 static struct test_function all_funcs[] = {
-	FUNC_FROM_TYPE(F_SERIAL),
-	FUNC_FROM_TYPE(F_ACM),
-	FUNC_FROM_TYPE(F_OBEX),
-	FUNC_FROM_TYPE(F_ECM),
-	FUNC_FROM_TYPE(F_SUBSET),
-	FUNC_FROM_TYPE(F_NCM),
-	FUNC_FROM_TYPE(F_EEM),
-	FUNC_FROM_TYPE(F_RNDIS),
-	FUNC_FROM_TYPE(F_PHONET),
-	FUNC_FROM_TYPE(F_FFS),
+	FUNC_FROM_TYPE(USBG_F_SERIAL),
+	FUNC_FROM_TYPE(USBG_F_ACM),
+	FUNC_FROM_TYPE(USBG_F_OBEX),
+	FUNC_FROM_TYPE(USBG_F_ECM),
+	FUNC_FROM_TYPE(USBG_F_SUBSET),
+	FUNC_FROM_TYPE(USBG_F_NCM),
+	FUNC_FROM_TYPE(USBG_F_EEM),
+	FUNC_FROM_TYPE(USBG_F_RNDIS),
+	FUNC_FROM_TYPE(USBG_F_PHONET),
+	FUNC_FROM_TYPE(USBG_F_FFS),
 	TEST_FUNCTION_LIST_END
 };
 
 static struct test_function same_type_funcs[] = {
-	FUNC_FROM_TYPE(F_SERIAL),
-	FUNC_FROM_TYPE(F_SERIAL),
-	FUNC_FROM_TYPE(F_SERIAL),
+	FUNC_FROM_TYPE(USBG_F_SERIAL),
+	FUNC_FROM_TYPE(USBG_F_SERIAL),
+	FUNC_FROM_TYPE(USBG_F_SERIAL),
 	TEST_FUNCTION_LIST_END
 };
 
@@ -460,121 +460,121 @@ static void *setup_f_attrs(int f_type, void *attrs)
 
 static int setup_f_serial_attrs(void **state)
 {
-	*state = setup_f_attrs(F_SERIAL, &simple_serial_attrs);
+	*state = setup_f_attrs(USBG_F_SERIAL, &simple_serial_attrs);
 	return 0;
 }
 
 static int setup_f_serial_writable_attrs(void **state)
 {
-	*state = setup_f_attrs(F_SERIAL, &writable_serial_attrs);
+	*state = setup_f_attrs(USBG_F_SERIAL, &writable_serial_attrs);
 	return 0;
 }
 
 static int setup_f_acm_attrs(void **state)
 {
-	*state = setup_f_attrs(F_ACM, &simple_serial_attrs);
+	*state = setup_f_attrs(USBG_F_ACM, &simple_serial_attrs);
 	return 0;
 }
 
 static int setup_f_acm_writable_attrs(void **state)
 {
-	*state = setup_f_attrs(F_ACM, &writable_serial_attrs);
+	*state = setup_f_attrs(USBG_F_ACM, &writable_serial_attrs);
 	return 0;
 }
 
 static int setup_f_obex_attrs(void **state)
 {
-	*state = setup_f_attrs(F_OBEX, &simple_serial_attrs);
+	*state = setup_f_attrs(USBG_F_OBEX, &simple_serial_attrs);
 	return 0;
 }
 
 static int setup_f_obex_writable_attrs(void **state)
 {
-	*state = setup_f_attrs(F_OBEX, &writable_serial_attrs);
+	*state = setup_f_attrs(USBG_F_OBEX, &writable_serial_attrs);
 	return 0;
 }
 
 static int setup_f_ecm_attrs(void **state)
 {
-	*state = setup_f_attrs(F_ECM, &simple_net_attrs);
+	*state = setup_f_attrs(USBG_F_ECM, &simple_net_attrs);
 	return 0;
 }
 
 static int setup_f_ecm_writable_attrs(void **state)
 {
-	*state = setup_f_attrs(F_ECM, &writable_net_attrs);
+	*state = setup_f_attrs(USBG_F_ECM, &writable_net_attrs);
 	return 0;
 }
 
 static int setup_f_subset_attrs(void **state)
 {
-	*state = setup_f_attrs(F_SUBSET, &simple_net_attrs);
+	*state = setup_f_attrs(USBG_F_SUBSET, &simple_net_attrs);
 	return 0;
 }
 
 static int setup_f_subset_writable_attrs(void **state)
 {
-	*state = setup_f_attrs(F_SUBSET, &writable_net_attrs);
+	*state = setup_f_attrs(USBG_F_SUBSET, &writable_net_attrs);
 	return 0;
 }
 
 static int setup_f_ncm_attrs(void **state)
 {
-	*state = setup_f_attrs(F_NCM, &simple_net_attrs);
+	*state = setup_f_attrs(USBG_F_NCM, &simple_net_attrs);
 	return 0;
 }
 
 static int setup_f_ncm_writable_attrs(void **state)
 {
-	*state = setup_f_attrs(F_NCM, &writable_net_attrs);
+	*state = setup_f_attrs(USBG_F_NCM, &writable_net_attrs);
 	return 0;
 }
 
 static int setup_f_eem_attrs(void **state)
 {
-	*state = setup_f_attrs(F_EEM, &simple_net_attrs);
+	*state = setup_f_attrs(USBG_F_EEM, &simple_net_attrs);
 	return 0;
 }
 
 static int setup_f_eem_writable_attrs(void **state)
 {
-	*state = setup_f_attrs(F_EEM, &writable_net_attrs);
+	*state = setup_f_attrs(USBG_F_EEM, &writable_net_attrs);
 	return 0;
 }
 
 static int setup_f_rndis_attrs(void **state)
 {
-	*state = setup_f_attrs(F_RNDIS, &simple_net_attrs);
+	*state = setup_f_attrs(USBG_F_RNDIS, &simple_net_attrs);
 	return 0;
 }
 
 static int setup_f_rndis_writable_attrs(void **state)
 {
-	*state = setup_f_attrs(F_RNDIS, &writable_net_attrs);
+	*state = setup_f_attrs(USBG_F_RNDIS, &writable_net_attrs);
 	return 0;
 }
 
 static int setup_f_phonet_attrs(void **state)
 {
-	*state = setup_f_attrs(F_PHONET, &simple_phonet_attrs);
+	*state = setup_f_attrs(USBG_F_PHONET, &simple_phonet_attrs);
 	return 0;
 }
 
 static int setup_f_phonet_writable_attrs(void **state)
 {
-	*state = setup_f_attrs(F_PHONET, &writable_phonet_attrs);
+	*state = setup_f_attrs(USBG_F_PHONET, &writable_phonet_attrs);
 	return 0;
 }
 
 static int setup_f_ffs_attrs(void **state)
 {
-	*state = setup_f_attrs(F_FFS, &simple_ffs_attrs);
+	*state = setup_f_attrs(USBG_F_FFS, &simple_ffs_attrs);
 	return 0;
 }
 
 static int setup_f_ffs_writable_attrs(void **state)
 {
-	*state = setup_f_attrs(F_FFS, &writable_ffs_attrs);
+	*state = setup_f_attrs(USBG_F_FFS, &writable_ffs_attrs);
 	return 0;
 }
 
@@ -792,7 +792,7 @@ static void test_get_function_fail(void **state)
 	g = usbg_get_first_gadget(s);
 	assert_non_null(g);
 
-	f = usbg_get_function(g, F_ACM, "non-existing-instance");
+	f = usbg_get_function(g, USBG_F_ACM, "non-existing-instance");
 	assert_null(f);
 
 	f = usbg_get_function(g, 9001, "0");
@@ -811,16 +811,16 @@ static void test_get_function_type_str(void **state)
 		usbg_function_type type;
 		const char *str;
 	} types[] = {
-		{F_SERIAL, "gser"},
-		{F_ACM, "acm"},
-		{F_OBEX, "obex"},
-		{F_ECM, "ecm"},
-		{F_SUBSET, "geth"},
-		{F_NCM, "ncm"},
-		{F_EEM, "eem"},
-		{F_RNDIS, "rndis"},
-		{F_PHONET, "phonet"},
-		{F_FFS, "ffs"},
+		{USBG_F_SERIAL, "gser"},
+		{USBG_F_ACM, "acm"},
+		{USBG_F_OBEX, "obex"},
+		{USBG_F_ECM, "ecm"},
+		{USBG_F_SUBSET, "geth"},
+		{USBG_F_NCM, "ncm"},
+		{USBG_F_EEM, "eem"},
+		{USBG_F_RNDIS, "rndis"},
+		{USBG_F_PHONET, "phonet"},
+		{USBG_F_FFS, "ffs"},
 	};
 
 	const char *str;

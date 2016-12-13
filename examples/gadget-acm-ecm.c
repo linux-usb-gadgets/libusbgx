@@ -78,7 +78,7 @@ int main(void)
 		goto out2;
 	}
 
-	usbg_ret = usbg_create_function(g, F_ACM, "usb0", NULL, &f_acm0);
+	usbg_ret = usbg_create_function(g, USBG_F_ACM, "usb0", NULL, &f_acm0);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating acm0 function\n");
 		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
@@ -86,7 +86,7 @@ int main(void)
 		goto out2;
 	}
 
-	usbg_ret = usbg_create_function(g, F_ACM, "usb1", NULL, &f_acm1);
+	usbg_ret = usbg_create_function(g, USBG_F_ACM, "usb1", NULL, &f_acm1);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating acm1 function\n");
 		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
@@ -94,7 +94,7 @@ int main(void)
 		goto out2;
 	}
 
-	usbg_ret = usbg_create_function(g, F_ECM, "usb0", NULL, &f_ecm);
+	usbg_ret = usbg_create_function(g, USBG_F_ECM, "usb0", NULL, &f_ecm);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating ecm function\n");
 		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),

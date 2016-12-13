@@ -76,7 +76,7 @@ int main() {
 				usbg_strerror(usbg_ret));
 		goto out2;
 	}
-	usbg_ret = usbg_create_function(g, F_MIDI, "usb0", &f_attrs, &f_midi);
+	usbg_ret = usbg_create_function(g, USBG_F_MIDI, "usb0", &f_attrs, &f_midi);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error creating function\n");
 		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
