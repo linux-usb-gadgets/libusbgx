@@ -28,6 +28,7 @@
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h> /* For FILE * */
+#include <malloc.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -147,9 +148,9 @@ typedef enum {
  */
 struct usbg_gadget_strs
 {
-	char manufacturer[USBG_MAX_STR_LENGTH];
-	char product[USBG_MAX_STR_LENGTH];
-	char serial[USBG_MAX_STR_LENGTH];
+	char *manufacturer;
+	char *product;
+	char *serial;
 };
 
 /**
@@ -569,6 +570,12 @@ extern int usbg_get_gadget_strs(usbg_gadget *g, int lang,
  */
 static inline void usbg_free_gadget_strs(struct usbg_gadget_strs *g_strs)
 {
+	if (g_strs)
+		return;
+
+	free(g_strs->manufacturer);
+	free(g_strs->product);
+	free(g_strs->serial);
 }
 
 /**

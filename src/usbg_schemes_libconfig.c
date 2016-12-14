@@ -1236,8 +1236,7 @@ static int usbg_import_gadget_strs_lang(config_setting_t *root, usbg_gadget *g)
 {
 	config_setting_t *node;
 	int lang;
-	const char *str;
-	struct usbg_gadget_strs g_strs = {{0}};
+	struct usbg_gadget_strs g_strs = {0};
 	int ret = USBG_ERROR_INVALID_TYPE;
 
 	node = config_setting_get_member(root, USBG_LANG_TAG);
@@ -1258,9 +1257,7 @@ static int usbg_import_gadget_strs_lang(config_setting_t *root, usbg_gadget *g)
 		if (node) {						\
 			if (!usbg_config_is_string(node))		\
 				goto out;				\
-			str = config_setting_get_string(node);		\
-			strncpy(g_strs.FIELD, str, USBG_MAX_STR_LENGTH); \
-			g_strs.FIELD[USBG_MAX_STR_LENGTH - 1] = '\0';	\
+			g_strs.FIELD = (char *)config_setting_get_string(node); \
 		}							\
 	} while (0)
 

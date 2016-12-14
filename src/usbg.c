@@ -525,7 +525,7 @@ static int usbg_parse_config_strs(const char *path, const char *name,
 		ret = USBG_ERROR_PATH_TOO_LONG;
 		goto out;
 	}
-	    
+
 	/* Check if directory exist */
 	dir = opendir(spath);
 	if (!dir) {
@@ -773,18 +773,29 @@ static int usbg_parse_gadget_strs(const char *path, const char *name, int lang,
 	}
 
 	closedir(dir);
-	ret = usbg_read_string(spath, "", "manufacturer", g_strs->manufacturer);
+
+	g_strs->manufacturer = g_strs->product = g_strs->serial = NULL;
+
+	ret = usbg_read_string_alloc(spath, "", "manufacturer",
+				     &g_strs->manufacturer);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	ret = usbg_read_string(spath, "", "product", g_strs->product);
+	ret = usbg_read_string_alloc(spath, "", "product", &g_strs->product);
 	if (ret != USBG_SUCCESS)
-		goto out;
+		goto free_mnf;
 
-	ret = usbg_read_string(spath, "", "serialnumber", g_strs->serial);
+	ret = usbg_read_string_alloc(spath, "", "serialnumber",
+				     &g_strs->serial);
 	if (ret != USBG_SUCCESS)
-		goto out;
+		goto free_product;
 
+	return ret;
+
+free_product:
+	free(g_strs->product);
+free_mnf:
+	free(g_strs->manufacturer);
 out:
 	return ret;
 }
@@ -1691,15 +1702,18 @@ int usbg_set_gadget_strs(usbg_gadget *g, int lang,
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	ret = usbg_write_string(path, "", "manufacturer", g_strs->manufacturer);
-	if (ret != USBG_SUCCESS)
-		goto out;
+#define SET_GADGET_STR(file, field)				\
+	if (g_strs->field) {					\
+		ret = usbg_write_string(path, "", #file,	\
+					g_strs->field);		\
+		if (ret != USBG_SUCCESS)			\
+			goto out;				\
+	}
 
-	ret = usbg_write_string(path, "", "product", g_strs->product);
-	if (ret != USBG_SUCCESS)
-		goto out;
-
-	ret = usbg_write_string(path, "", "serialnumber", g_strs->serial);
+	SET_GADGET_STR(manufacturer, manufacturer);
+	SET_GADGET_STR(product, product);
+	SET_GADGET_STR(serialnumber, serial);
+#undef SET_GADGET_STR
 out:
 	return ret;
 }
@@ -2024,7 +2038,7 @@ int usbg_set_config_string(usbg_config *c, int lang, const char *str)
 
 
 	ret = usbg_write_string(path, "", "configuration", str);
-	
+
 out:
 	return ret;
 }
@@ -2143,7 +2157,7 @@ int usbg_enable_gadget(usbg_gadget *g, usbg_udc *udc)
 		g->udc->gadget = NULL;
 	g->udc = udc;
 	udc->gadget = g;
-	
+
 out:
 	return ret;
 }
@@ -2246,4 +2260,3 @@ usbg_udc *usbg_get_next_udc(usbg_udc *u)
 {
 	return u ? TAILQ_NEXT(u, unode) : NULL;
 }
-

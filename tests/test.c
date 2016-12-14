@@ -422,6 +422,16 @@ static int setup_long_udc_state(void **state)
 	return 0;
 }
 
+static void alloc_random_len_str(char **str)
+{
+	int len;
+
+	len = rand() % USBG_MAX_FILE_SIZE;
+	*str = safe_malloc(len);
+	memset(*str, 'x', len - 1);
+	(*str)[len - 1] = '\0';
+}
+
 /**
  * @brief Setup state with gadget strings of random length
  * @param[out] state Pointer to pointer to test_gadget_strs_data structure
@@ -438,9 +448,9 @@ static int setup_random_len_gadget_strs_data(void **state)
 
 	srand(time(NULL));
 
-	memset(strs->serial, 'x', rand() % USBG_MAX_STR_LENGTH);
-	memset(strs->manufacturer, 'x', rand() % USBG_MAX_STR_LENGTH);
-	memset(strs->product, 'x', rand() % USBG_MAX_STR_LENGTH);
+	alloc_random_len_str(&strs->manufacturer);
+	alloc_random_len_str(&strs->product);
+	alloc_random_len_str(&strs->serial);
 
 	data->strs = strs;
 
