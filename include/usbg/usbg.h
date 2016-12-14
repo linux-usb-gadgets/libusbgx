@@ -136,8 +136,8 @@ struct usbg_gadget_attrs
 
 typedef enum {
 	USBG_GADGET_STR_MIN = 0,
-	USBG_STR_PRODUCT = USBG_GADGET_STR_MIN,
-	USBG_STR_MANUFACTURER,
+	USBG_STR_MANUFACTURER = USBG_GADGET_STR_MIN,
+	USBG_STR_PRODUCT,
 	USBG_STR_SERIAL_NUMBER,
 	USBG_GADGET_STR_MAX,
 } usbg_gadget_str;
@@ -147,9 +147,9 @@ typedef enum {
  */
 struct usbg_gadget_strs
 {
-	char serial[USBG_MAX_STR_LENGTH];
 	char manufacturer[USBG_MAX_STR_LENGTH];
 	char product[USBG_MAX_STR_LENGTH];
+	char serial[USBG_MAX_STR_LENGTH];
 };
 
 /**

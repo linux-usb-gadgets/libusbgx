@@ -1439,10 +1439,6 @@ static void test_set_gadget_strs(void **data)
 			pull_gadget_string(tg, LANG_US_ENG, i,
 					   get_gadget_str(ts->strs, i));
 
-		ret = usbg_set_gadget_serial_number(g, LANG_US_ENG,
-						    ts->strs->serial);
-		assert_int_equal(ret, 0);
-
 		ret = usbg_set_gadget_manufacturer(g, LANG_US_ENG,
 						   ts->strs->manufacturer);
 		assert_int_equal(ret, 0);
@@ -1451,14 +1447,14 @@ static void test_set_gadget_strs(void **data)
 					      ts->strs->product);
 		assert_int_equal(ret, 0);
 
+		ret = usbg_set_gadget_serial_number(g, LANG_US_ENG,
+						    ts->strs->serial);
+		assert_int_equal(ret, 0);
+
 		for (i = 0; i < GADGET_STR_MAX; i++)
 			pull_gadget_string(tg, LANG_US_ENG,
 					   i, get_gadget_str(ts->strs, i));
 
-
-		ret = usbg_set_gadget_str(g, USBG_STR_SERIAL_NUMBER,
-					  LANG_US_ENG, ts->strs->serial);
-		assert_int_equal(ret, 0);
 
 		ret = usbg_set_gadget_str(g, USBG_STR_MANUFACTURER,
 					  LANG_US_ENG, ts->strs->manufacturer);
@@ -1466,6 +1462,10 @@ static void test_set_gadget_strs(void **data)
 
 		ret = usbg_set_gadget_str(g, USBG_STR_PRODUCT,
 					  LANG_US_ENG, ts->strs->product);
+		assert_int_equal(ret, 0);
+
+		ret = usbg_set_gadget_str(g, USBG_STR_SERIAL_NUMBER,
+					  LANG_US_ENG, ts->strs->serial);
 		assert_int_equal(ret, 0);
 	}
 }

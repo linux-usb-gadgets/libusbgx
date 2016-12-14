@@ -71,9 +71,9 @@ struct test_state
 };
 
 typedef enum {
-	STR_SER = 0,
-	STR_MNF,
+	STR_MNF = 0,
 	STR_PRD,
+	STR_SER,
 	GADGET_STR_MAX
 } gadget_str;
 

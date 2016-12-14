@@ -18,9 +18,9 @@ static struct simple_stack{
 } *cleanup_top = NULL;
 
 static const char *gadget_str_names[] = {
-	"serialnumber",
 	"manufacturer",
-	"product"
+	"product",
+	"serialnumber",
 };
 
 static const char *config_attr_names[] = {
