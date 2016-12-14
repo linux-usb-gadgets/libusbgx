@@ -460,6 +460,7 @@ static int usbg_export_gadget_strs_lang(usbg_gadget *g, const char *lang_str,
 #undef ADD_GADGET_STR
 	ret = USBG_SUCCESS;
 out:
+	usbg_free_gadget_strs(&strs);
 	return ret;
 }
 

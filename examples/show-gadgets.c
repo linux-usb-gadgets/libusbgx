@@ -94,6 +94,8 @@ void show_gadget(usbg_gadget *g)
 	fprintf(stdout, "  Manufacturer\t\t%s\n", g_strs.manufacturer);
 	fprintf(stdout, "  Product\t\t%s\n", g_strs.product);
 	fprintf(stdout, "  Serial Number\t\t%s\n", g_strs.serial);
+
+	usbg_free_gadget_strs(&g_strs);
 }
 
 void show_function(usbg_function *f)

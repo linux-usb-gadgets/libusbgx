@@ -1494,6 +1494,7 @@ static void test_get_gadget_strs(void **data)
 		push_gadget_strs(tg, LANG_US_ENG, ts->strs);
 		usbg_get_gadget_strs(g, LANG_US_ENG, &strs);
 		assert_gadget_strs_equal(&strs, ts->strs);
+		usbg_free_gadget_strs(&strs);
 	}
 }
 

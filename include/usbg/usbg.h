@@ -562,6 +562,16 @@ extern int usbg_get_gadget_strs(usbg_gadget *g, int lang,
 				struct usbg_gadget_strs *g_strs);
 
 /**
+ * @brief Free gadget strings
+ * @details This function releases the memory allocated for strings
+ *          not for struct usbg_gadget_strs itself.
+ * @param g_strs Strings to be released
+ */
+static inline void usbg_free_gadget_strs(struct usbg_gadget_strs *g_strs)
+{
+}
+
+/**
  * @brief Set selected string
  * @param g Pointer to gadget
  * @param str Code of selected string
