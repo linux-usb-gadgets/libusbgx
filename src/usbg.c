@@ -773,15 +773,15 @@ static int usbg_parse_gadget_strs(const char *path, const char *name, int lang,
 	}
 
 	closedir(dir);
-	ret = usbg_read_string(spath, "", "serialnumber", g_strs->str_ser);
+	ret = usbg_read_string(spath, "", "serialnumber", g_strs->serial);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	ret = usbg_read_string(spath, "", "manufacturer", g_strs->str_mnf);
+	ret = usbg_read_string(spath, "", "manufacturer", g_strs->manufacturer);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	ret = usbg_read_string(spath, "", "product", g_strs->str_prd);
+	ret = usbg_read_string(spath, "", "product", g_strs->product);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
@@ -1691,15 +1691,15 @@ int usbg_set_gadget_strs(usbg_gadget *g, int lang,
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	ret = usbg_write_string(path, "", "serialnumber", g_strs->str_ser);
+	ret = usbg_write_string(path, "", "serialnumber", g_strs->serial);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	ret = usbg_write_string(path, "", "manufacturer", g_strs->str_mnf);
+	ret = usbg_write_string(path, "", "manufacturer", g_strs->manufacturer);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
-	ret = usbg_write_string(path, "", "product", g_strs->str_prd);
+	ret = usbg_write_string(path, "", "product", g_strs->product);
 
 out:
 	return ret;

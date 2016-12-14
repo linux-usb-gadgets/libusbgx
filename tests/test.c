@@ -438,9 +438,9 @@ static int setup_random_len_gadget_strs_data(void **state)
 
 	srand(time(NULL));
 
-	memset(strs->str_ser, 'x', rand() % USBG_MAX_STR_LENGTH);
-	memset(strs->str_mnf, 'x', rand() % USBG_MAX_STR_LENGTH);
-	memset(strs->str_prd, 'x', rand() % USBG_MAX_STR_LENGTH);
+	memset(strs->serial, 'x', rand() % USBG_MAX_STR_LENGTH);
+	memset(strs->manufacturer, 'x', rand() % USBG_MAX_STR_LENGTH);
+	memset(strs->product, 'x', rand() % USBG_MAX_STR_LENGTH);
 
 	data->strs = strs;
 
@@ -1440,15 +1440,15 @@ static void test_set_gadget_strs(void **data)
 					   get_gadget_str(ts->strs, i));
 
 		ret = usbg_set_gadget_serial_number(g, LANG_US_ENG,
-						    ts->strs->str_ser);
+						    ts->strs->serial);
 		assert_int_equal(ret, 0);
 
 		ret = usbg_set_gadget_manufacturer(g, LANG_US_ENG,
-						   ts->strs->str_mnf);
+						   ts->strs->manufacturer);
 		assert_int_equal(ret, 0);
 
 		ret = usbg_set_gadget_product(g, LANG_US_ENG,
-					      ts->strs->str_prd);
+					      ts->strs->product);
 		assert_int_equal(ret, 0);
 
 		for (i = 0; i < GADGET_STR_MAX; i++)
@@ -1457,15 +1457,15 @@ static void test_set_gadget_strs(void **data)
 
 
 		ret = usbg_set_gadget_str(g, USBG_STR_SERIAL_NUMBER,
-					  LANG_US_ENG, ts->strs->str_ser);
+					  LANG_US_ENG, ts->strs->serial);
 		assert_int_equal(ret, 0);
 
 		ret = usbg_set_gadget_str(g, USBG_STR_MANUFACTURER,
-					  LANG_US_ENG, ts->strs->str_mnf);
+					  LANG_US_ENG, ts->strs->manufacturer);
 		assert_int_equal(ret, 0);
 
 		ret = usbg_set_gadget_str(g, USBG_STR_PRODUCT,
-					  LANG_US_ENG, ts->strs->str_prd);
+					  LANG_US_ENG, ts->strs->product);
 		assert_int_equal(ret, 0);
 	}
 }

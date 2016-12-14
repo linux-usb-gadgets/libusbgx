@@ -51,9 +51,9 @@ int main(int argc, char **argv)
 	};
 
 	struct usbg_gadget_strs g_strs = {
-		.str_ser = "0123456789", /* Serial number */
-		.str_mnf = "Foo Inc.", /* Manufacturer */
-		.str_prd = "Bar Gadget" /* Product string */
+		.serial = "0123456789", /* Serial number */
+		.manufacturer = "Foo Inc.", /* Manufacturer */
+		.product = "Bar Gadget" /* Product string */
 	};
 
 	struct usbg_f_ms_lun_attrs f_ms_luns_array[] = {

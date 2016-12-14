@@ -453,9 +453,9 @@ static int usbg_export_gadget_strs_lang(usbg_gadget *g, const char *lang_str,
 		}							\
 	} while (0)
 
-	ADD_GADGET_STR("manufacturer", str_mnf);
-	ADD_GADGET_STR("product", str_prd);
-	ADD_GADGET_STR("serialnumber", str_ser);
+	ADD_GADGET_STR("manufacturer", manufacturer);
+	ADD_GADGET_STR("product", product);
+	ADD_GADGET_STR("serialnumber", serial);
 
 #undef ADD_GADGET_STR
 	ret = USBG_SUCCESS;
@@ -1263,9 +1263,9 @@ static int usbg_import_gadget_strs_lang(config_setting_t *root, usbg_gadget *g)
 		}							\
 	} while (0)
 
-	GET_OPTIONAL_GADGET_STR(manufacturer, str_mnf);
-	GET_OPTIONAL_GADGET_STR(product, str_prd);
-	GET_OPTIONAL_GADGET_STR(serialnumber, str_ser);
+	GET_OPTIONAL_GADGET_STR(manufacturer, manufacturer);
+	GET_OPTIONAL_GADGET_STR(product, product);
+	GET_OPTIONAL_GADGET_STR(serialnumber, serial);
 
 #undef GET_OPTIONAL_GADGET_STR
 

@@ -147,9 +147,9 @@ typedef enum {
  */
 struct usbg_gadget_strs
 {
-	char str_ser[USBG_MAX_STR_LENGTH];
-	char str_mnf[USBG_MAX_STR_LENGTH];
-	char str_prd[USBG_MAX_STR_LENGTH];
+	char serial[USBG_MAX_STR_LENGTH];
+	char manufacturer[USBG_MAX_STR_LENGTH];
+	char product[USBG_MAX_STR_LENGTH];
 };
 
 /**

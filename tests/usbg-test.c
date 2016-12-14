@@ -860,13 +860,13 @@ const char *get_gadget_str(struct usbg_gadget_strs *strs, gadget_str str)
 
 	switch (str) {
 	case STR_SER:
-		ret = strs->str_ser;
+		ret = strs->serial;
 		break;
 	case STR_MNF:
-		ret = strs->str_mnf;
+		ret = strs->manufacturer;
 		break;
 	case STR_PRD:
-		ret = strs->str_prd;
+		ret = strs->product;
 		break;
 	default:
 		ret = NULL;
