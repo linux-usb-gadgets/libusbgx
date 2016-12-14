@@ -115,6 +115,9 @@ int usbg_read_string_limited(const char *path, const char *name,
 	if (ret == USBG_SUCCESS) {
 		if ((p = strchr(buf, '\n')) != NULL)
 				*p = '\0';
+		else
+			/* Truncate bufer if needed */
+			buf[len - 1] = '\0';
 	} else {
 		/* Set this as empty string */
 		*buf = '\0';
@@ -131,7 +134,7 @@ int usbg_read_string_alloc(const char *path, const char *name,
 	char *new_buf = NULL;
 	int ret;
 
-	ret = usbg_read_string(path, name, file, buf);
+	ret = usbg_read_string_limited(path, name, file, buf, sizeof(buf));
 	if (ret != USBG_SUCCESS)
 		goto out;
 
