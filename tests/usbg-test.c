@@ -175,7 +175,8 @@ static int test_config_cmp(struct test_config *a, struct test_config *b)
 	return strcoll(a->name, b->name);
 }
 
-void prepare_binding(struct test_binding *b, struct test_function *f, char *fpath)
+void prepare_binding(struct test_binding *b, struct test_function *f,
+		     char *fpath)
 {
 	if (!f->name)
 		prepare_function(f, fpath);
@@ -278,7 +279,7 @@ void prepare_gadget(struct test_state *state, struct test_gadget *g)
 }
 
 static void cpy_test_function(struct test_function *to,
-			       struct test_function *from)
+			      struct test_function *from)
 {
 	/* Reuse instance */
 	to->instance = from->instance;
@@ -580,8 +581,10 @@ static void push_binding(struct test_config *conf, struct test_binding *binding)
 	char *s_path;
 	char *d_path;
 
-	safe_asprintf(&s_path, "%s/%s/%s", conf->path, conf->name, binding->name);
-	safe_asprintf(&d_path, "%s/%s", binding->target->path, binding->target->name);
+	safe_asprintf(&s_path, "%s/%s/%s",
+		      conf->path, conf->name, binding->name);
+	safe_asprintf(&d_path, "%s/%s",
+		      binding->target->path, binding->target->name);
 
 	PUSH_LINK(s_path, d_path, USBG_MAX_PATH_LENGTH - 1);
 }
@@ -700,13 +703,14 @@ int get_gadget_attr(struct usbg_gadget_attrs *attrs, usbg_gadget_attr attr)
 }
 
 void pull_gadget_attribute(struct test_gadget *gadget,
-		usbg_gadget_attr attr, int value)
+			   usbg_gadget_attr attr, int value)
 {
 	char *path;
 	char *content;
 
 	safe_asprintf(&path, "%s/%s/%s",
-			gadget->path, gadget->name, usbg_get_gadget_attr_str(attr));
+		      gadget->path, gadget->name,
+		      usbg_get_gadget_attr_str(attr));
 
 	safe_asprintf(&content, "0x%x\n", value);
 
@@ -714,13 +718,14 @@ void pull_gadget_attribute(struct test_gadget *gadget,
 }
 
 void push_gadget_attribute(struct test_gadget *gadget,
-		usbg_gadget_attr attr, int value)
+			   usbg_gadget_attr attr, int value)
 {
 	char *path;
 	char *content;
 
 	safe_asprintf(&path, "%s/%s/%s",
-			gadget->path, gadget->name, usbg_get_gadget_attr_str(attr));
+		      gadget->path, gadget->name,
+		      usbg_get_gadget_attr_str(attr));
 	safe_asprintf(&content, "0x%x\n", value);
 
 	PUSH_FILE(path, content);
@@ -787,7 +792,8 @@ void push_config_attribute(struct test_config *config, config_attr attr,
 	char *path;
 	char *content;
 
-	safe_asprintf(&path, "%s/%s/%s", config->path, config->name, config_attr_names[attr]);
+	safe_asprintf(&path, "%s/%s/%s",
+		      config->path, config->name, config_attr_names[attr]);
 
 	switch (config_attr_format[attr]) {
 	case FORMAT_HEX:
@@ -817,7 +823,8 @@ void pull_config_attribute(struct test_config *config, config_attr attr,
 	char *path;
 	char *content;
 
-	safe_asprintf(&path, "%s/%s/%s", config->path, config->name, config_attr_names[attr]);
+	safe_asprintf(&path, "%s/%s/%s",
+		      config->path, config->name, config_attr_names[attr]);
 
 	switch (config_attr_format[attr]) {
 	case FORMAT_HEX:
@@ -889,7 +896,7 @@ static void pull_gadget_str_dir(struct test_gadget *gadget, int lang)
 }
 
 static void pull_gadget_str(struct test_gadget *gadget, const char *attr_name,
-		int lang, const char *content)
+			    int lang, const char *content)
 {
 	char *path;
 
@@ -912,7 +919,8 @@ void pull_gadget_strs(struct test_gadget *gadget, int lang,
 
 	pull_gadget_str_dir(gadget, lang);
 	for (i = 0; i < GADGET_STR_MAX; i++)
-		pull_gadget_str(gadget, gadget_str_names[i], lang, get_gadget_str(strs, i));
+		pull_gadget_str(gadget, gadget_str_names[i],
+				lang, get_gadget_str(strs, i));
 }
 
 static void push_gadget_str_dir(struct test_gadget *gadget, int lang)
@@ -926,7 +934,7 @@ static void push_gadget_str_dir(struct test_gadget *gadget, int lang)
 }
 
 static void push_gadget_str(struct test_gadget *gadget, const char *attr_name,
-		int lang, const char *content)
+			    int lang, const char *content)
 {
 	char *path;
 
@@ -942,7 +950,8 @@ void push_gadget_strs(struct test_gadget *gadget, int lang,
 
 	push_gadget_str_dir(gadget, lang);
 	for (i = 0; i < GADGET_STR_MAX; i++)
-		push_gadget_str(gadget, gadget_str_names[i], lang, get_gadget_str(strs, i));
+		push_gadget_str(gadget, gadget_str_names[i],
+				lang, get_gadget_str(strs, i));
 }
 
 void pull_config_string(struct test_config *config, int lang, const char *str)
@@ -1018,7 +1027,7 @@ void pull_create_config(struct test_config *tc)
 #define ETHER_ADDR_STR_LEN 19
 
 static void push_serial_attrs(struct test_function *func,
-		int *port_num)
+			      int *port_num)
 {
 	char *path;
 	char *content;
@@ -1029,7 +1038,7 @@ static void push_serial_attrs(struct test_function *func,
 }
 
 static void push_net_attrs(struct test_function *func,
-		struct usbg_f_net_attrs *attrs)
+			   struct usbg_f_net_attrs *attrs)
 {
 	char *path;
 	char *content;
@@ -1060,7 +1069,7 @@ static void push_net_attrs(struct test_function *func,
 }
 
 static void push_phonet_attrs(struct test_function *func,
-		char **ifname)
+			      char **ifname)
 {
 	char *path;
 	char *content;
@@ -1227,13 +1236,15 @@ int path_cmp(const char *actual, const char *expected)
 	return SIGNUM(*a - *b);
 }
 
-int path_equal_display_error(const LargestIntegralType actual, const LargestIntegralType expected)
+int path_equal_display_error(const LargestIntegralType actual,
+			     const LargestIntegralType expected)
 {
 	if (path_cmp((const char *)actual, (const char *)expected) == 0) {
 		return 1;
 	}
 
-	fprintf(stderr, "%s != %s\n", (const char *)actual, (const char *)expected);
+	fprintf(stderr, "%s != %s\n",
+		(const char *)actual, (const char *)expected);
 	return 0;
 }
 
@@ -1255,13 +1266,15 @@ int hex_str_cmp(const char *actual, const char *expected)
 	return SIGNUM(a - b);
 }
 
-int hex_str_equal_display_error(const LargestIntegralType actual, const LargestIntegralType expected)
+int hex_str_equal_display_error(const LargestIntegralType actual,
+				const LargestIntegralType expected)
 {
 	if (hex_str_cmp((const char *)actual, (const char *)expected) == 0) {
 		return 1;
 	}
 
-	fprintf(stderr, "%s != %s\n", (const char *)actual, (const char *)expected);
+	fprintf(stderr, "%s != %s\n",
+		(const char *)actual, (const char *)expected);
 	return 0;
 }
 
@@ -1271,7 +1284,8 @@ void assert_gadget_attrs_equal(struct usbg_gadget_attrs *actual,
 	int i;
 
 	for (i = USBG_GADGET_ATTR_MIN; i < USBG_GADGET_ATTR_MAX; i++)
-		assert_int_equal(get_gadget_attr(actual, i), get_gadget_attr(expected, i));
+		assert_int_equal(get_gadget_attr(actual, i),
+				 get_gadget_attr(expected, i));
 }
 
 void assert_gadget_strs_equal(struct usbg_gadget_strs *actual,
@@ -1279,7 +1293,8 @@ void assert_gadget_strs_equal(struct usbg_gadget_strs *actual,
 {
 	int i;
 	for (i = 0; i < GADGET_STR_MAX; i++)
-		assert_string_equal(get_gadget_str(actual, i), get_gadget_str(expected, i));
+		assert_string_equal(get_gadget_str(actual, i),
+				    get_gadget_str(expected, i));
 }
 
 void assert_f_serial_attrs_equal(int *actual, int *expected)
@@ -1291,7 +1306,7 @@ static void assert_ether_addrs_equal(const struct ether_addr *ea1,
 		const struct ether_addr *ea2)
 {
 	assert_memory_equal(ea1->ether_addr_octet, ea2->ether_addr_octet,
-			ETHER_ADDR_LEN);
+			    ETHER_ADDR_LEN);
 }
 
 void assert_f_net_attrs_equal(struct usbg_f_net_attrs *actual,
@@ -1341,7 +1356,8 @@ void assert_function_attrs_equal(void *actual, void *expected,
 }
 
 
-void for_each_test_function(struct test_state *ts, usbg_state *s, FunctionTest fun)
+void for_each_test_function(struct test_state *ts, usbg_state *s,
+			    FunctionTest fun)
 {
 	struct test_gadget *tg;
 	struct test_function *tf;
@@ -1401,7 +1417,8 @@ void for_each_binding(struct test_state *ts, usbg_state *s, BindingTestFunc fun)
 	}
 }
 
-void for_each_test_gadget(struct test_state *ts, usbg_state *s, GadgetTestFunc fun)
+void for_each_test_gadget(struct test_state *ts, usbg_state *s,
+			  GadgetTestFunc fun)
 {
 	struct test_gadget *tg;
 	usbg_gadget *g = NULL;

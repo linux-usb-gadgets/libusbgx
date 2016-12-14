@@ -199,7 +199,7 @@ int get_gadget_attr(struct usbg_gadget_attrs *attrs, usbg_gadget_attr attr);
  * @param[in] value Attributes value
  **/
 void push_gadget_attribute(struct test_gadget *gadget,
-		usbg_gadget_attr attr, int value);
+			   usbg_gadget_attr attr, int value);
 
 /**
  * @brief Prepare to read given attribute by libusbg
@@ -208,7 +208,7 @@ void push_gadget_attribute(struct test_gadget *gadget,
  * @param[in] value Attributes value
  **/
 void pull_gadget_attribute(struct test_gadget *gadget,
-		usbg_gadget_attr attr, int value);
+			   usbg_gadget_attr attr, int value);
 
 /**
  * @brief Prepare fake filesystem to get given gadget attributes
@@ -268,7 +268,7 @@ const char *get_gadget_str(struct usbg_gadget_strs *strs, gadget_str str);
  * @param[in] content String expected to be set
  */
 void pull_gadget_string(struct test_gadget *gadget, int lang,
-		gadget_str str, const char *content);
+			gadget_str str, const char *content);
 
 /**
  * @brief Prepare filesystem to set given gadget strings
@@ -461,7 +461,8 @@ void assert_gadget_attrs_equal(struct usbg_gadget_attrs *actual,
  * @param[in] expected Pointer to expected attributes obejct
  * @param[in] type Type of function, which attributes are checked
  */
-void assert_function_attrs_equal(void *actual, void *expected, usbg_function_type type);
+void assert_function_attrs_equal(void *actual, void *expected,
+				 usbg_function_type type);
 
 /**
  * @brief Assert that given gadget strings are equal

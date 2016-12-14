@@ -190,7 +190,8 @@ static struct test_gadget all_funcs_gadgets[] = {
 };
 
 static struct test_gadget long_udc_gadgets[] = {
-	GADGET("long_udc_gadgets", long_usbg_string, simple_confs, simple_funcs),
+	GADGET("long_udc_gadgets", long_usbg_string,
+	       simple_confs, simple_funcs),
 	TEST_GADGET_LIST_END
 };
 
@@ -238,16 +239,20 @@ struct test_gadget_strs_data {
 /**
  * @brief Simple state
  */
-static struct test_state simple_state = STATE("config", simple_gadgets, simple_udcs);
+static struct test_state simple_state =
+	STATE("config", simple_gadgets, simple_udcs);
 
 /**
  * @brief State with all functions avaible
  */
-static struct test_state all_funcs_state = STATE("all_funcs_configfs", all_funcs_gadgets, simple_udcs);
+static struct test_state all_funcs_state =
+	STATE("all_funcs_configfs", all_funcs_gadgets, simple_udcs);
 
-static struct test_state long_path_state = STATE(long_path_str, simple_gadgets, simple_udcs);
+static struct test_state long_path_state =
+	STATE(long_path_str, simple_gadgets, simple_udcs);
 
-static struct test_state long_udc_state = STATE("simple_path", long_udc_gadgets, long_udcs);
+static struct test_state long_udc_state =
+	STATE("simple_path", long_udc_gadgets, long_udcs);
 
 static struct usbg_config_attrs *get_random_config_attrs()
 {
@@ -301,19 +306,22 @@ static void *prepare_state_with_config_attrs(struct test_state *state,
 
 static int setup_max_config_attrs_state(void **state)
 {
-	*state = prepare_state_with_config_attrs(&simple_state, &max_config_attrs);
+	*state = prepare_state_with_config_attrs(&simple_state,
+						 &max_config_attrs);
 	return 0;
 }
 
 static int setup_min_config_attrs_state(void **state)
 {
-	*state = prepare_state_with_config_attrs(&simple_state, &min_config_attrs);
+	*state = prepare_state_with_config_attrs(&simple_state,
+						 &min_config_attrs);
 	return 0;
 }
 
 static int setup_random_config_attrs_state(void **state)
 {
-	*state = prepare_state_with_config_attrs(&simple_state, get_random_config_attrs());
+	*state = prepare_state_with_config_attrs(&simple_state,
+						 get_random_config_attrs());
 	return 0;
 }
 
@@ -763,7 +771,8 @@ static void test_init(void **state)
 
 /**
  * @brief Test getting function by name
- * @param[in] state Pointer to pointer to correctly initialized test_state structure
+ * @param[in] state Pointer to pointer to correctly initialized
+ *            test_state structure
  */
 static void test_get_function(void **state)
 {
@@ -778,7 +787,8 @@ static void test_get_function(void **state)
  * @brief Tests usbg_get_function with some non-existing functions
  * @details Check if get function will return NULL, when invalid
  * functions names and types are passed as arguments and will not cause crash.
- * @param[in] state Pointer to pointer to correctly initialized test_state structure
+ * @param[in] state Pointer to pointer to correctly initialized
+ *            test_state structure
  */
 static void test_get_function_fail(void **state)
 {
@@ -802,7 +812,8 @@ static void test_get_function_fail(void **state)
 
 /**
  * @brief Tests function type translation to string
- * @param[in] state Pointer to pointer to correctly initialized test_state structure
+ * @param[in] state Pointer to pointer to correctly initialized
+ *            test_state structure
  * @details Check if get_function_type_str returns proper strings for all types.
  */
 static void test_get_function_type_str(void **state)
@@ -844,8 +855,10 @@ static struct {
 
 /**
  * @brief Tests gadget codeing name getting
- * @param[in] state Pointer to pointer to correctly initialized test_state codeucture
- * @details Check if usbg_get_gadget_code_name returns proper codeings for all types.
+ * @param[in] state Pointer to pointer to correctly initialized
+ *            test_state structure
+ * @details Check if usbg_get_gadget_code_name returns proper
+ *          codeings for all types.
  */
 static void test_get_gadget_str_name(void **state)
 {
@@ -861,7 +874,8 @@ static void test_get_gadget_str_name(void **state)
 
 /**
  * @brief Tests gadget codeing code getting by its name
- * @param[in] state Pointer to pointer to correctly initialized test_state codeucture
+ * @param[in] state Pointer to pointer to correctly initialized
+ *            test_state structure
  * @details Check if usbg_lookup_gadget_code returns values matching codeings
  */
 static void test_lookup_gadget_str(void **state)
@@ -894,7 +908,8 @@ static void test_get_function_type_str_fail(void **state)
  * @param[in] f Usbg function
  * @param[in] tf Test function which should match f
  */
-static void try_get_function_instance(usbg_function *f, struct test_function *tf)
+static void try_get_function_instance(usbg_function *f,
+				      struct test_function *tf)
 {
 	const char *str;
 
@@ -904,7 +919,8 @@ static void try_get_function_instance(usbg_function *f, struct test_function *tf
 
 /**
  * @brief Tests getting function instance from usbg_function structure
- * @param[in] state Pointer to pointer to correctly initialized test_state structure
+ * @param[in] state Pointer to pointer to correctly initialized
+ *            test_state structure
  * @details Check if returned instance name is correct.
  */
 static void test_get_function_instance(void **state)
@@ -921,7 +937,8 @@ static void test_get_function_instance(void **state)
  * @param[in] f Usbg function
  * @param[in] tf Test function which should match f
  */
-static void try_get_function_instance_s(usbg_function *f, struct test_function *tf)
+static void try_get_function_instance_s(usbg_function *f,
+					struct test_function *tf)
 {
 	char str[USBG_MAX_NAME_LENGTH];
 	int ret;
@@ -938,7 +955,8 @@ static void try_get_function_instance_s(usbg_function *f, struct test_function *
 }
 
 /**
- * @brief Tests copying function instance from usbg_function structure into buffer
+ * @brief Tests copying function instance from usbg_function structure
+ *        into buffer
  * @param[in] state Pointer to pointer to correctly initialized state
  * @details Check if buffer contains expected string
  */
@@ -984,7 +1002,8 @@ static void test_get_function_type(void **state)
  * @param[in] f Usbg function
  * @param[in] tf Test function which should match f
  */
-static void try_get_function_instance_len(usbg_function *f, struct test_function *tf)
+static void try_get_function_instance_len(usbg_function *f,
+					  struct test_function *tf)
 {
 	size_t len;
 	char buf;
@@ -1391,7 +1410,8 @@ static void test_get_gadget_attr_str_fail(void **state)
 /**
  * @brief set gadget strings
  * @details Also do it one by one
- * @param[in] data Pointer to correctly initialized test_gadget_strs_data structure
+ * @param[in] data Pointer to correctly initialized
+ *            test_gadget_strs_data structure
  */
 static void test_set_gadget_strs(void **data)
 {
@@ -1416,35 +1436,44 @@ static void test_set_gadget_strs(void **data)
 		assert_int_equal(ret, 0);
 
 		for (i = 0; i < GADGET_STR_MAX; i++)
-			pull_gadget_string(tg, LANG_US_ENG, i, get_gadget_str(ts->strs, i));
+			pull_gadget_string(tg, LANG_US_ENG, i,
+					   get_gadget_str(ts->strs, i));
 
-		ret = usbg_set_gadget_serial_number(g, LANG_US_ENG, ts->strs->str_ser);
+		ret = usbg_set_gadget_serial_number(g, LANG_US_ENG,
+						    ts->strs->str_ser);
 		assert_int_equal(ret, 0);
 
-		ret = usbg_set_gadget_manufacturer(g, LANG_US_ENG, ts->strs->str_mnf);
+		ret = usbg_set_gadget_manufacturer(g, LANG_US_ENG,
+						   ts->strs->str_mnf);
 		assert_int_equal(ret, 0);
 
-		ret = usbg_set_gadget_product(g, LANG_US_ENG, ts->strs->str_prd);
+		ret = usbg_set_gadget_product(g, LANG_US_ENG,
+					      ts->strs->str_prd);
 		assert_int_equal(ret, 0);
 
 		for (i = 0; i < GADGET_STR_MAX; i++)
-			pull_gadget_string(tg, LANG_US_ENG, i, get_gadget_str(ts->strs, i));
+			pull_gadget_string(tg, LANG_US_ENG,
+					   i, get_gadget_str(ts->strs, i));
 
 
-		ret = usbg_set_gadget_str(g, USBG_STR_SERIAL_NUMBER, LANG_US_ENG, ts->strs->str_ser);
+		ret = usbg_set_gadget_str(g, USBG_STR_SERIAL_NUMBER,
+					  LANG_US_ENG, ts->strs->str_ser);
 		assert_int_equal(ret, 0);
 
-		ret = usbg_set_gadget_str(g, USBG_STR_MANUFACTURER, LANG_US_ENG, ts->strs->str_mnf);
+		ret = usbg_set_gadget_str(g, USBG_STR_MANUFACTURER,
+					  LANG_US_ENG, ts->strs->str_mnf);
 		assert_int_equal(ret, 0);
 
-		ret = usbg_set_gadget_str(g, USBG_STR_PRODUCT, LANG_US_ENG, ts->strs->str_prd);
+		ret = usbg_set_gadget_str(g, USBG_STR_PRODUCT,
+					  LANG_US_ENG, ts->strs->str_prd);
 		assert_int_equal(ret, 0);
 	}
 }
 
 /**
  * @brief get gadget strings
- * @param[in] data Pointer to correctly initialized test_gadget_strs_data structure
+ * @param[in] data Pointer to correctly initialized
+ *            test_gadget_strs_data structure
  */
 static void test_get_gadget_strs(void **data)
 {
@@ -2599,7 +2628,8 @@ static int apply_test_config(FILE *input)
 
 		test_name = config_setting_get_string(node);
 		if (!test_name) {
-			fprintf(stderr, "Incorrect tests list. Element %d\n", i);
+			fprintf(stderr,
+				"Incorrect tests list. Element %d\n", i);
 			ret = -EINVAL;
 			goto out;
 		}
