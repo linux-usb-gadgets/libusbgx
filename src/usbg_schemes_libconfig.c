@@ -99,7 +99,7 @@ static int usbg_export_config_strs_lang(usbg_config *c, char *lang_str,
 					config_setting_t *root)
 {
 	config_setting_t *node;
-	usbg_config_strs strs;
+	struct usbg_config_strs strs;
 	int lang;
 	int usbg_ret, cfg_ret, ret2;
 	int ret = USBG_ERROR_NO_MEM;
@@ -191,7 +191,7 @@ out:
 static int usbg_export_config_attrs(usbg_config *c, config_setting_t *root)
 {
 	config_setting_t *node;
-	usbg_config_attrs attrs;
+	struct usbg_config_attrs attrs;
 	int usbg_ret, cfg_ret;
 	int ret = USBG_ERROR_NO_MEM;
 
@@ -408,7 +408,7 @@ static int usbg_export_gadget_strs_lang(usbg_gadget *g, const char *lang_str,
 					config_setting_t *root)
 {
 	config_setting_t *node;
-	usbg_gadget_strs strs;
+	struct usbg_gadget_strs strs;
 	int lang;
 	int usbg_ret, cfg_ret;
 	int ret;
@@ -510,7 +510,7 @@ out:
 static int usbg_export_gadget_attrs(usbg_gadget *g, config_setting_t *root)
 {
 	config_setting_t *node;
-	usbg_gadget_attrs attrs;
+	struct usbg_gadget_attrs attrs;
 	int usbg_ret, cfg_ret;
 	int ret = USBG_ERROR_NO_MEM;
 
@@ -945,7 +945,7 @@ static int usbg_import_config_strs_lang(config_setting_t *root, usbg_config *c)
 	config_setting_t *node;
 	int lang;
 	const char *str;
-	usbg_config_strs c_strs = {{0}};
+	struct usbg_config_strs c_strs = {{0}};
 	int ret = USBG_ERROR_INVALID_TYPE;
 
 	node = config_setting_get_member(root, USBG_LANG_TAG);
@@ -1236,7 +1236,7 @@ static int usbg_import_gadget_strs_lang(config_setting_t *root, usbg_gadget *g)
 	config_setting_t *node;
 	int lang;
 	const char *str;
-	usbg_gadget_strs g_strs = {{0}};
+	struct usbg_gadget_strs g_strs = {{0}};
 	int ret = USBG_ERROR_INVALID_TYPE;
 
 	node = config_setting_get_member(root, USBG_LANG_TAG);

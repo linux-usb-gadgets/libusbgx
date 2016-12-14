@@ -45,8 +45,8 @@ struct test_config
 	char *path;
 	char *name;
 	int writable;
-	usbg_config_strs *strs;
-	usbg_config_attrs *attrs;
+	struct usbg_config_strs *strs;
+	struct usbg_config_attrs *attrs;
 };
 
 struct test_gadget
@@ -174,21 +174,23 @@ void push_init(struct test_state *state);
  * @param[in] config Configuration from which attributes will be get
  * @param[in] attrs Attributes which will be present in virtual filesystem
  */
-void push_config_attrs(struct test_config *config, usbg_config_attrs *attrs);
+void push_config_attrs(struct test_config *config,
+		       struct usbg_config_attrs *attrs);
 
 /**
  * @brief Preapre for setting config attributes
  * @param[in] config Configuration on which attributes will be set
  * @param[in] attrs Attributes which will be set on given config
  */
-void pull_config_attrs(struct test_config *config, usbg_config_attrs *attrs);
+void pull_config_attrs(struct test_config *config,
+		       struct usbg_config_attrs *attrs);
 
 /**
  * @brief Get gadget attribute
  * @param[in] attrs
  * @param[in] attr
  */
-int get_gadget_attr(usbg_gadget_attrs *attrs, usbg_gadget_attr attr);
+int get_gadget_attr(struct usbg_gadget_attrs *attrs, usbg_gadget_attr attr);
 
 /**
  * @brief Prepare to write given attribute by libusbg
@@ -217,7 +219,8 @@ void pull_gadget_attribute(struct test_gadget *gadget,
  * @warning Calling usbg_get_gadget_attrs function whithout this
  * preparation and with wrapped i/o may fail.
  */
-void push_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs);
+void push_gadget_attrs(struct test_gadget *gadget,
+		       struct usbg_gadget_attrs *attrs);
 
 /**
  * @brief Prepare fake filesystem for attributes setting attempt.
@@ -228,7 +231,8 @@ void push_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs);
  * @warning Calling usbg_get_gadget_attrs function whithout this
  * preparation and with wrapped i/o may fail.
  */
-void pull_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs);
+void pull_gadget_attrs(struct test_gadget *gadget,
+		       struct usbg_gadget_attrs *attrs);
 
 /**
  * @brief Prepare fake filesystem to get given function attributes
@@ -254,7 +258,7 @@ void pull_function_attrs(struct test_function *func, void *attrs);
  * @param[in] str Identifier of string which should be returned
  * @return Selected string from given set of strings
  */
-const char *get_gadget_str(usbg_gadget_strs *strs, gadget_str str);
+const char *get_gadget_str(struct usbg_gadget_strs *strs, gadget_str str);
 
 /**
  * @brief Prepare filesystem to set selected gadget string
@@ -272,12 +276,14 @@ void pull_gadget_string(struct test_gadget *gadget, int lang,
  * @param[in] lang Language of strings
  * @param[in] strs Strings expected to be set
  */
-void pull_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *strs);
+void pull_gadget_strs(struct test_gadget *gadget, int lang,
+		      struct usbg_gadget_strs *strs);
 
 /**
  * @brief prepare for reading gadget's strings
  */
-void push_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *strs);
+void push_gadget_strs(struct test_gadget *gadget, int lang,
+		      struct usbg_gadget_strs *strs);
 
 /**
  * @brief Prepare for /ref usbg_set_config_string calling
@@ -294,7 +300,8 @@ void pull_config_string(struct test_config *config, int lang, const char *str);
  * @param[in] lang Language of strings
  * @param[in] strs Strings expected to be set
  */
-void pull_config_strs(struct test_config *config, int lang, usbg_config_strs *strs);
+void pull_config_strs(struct test_config *config, int lang,
+		      struct usbg_config_strs *strs);
 
 /**
  * @brief Prepare for /ref usbg_get_config_string calling
@@ -311,7 +318,8 @@ void push_config_string(struct test_config *config, int lang, const char *str);
  * @param[in] lang Language of strings
  * @param[in] strs Strings which should be returned
  */
-void push_config_strs(struct test_config *config, int lang, usbg_config_strs *strs);
+void push_config_strs(struct test_config *config, int lang,
+		      struct usbg_config_strs *strs);
 
 /**
  * @brief Prepare for creating config
@@ -364,7 +372,8 @@ void safe_init_with_state(void **state, struct test_state **ts, usbg_state **s);
 /**
  * @brief Assert that given config attributes are equal
  */
-void assert_config_attrs_equal(usbg_config_attrs *actual, usbg_config_attrs *expected);
+void assert_config_attrs_equal(struct usbg_config_attrs *actual,
+			       struct usbg_config_attrs *expected);
 
 /**
  * @brief Assert that given usbg binding matches given test binding
@@ -443,8 +452,8 @@ void assert_path_equal(const char *actual, const char *expected);
  * @param[in] actual Pointer to actual gadget attributes structure
  * @param[in] expected Pointer to expeced gadget attributes structure
  */
-void assert_gadget_attrs_equal(usbg_gadget_attrs *actual,
-		usbg_gadget_attrs *expected);
+void assert_gadget_attrs_equal(struct usbg_gadget_attrs *actual,
+			       struct usbg_gadget_attrs *expected);
 
 /**
  * @brief Assert that given function attributes are the same.
@@ -457,7 +466,8 @@ void assert_function_attrs_equal(void *actual, void *expected, usbg_function_typ
 /**
  * @brief Assert that given gadget strings are equal
  */
-void assert_gadget_strs_equal(usbg_gadget_strs *actual, usbg_gadget_strs *expected);
+void assert_gadget_strs_equal(struct usbg_gadget_strs *actual,
+			      struct usbg_gadget_strs *expected);
 
 /**
  * @brief Function that performs some test on given usbg function

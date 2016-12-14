@@ -66,7 +66,7 @@ int main(void)
 	int ret = -EINVAL;
 	usbg_state *s;
 	usbg_gadget *g;
-	usbg_gadget_attrs g_attrs;
+	struct usbg_gadget_attrs g_attrs;
 
 	usbg_ret = usbg_init("/sys/kernel/config", &s);
 	if (usbg_ret != USBG_SUCCESS) {

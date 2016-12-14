@@ -42,8 +42,8 @@ void show_gadget(usbg_gadget *g)
 	const char *name, *udc;
 	usbg_udc *u;
 	int usbg_ret;
-	usbg_gadget_attrs g_attrs;
-	usbg_gadget_strs g_strs;
+	struct usbg_gadget_attrs g_attrs;
+	struct usbg_gadget_strs g_strs;
 
 	name = usbg_get_gadget_name(g);
 	if (!name) {
@@ -204,8 +204,8 @@ void show_config(usbg_config *c)
 	usbg_function *f;
 	const char *label, *instance, *bname;
 	usbg_function_type type;
-	usbg_config_attrs c_attrs;
-	usbg_config_strs c_strs;
+	struct usbg_config_attrs c_attrs;
+	struct usbg_config_strs c_strs;
 	int usbg_ret, id;
 
 	label = usbg_get_config_label(c);

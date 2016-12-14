@@ -495,7 +495,7 @@ out:
 }
 
 static int usbg_parse_config_attrs(const char *path, const char *name,
-		usbg_config_attrs *c_attrs)
+				   struct usbg_config_attrs *c_attrs)
 {
 	int buf, ret;
 
@@ -512,7 +512,7 @@ static int usbg_parse_config_attrs(const char *path, const char *name,
 }
 
 static int usbg_parse_config_strs(const char *path, const char *name,
-		int lang, usbg_config_strs *c_strs)
+				  int lang, struct usbg_config_strs *c_strs)
 {
 	DIR *dir;
 	int ret;
@@ -692,7 +692,7 @@ out:
 }
 
 static int usbg_parse_gadget_attrs(const char *path, const char *name,
-		usbg_gadget_attrs *g_attrs)
+				   struct usbg_gadget_attrs *g_attrs)
 {
 	int buf, ret;
 
@@ -751,7 +751,7 @@ out:
 }
 
 static int usbg_parse_gadget_strs(const char *path, const char *name, int lang,
-		usbg_gadget_strs *g_strs)
+				  struct usbg_gadget_strs *g_strs)
 {
 	int ret;
 	int nmb;
@@ -1365,8 +1365,8 @@ out:
 }
 
 int usbg_create_gadget(usbg_state *s, const char *name,
-		       const usbg_gadget_attrs *g_attrs,
-		       const usbg_gadget_strs *g_strs, usbg_gadget **g)
+		       const struct usbg_gadget_attrs *g_attrs,
+		       const struct usbg_gadget_strs *g_strs, usbg_gadget **g)
 {
 	usbg_gadget *gad;
 	int ret;
@@ -1410,7 +1410,8 @@ out:
 	return ret;
 }
 
-int usbg_get_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs)
+int usbg_get_gadget_attrs(usbg_gadget *g,
+			  struct usbg_gadget_attrs *g_attrs)
 {
 	return g && g_attrs ? usbg_parse_gadget_attrs(g->path, g->name, g_attrs)
 			: USBG_ERROR_INVALID_PARAM;
@@ -1534,7 +1535,8 @@ out:
 	return g;
 }
 
-int usbg_set_gadget_attrs(usbg_gadget *g, const usbg_gadget_attrs *g_attrs)
+int usbg_set_gadget_attrs(usbg_gadget *g,
+			  const struct usbg_gadget_attrs *g_attrs)
 {
 	int ret;
 	if (!g || !g_attrs)
@@ -1630,7 +1632,7 @@ int usbg_set_gadget_device_bcd_usb(usbg_gadget *g, uint16_t bcdUSB)
 }
 
 int usbg_get_gadget_strs(usbg_gadget *g, int lang,
-		usbg_gadget_strs *g_strs)
+			 struct usbg_gadget_strs *g_strs)
 {
 	return g && g_strs ? usbg_parse_gadget_strs(g->path, g->name, lang,
 			g_strs)	: USBG_ERROR_INVALID_PARAM;
@@ -1669,7 +1671,7 @@ out:
 }
 
 int usbg_set_gadget_strs(usbg_gadget *g, int lang,
-		const usbg_gadget_strs *g_strs)
+			 const struct usbg_gadget_strs *g_strs)
 {
 	char path[USBG_MAX_PATH_LENGTH];
 	int nmb;
@@ -1840,8 +1842,9 @@ out:
 }
 
 int usbg_create_config(usbg_gadget *g, int id, const char *label,
-		const usbg_config_attrs *c_attrs, const usbg_config_strs *c_strs,
-		usbg_config **c)
+		       const struct usbg_config_attrs *c_attrs,
+		       const struct usbg_config_strs *c_strs,
+		       usbg_config **c)
 {
 	char cpath[USBG_MAX_PATH_LENGTH];
 	usbg_config *conf = NULL;
@@ -1948,7 +1951,8 @@ int usbg_get_function_instance_s(usbg_function *f, char *buf, int len)
 	return snprintf(buf, len, "%s", f->instance);
 }
 
-int usbg_set_config_attrs(usbg_config *c, const usbg_config_attrs *c_attrs)
+int usbg_set_config_attrs(usbg_config *c,
+			  const struct usbg_config_attrs *c_attrs)
 {
 	int ret = USBG_ERROR_INVALID_PARAM;
 
@@ -1969,7 +1973,7 @@ out:
 }
 
 int usbg_get_config_attrs(usbg_config *c,
-		usbg_config_attrs *c_attrs)
+			  struct usbg_config_attrs *c_attrs)
 {
 	return c && c_attrs ? usbg_parse_config_attrs(c->path, c->name, c_attrs)
 			: USBG_ERROR_INVALID_PARAM;
@@ -1987,14 +1991,15 @@ int usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes)
 			: USBG_ERROR_INVALID_PARAM;
 }
 
-int usbg_get_config_strs(usbg_config *c, int lang, usbg_config_strs *c_strs)
+int usbg_get_config_strs(usbg_config *c, int lang,
+			 struct usbg_config_strs *c_strs)
 {
 	return c && c_strs ? usbg_parse_config_strs(c->path, c->name, lang, c_strs)
 			: USBG_ERROR_INVALID_PARAM;
 }
 
 int usbg_set_config_strs(usbg_config *c, int lang,
-		const usbg_config_strs *c_strs)
+			 const struct usbg_config_strs *c_strs)
 {
 	return usbg_set_config_string(c, lang, c_strs->configuration);
 }

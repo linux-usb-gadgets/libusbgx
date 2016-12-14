@@ -120,10 +120,9 @@ typedef enum {
 } usbg_gadget_attr;
 
 /**
- * @typedef usbg_gadget_attrs
  * @brief USB gadget device attributes
  */
-typedef struct
+struct usbg_gadget_attrs
 {
 	uint16_t bcdUSB;
 	uint8_t bDeviceClass;
@@ -133,7 +132,7 @@ typedef struct
 	uint16_t idVendor;
 	uint16_t idProduct;
 	uint16_t bcdDevice;
-} usbg_gadget_attrs;
+};
 
 typedef enum {
 	USBG_GADGET_STR_MIN = 0,
@@ -144,34 +143,31 @@ typedef enum {
 } usbg_gadget_str;
 
 /**
- * @typedef usbg_gadget_strs
  * @brief USB gadget device strings
  */
-typedef struct
+struct usbg_gadget_strs
 {
 	char str_ser[USBG_MAX_STR_LENGTH];
 	char str_mnf[USBG_MAX_STR_LENGTH];
 	char str_prd[USBG_MAX_STR_LENGTH];
-} usbg_gadget_strs;
+};
 
 /**
- * @typedef usbg_config_attrs
  * @brief USB configuration attributes
  */
-typedef struct
+struct usbg_config_attrs
 {
 	uint8_t bmAttributes;
 	uint8_t bMaxPower;
-} usbg_config_attrs;
+};
 
 /**
- * @typedef usbg_config_strs
  * @brief USB configuration strings
  */
-typedef struct
+struct usbg_config_strs
 {
 	char configuration[USBG_MAX_STR_LENGTH];
-} usbg_config_strs;
+};
 
 /**
  * @typedef usbg_function_type
@@ -392,7 +388,8 @@ extern int usbg_create_gadget_vid_pid(usbg_state *s, const char *name,
  * @return 0 on success usbg_error if error occurred
  */
 extern int usbg_create_gadget(usbg_state *s, const char *name,
-		const usbg_gadget_attrs *g_attrs, const usbg_gadget_strs *g_strs,
+			      const struct usbg_gadget_attrs *g_attrs,
+			      const struct usbg_gadget_strs *g_strs,
 			      usbg_gadget **g);
 
 /**
@@ -453,7 +450,7 @@ extern int usbg_get_gadget_attr(usbg_gadget *g, usbg_gadget_attr attr);
  * @return 0 on success usbg_error if error occurred
  */
 extern int usbg_set_gadget_attrs(usbg_gadget *g,
-		const usbg_gadget_attrs *g_attrs);
+				 const struct usbg_gadget_attrs *g_attrs);
 
 /**
  * @brief Get the USB gadget strings
@@ -461,7 +458,8 @@ extern int usbg_set_gadget_attrs(usbg_gadget *g,
  * @param g_attrs Structure to be filled
  * @return 0 on success usbg_error if error occurred
  */
-extern int usbg_get_gadget_attrs(usbg_gadget *g, usbg_gadget_attrs *g_attrs);
+extern int usbg_get_gadget_attrs(usbg_gadget *g,
+				 struct usbg_gadget_attrs *g_attrs);
 
 /**
  * @brief Get gadget name
@@ -561,7 +559,7 @@ extern int usbg_set_gadget_device_bcd_usb(usbg_gadget *g, uint16_t bcdUSB);
  * @return 0 on success usbg_error if error occurred
  */
 extern int usbg_get_gadget_strs(usbg_gadget *g, int lang,
-		usbg_gadget_strs *g_strs);
+				struct usbg_gadget_strs *g_strs);
 
 /**
  * @brief Set selected string
@@ -581,7 +579,7 @@ extern int usbg_set_gadget_str(usbg_gadget *g, usbg_gadget_str str, int lang,
  * @return 0 on success usbg_error if error occurred
  */
 extern int usbg_set_gadget_strs(usbg_gadget *g, int lang,
-		const usbg_gadget_strs *g_strs);
+				const struct usbg_gadget_strs *g_strs);
 
 /**
  * @brief Set the serial number for a gadget
@@ -716,8 +714,9 @@ extern int usbg_set_function_attrs(usbg_function *f, void *f_attrs);
  * @return 0 on success usbg_error if error occurred
  */
 extern int usbg_create_config(usbg_gadget *g, int id, const char *label,
-		const usbg_config_attrs *c_attrs, const usbg_config_strs *c_strs,
-		usbg_config **c);
+			      const struct usbg_config_attrs *c_attrs,
+			      const struct usbg_config_strs *c_strs,
+			      usbg_config **c);
 
 /**
  * @brief Get config label
@@ -754,7 +753,7 @@ extern int usbg_get_config_id(usbg_config *c);
  * @return 0 on success or usbg_error if error occurred.
  */
 extern int usbg_set_config_attrs(usbg_config *c,
-		const usbg_config_attrs *c_attrs);
+				 const struct usbg_config_attrs *c_attrs);
 
 /**
  * @brief Get the USB configuration strings
@@ -762,7 +761,8 @@ extern int usbg_set_config_attrs(usbg_config *c,
  * @param c_attrs Structure to be filled
  * @return 0 on success or usbg_error if error occurred.
  */
-extern int usbg_get_config_attrs(usbg_config *c, usbg_config_attrs *c_attrs);
+extern int usbg_get_config_attrs(usbg_config *c,
+				 struct usbg_config_attrs *c_attrs);
 
 /**
  * @brief Set the configuration maximum power
@@ -788,7 +788,7 @@ extern int usbg_set_config_bm_attrs(usbg_config *c, int bmAttributes);
  * @return 0 on success or usbg_error if error occurred.
  */
 extern int usbg_get_config_strs(usbg_config *c, int lang,
-		usbg_config_strs *c_strs);
+				struct usbg_config_strs *c_strs);
 
 /**
  * @brief Set the USB configuration strings
@@ -798,7 +798,7 @@ extern int usbg_get_config_strs(usbg_config *c, int lang,
  * @return 0 on success, usbg_error on failure.
  */
 extern int usbg_set_config_strs(usbg_config *c, int lang,
-		const usbg_config_strs *c_strs);
+				const struct usbg_config_strs *c_strs);
 
 /**
  * @brief Set the configuration string

@@ -662,7 +662,7 @@ void push_init(struct test_state *state)
 		push_gadget(g);
 }
 
-int get_gadget_attr(usbg_gadget_attrs *attrs, usbg_gadget_attr attr)
+int get_gadget_attr(struct usbg_gadget_attrs *attrs, usbg_gadget_attr attr)
 {
 	int ret = -1;
 
@@ -726,7 +726,8 @@ void push_gadget_attribute(struct test_gadget *gadget,
 	PUSH_FILE(path, content);
 }
 
-void push_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs)
+void push_gadget_attrs(struct test_gadget *gadget,
+		       struct usbg_gadget_attrs *attrs)
 {
 	int i;
 
@@ -734,7 +735,8 @@ void push_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs)
 		push_gadget_attribute(gadget, i, get_gadget_attr(attrs, i));
 }
 
-void pull_gadget_attrs(struct test_gadget *gadget, usbg_gadget_attrs *attrs)
+void pull_gadget_attrs(struct test_gadget *gadget,
+		       struct usbg_gadget_attrs *attrs)
 {
 	int i;
 
@@ -760,7 +762,7 @@ void safe_init_with_state(void **state, struct test_state **ts, usbg_state **s)
 	*state = *s;
 }
 
-static int get_config_attr(usbg_config_attrs *attrs, config_attr attr)
+static int get_config_attr(struct usbg_config_attrs *attrs, config_attr attr)
 {
 	int ret;
 
@@ -800,7 +802,8 @@ void push_config_attribute(struct test_config *config, config_attr attr,
 }
 
 
-void push_config_attrs(struct test_config *config, usbg_config_attrs *attrs)
+void push_config_attrs(struct test_config *config,
+		       struct usbg_config_attrs *attrs)
 {
 	int i;
 
@@ -835,7 +838,8 @@ void pull_config_attribute(struct test_config *config, config_attr attr,
 	}
 }
 
-void pull_config_attrs(struct test_config *config, usbg_config_attrs *attrs)
+void pull_config_attrs(struct test_config *config,
+		       struct usbg_config_attrs *attrs)
 {
 	int i;
 
@@ -843,7 +847,7 @@ void pull_config_attrs(struct test_config *config, usbg_config_attrs *attrs)
 		pull_config_attribute(config, i, get_config_attr(attrs, i));
 }
 
-const char *get_gadget_str(usbg_gadget_strs *strs, gadget_str str)
+const char *get_gadget_str(struct usbg_gadget_strs *strs, gadget_str str)
 {
 	const char *ret = NULL;
 
@@ -901,7 +905,8 @@ void pull_gadget_string(struct test_gadget *gadget, int lang,
 	pull_gadget_str(gadget, gadget_str_names[str], lang, content);
 }
 
-void pull_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *strs)
+void pull_gadget_strs(struct test_gadget *gadget, int lang,
+		      struct usbg_gadget_strs *strs)
 {
 	int i;
 
@@ -930,7 +935,8 @@ static void push_gadget_str(struct test_gadget *gadget, const char *attr_name,
 	PUSH_FILE(path, content);
 }
 
-void push_gadget_strs(struct test_gadget *gadget, int lang, usbg_gadget_strs *strs)
+void push_gadget_strs(struct test_gadget *gadget, int lang,
+		      struct usbg_gadget_strs *strs)
 {
 	int i;
 
@@ -963,7 +969,8 @@ void pull_config_string(struct test_config *config, int lang, const char *str)
 	EXPECT_WRITE(path, str);
 }
 
-void pull_config_strs(struct test_config *config, int lang, usbg_config_strs *strs)
+void pull_config_strs(struct test_config *config, int lang,
+		      struct usbg_config_strs *strs)
 {
 	pull_config_string(config, lang, strs->configuration);
 }
@@ -982,12 +989,14 @@ void push_config_string(struct test_config *config, int lang, const char *str)
 	PUSH_FILE(path, str);
 }
 
-void push_config_strs(struct test_config *config, int lang, usbg_config_strs *strs)
+void push_config_strs(struct test_config *config, int lang,
+		      struct usbg_config_strs *strs)
 {
 	push_config_string(config, lang, strs->configuration);
 }
 
-void assert_config_attrs_equal(usbg_config_attrs *actual, usbg_config_attrs *expected)
+void assert_config_attrs_equal(struct usbg_config_attrs *actual,
+			       struct usbg_config_attrs *expected)
 {
 	assert_int_equal(actual->bmAttributes, expected->bmAttributes);
 	assert_int_equal(actual->bMaxPower, expected->bMaxPower);
@@ -1256,8 +1265,8 @@ int hex_str_equal_display_error(const LargestIntegralType actual, const LargestI
 	return 0;
 }
 
-void assert_gadget_attrs_equal(usbg_gadget_attrs *actual,
-		usbg_gadget_attrs *expected)
+void assert_gadget_attrs_equal(struct usbg_gadget_attrs *actual,
+		struct usbg_gadget_attrs *expected)
 {
 	int i;
 
@@ -1265,7 +1274,8 @@ void assert_gadget_attrs_equal(usbg_gadget_attrs *actual,
 		assert_int_equal(get_gadget_attr(actual, i), get_gadget_attr(expected, i));
 }
 
-void assert_gadget_strs_equal(usbg_gadget_strs *actual, usbg_gadget_strs *expected)
+void assert_gadget_strs_equal(struct usbg_gadget_strs *actual,
+			      struct usbg_gadget_strs *expected)
 {
 	int i;
 	for (i = 0; i < GADGET_STR_MAX; i++)

@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 	int ret = -EINVAL;
 	int usbg_ret;
 
-	usbg_gadget_attrs g_attrs = {
+	struct usbg_gadget_attrs g_attrs = {
 		.bcdUSB = 0x0200,
 		.bDeviceClass =	USB_CLASS_PER_INTERFACE,
 		.bDeviceSubClass = 0x00,
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 		.bcdDevice = 0x0001, /* Verson of device */
 	};
 
-	usbg_gadget_strs g_strs = {
+	struct usbg_gadget_strs g_strs = {
 		.str_ser = "0123456789", /* Serial number */
 		.str_mnf = "Foo Inc.", /* Manufacturer */
 		.str_prd = "Bar Gadget" /* Product string */
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
 		.luns = f_ms_luns,
 	};
 
-	usbg_config_strs c_strs = {
+	struct usbg_config_strs c_strs = {
 			"1xMass Storage"
 	};
 

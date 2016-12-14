@@ -43,7 +43,7 @@
 	.bound_funcs = b \
 }
 
-static usbg_gadget_attrs min_gadget_attrs = {
+static struct usbg_gadget_attrs min_gadget_attrs = {
 	.bcdUSB = 0x0000,
 	.bDeviceClass = 0x0,
 	.bDeviceSubClass = 0x0,
@@ -54,7 +54,7 @@ static usbg_gadget_attrs min_gadget_attrs = {
 	.bcdDevice = 0x0000
 };
 
-static usbg_gadget_attrs max_gadget_attrs = {
+static struct usbg_gadget_attrs max_gadget_attrs = {
 	.bcdUSB = 0xffff,
 	.bDeviceClass = 0xff,
 	.bDeviceSubClass = 0xff,
@@ -72,16 +72,16 @@ static char long_path_str[] = FILLED_STR(LONG_PATH_LEN, 'x');
 /* NAME_MAX is limit for filename length */
 static char long_usbg_string[] = FILLED_STR(NAME_MAX, 'x');
 
-static usbg_config_strs simple_config_strs= {
+static struct usbg_config_strs simple_config_strs= {
 	.configuration = "configuration string"
 };
 
-static usbg_config_attrs max_config_attrs = {
+static struct usbg_config_attrs max_config_attrs = {
 	.bmAttributes = 0xff,
 	.bMaxPower = 0xff
 };
 
-static usbg_config_attrs min_config_attrs = {
+static struct usbg_config_attrs min_config_attrs = {
 	.bmAttributes = 0x00,
 	.bMaxPower = 0x00
 };
@@ -226,7 +226,7 @@ static char *writable_ffs_attrs = "";
 
 struct test_gadget_strs_data {
 	struct test_state *state;
-	usbg_gadget_strs *strs;
+	struct usbg_gadget_strs *strs;
 };
 
 #define STATE(p, g, u) { \
@@ -249,9 +249,9 @@ static struct test_state long_path_state = STATE(long_path_str, simple_gadgets, 
 
 static struct test_state long_udc_state = STATE("simple_path", long_udc_gadgets, long_udcs);
 
-static usbg_config_attrs *get_random_config_attrs()
+static struct usbg_config_attrs *get_random_config_attrs()
 {
-	usbg_config_attrs *ret;
+	struct usbg_config_attrs *ret;
 
 	ret = safe_malloc(sizeof(*ret));
 
@@ -262,9 +262,9 @@ static usbg_config_attrs *get_random_config_attrs()
 	return ret;
 }
 
-static usbg_gadget_attrs *get_random_gadget_attrs()
+static struct usbg_gadget_attrs *get_random_gadget_attrs()
 {
-	usbg_gadget_attrs *ret;
+	struct usbg_gadget_attrs *ret;
 
 	ret = safe_malloc(sizeof(*ret));
 
@@ -286,7 +286,7 @@ static usbg_gadget_attrs *get_random_gadget_attrs()
  * @return Prepared state where configs has given attributes
  */
 static void *prepare_state_with_config_attrs(struct test_state *state,
-		usbg_config_attrs *attrs)
+					     struct usbg_config_attrs *attrs)
 {
 	struct test_gadget *tg;
 	struct test_config *tc;
@@ -421,7 +421,7 @@ static int setup_long_udc_state(void **state)
  */
 static int setup_random_len_gadget_strs_data(void **state)
 {
-	usbg_gadget_strs *strs;
+	struct usbg_gadget_strs *strs;
 	struct test_gadget_strs_data *data;
 
 	/* will fill memory with zeros */
@@ -1189,10 +1189,10 @@ static void test_get_config_id(void **state)
  * virtual filesystem for writting by usbg
  */
 static void try_get_gadget_attrs(usbg_state *s, struct test_state *ts,
-		usbg_gadget_attrs *attrs)
+				 struct usbg_gadget_attrs *attrs)
 {
 	usbg_gadget *g = NULL;
-	usbg_gadget_attrs actual;
+	struct usbg_gadget_attrs actual;
 	struct test_gadget *tg;
 	int ret;
 
@@ -1231,7 +1231,7 @@ static void test_get_gadget_attrs(void **state)
  * @param[in] attrs Pointer to gadget attributes to be set
  */
 static void try_set_gadget_attrs(usbg_state *s, struct test_state *ts,
-		usbg_gadget_attrs *attrs)
+				 struct usbg_gadget_attrs *attrs)
 {
 	usbg_gadget *g = NULL;
 	struct test_gadget *tg;
@@ -1271,7 +1271,7 @@ static void test_set_gadget_attrs(void **state)
  * @param[in] attrs Pointer to gadget attributes to be set
  */
 static void try_set_specific_gadget_attr(usbg_state *s, struct test_state *ts,
-		usbg_gadget_attrs *attrs)
+					 struct usbg_gadget_attrs *attrs)
 {
 	usbg_gadget *g = NULL;
 	struct test_gadget *tg;
@@ -1452,7 +1452,7 @@ static void test_get_gadget_strs(void **data)
 	struct test_gadget *tg;
 	usbg_state *s = NULL;
 	usbg_gadget *g = NULL;
-	usbg_gadget_strs strs;
+	struct usbg_gadget_strs strs;
 
 	ts = (struct test_gadget_strs_data *)(*data);
 	*data = NULL;
@@ -1615,7 +1615,7 @@ static void test_set_config_string(void **state)
  */
 static void try_get_config_strs(usbg_config *c, struct test_config *tc)
 {
-	usbg_config_strs strs;
+	struct usbg_config_strs strs;
 	push_config_strs(tc, LANG_US_ENG, tc->strs);
 	usbg_get_config_strs(c, LANG_US_ENG, &strs);
 	assert_string_equal(tc->strs->configuration, strs.configuration);
@@ -1645,7 +1645,7 @@ static void test_get_config_strs(void **state)
  */
 static void try_get_config_attrs(usbg_config *c, struct test_config *tc)
 {
-	usbg_config_attrs attrs;
+	struct usbg_config_attrs attrs;
 
 	push_config_attrs(tc, tc->attrs);
 	usbg_get_config_attrs(c, &attrs);
