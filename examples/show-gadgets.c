@@ -37,13 +37,33 @@
  * in the system
  */
 
+void show_gadget_strs(usbg_gadget *g, int lang)
+{
+	int usbg_ret;
+	struct usbg_gadget_strs g_strs;
+
+	usbg_ret = usbg_get_gadget_strs(g, lang, &g_strs);
+	if (usbg_ret != USBG_SUCCESS) {
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
+		return;
+	}
+	fprintf(stdout, "  Language: \t0x%x\n", lang);
+	fprintf(stdout, "    Manufacturer\t%s\n", g_strs.manufacturer);
+	fprintf(stdout, "    Product\t\t%s\n", g_strs.product);
+	fprintf(stdout, "    Serial Number\t%s\n", g_strs.serial);
+
+	usbg_free_gadget_strs(&g_strs);
+}
+
 void show_gadget(usbg_gadget *g)
 {
 	const char *name, *udc;
 	usbg_udc *u;
 	int usbg_ret;
 	struct usbg_gadget_attrs g_attrs;
-	struct usbg_gadget_strs g_strs;
+	int *langs;
+	int i;
 
 	name = usbg_get_gadget_name(g);
 	if (!name) {
@@ -85,17 +105,15 @@ void show_gadget(usbg_gadget *g)
 		g_attrs.bcdDevice >> 8,
 		g_attrs.bcdDevice & 0x00ff);
 
-	usbg_ret = usbg_get_gadget_strs(g, LANG_US_ENG, &g_strs);
+	usbg_ret = usbg_get_gadget_strs_langs(g, &langs);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
-				usbg_strerror(usbg_ret));
+			usbg_strerror(usbg_ret));
 		return;
 	}
-	fprintf(stdout, "  Manufacturer\t\t%s\n", g_strs.manufacturer);
-	fprintf(stdout, "  Product\t\t%s\n", g_strs.product);
-	fprintf(stdout, "  Serial Number\t\t%s\n", g_strs.serial);
 
-	usbg_free_gadget_strs(&g_strs);
+	for (i = 0; langs[i]; ++i)
+		show_gadget_strs(g, langs[i]);
 }
 
 void show_function(usbg_function *f)
@@ -200,6 +218,24 @@ void show_function(usbg_function *f)
 	usbg_cleanup_function_attrs(f, &f_attrs);
 }
 
+void show_config_strs(usbg_config *c, int lang)
+{
+	struct usbg_config_strs c_strs;
+	int usbg_ret;
+
+	usbg_ret = usbg_get_config_strs(c, lang, &c_strs);
+	if (usbg_ret != USBG_SUCCESS) {
+		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
+				usbg_strerror(usbg_ret));
+		return;
+	}
+
+	fprintf(stdout, "    Language: \t0x%x\n", lang);
+	fprintf(stdout, "      configuration\t%s\n", c_strs.configuration);
+
+	usbg_free_config_strs(&c_strs);
+}
+
 void show_config(usbg_config *c)
 {
 	usbg_binding *b;
@@ -207,8 +243,8 @@ void show_config(usbg_config *c)
 	const char *label, *instance, *bname;
 	usbg_function_type type;
 	struct usbg_config_attrs c_attrs;
-	struct usbg_config_strs c_strs;
-	int usbg_ret, id;
+	int *langs;
+	int usbg_ret, id, i;
 
 	label = usbg_get_config_label(c);
 	if (!label) {
@@ -229,16 +265,15 @@ void show_config(usbg_config *c)
 	fprintf(stdout, "    MaxPower\t\t%d\n", c_attrs.bMaxPower);
 	fprintf(stdout, "    bmAttributes\t0x%02x\n", c_attrs.bmAttributes);
 
-	usbg_ret = usbg_get_config_strs(c, LANG_US_ENG, &c_strs);
+	usbg_ret = usbg_get_config_strs_langs(c, &langs);
 	if (usbg_ret != USBG_SUCCESS) {
 		fprintf(stderr, "Error: %s : %s\n", usbg_error_name(usbg_ret),
 				usbg_strerror(usbg_ret));
 		return;
 	}
 
-	fprintf(stdout, "    configuration\t%s\n", c_strs.configuration);
-
-	usbg_free_config_strs(&c_strs);
+	for (i = 0; langs[i]; ++i)
+		show_config_strs(c, langs[i]);
 
 	usbg_for_each_binding(b, c) {
 		bname = usbg_get_binding_name(b);
