@@ -1649,6 +1649,62 @@ int usbg_get_gadget_strs(usbg_gadget *g, int lang,
 			g_strs)	: USBG_ERROR_INVALID_PARAM;
 }
 
+static int usbg_get_strs_langs_by_path(const char *epath, const char *name,
+				       int **langs)
+{
+	int i, n;
+	struct dirent **dent;
+	char spath[USBG_MAX_PATH_LENGTH];
+	int *buf;
+	int ret = USBG_SUCCESS;
+
+	n = snprintf(spath, sizeof(spath), "%s/%s/%s", epath, name,
+		     STRINGS_DIR);
+	if (n >= sizeof(spath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	n = scandir(spath, &dent, file_select, alphasort);
+	if (n < 0) {
+		ret = usbg_translate_error(errno);
+		goto out;
+	}
+
+	buf = calloc(n + 1, sizeof(*buf));
+	if (!buf)
+		ret = USBG_ERROR_NO_MEM;
+
+	/* Keep the buffer 0 terminated */
+	buf[n] = 0;
+	for (i = 0; i < n; i++) {
+		if (ret == USBG_SUCCESS) {
+			char *pos;
+			unsigned long int res;
+
+			res = strtoul(dent[i]->d_name, &pos, 16);
+			if (*pos == '\0' && res < 65535)
+				buf[i] = (int)res;
+			else
+				ret = USBG_ERROR_OTHER_ERROR;
+		}
+		free(dent[i]);
+	}
+	free(dent);
+
+	if (ret != USBG_SUCCESS)
+		free(buf);
+	else
+		*langs = buf;
+out:
+	return ret;
+}
+
+int usbg_get_gadget_strs_langs(usbg_gadget *g, int **langs)
+{
+	return usbg_get_strs_langs_by_path(g->path, g->name, langs);
+}
+
 int usbg_set_gadget_str(usbg_gadget *g, usbg_gadget_str str, int lang,
 		const char *val)
 {

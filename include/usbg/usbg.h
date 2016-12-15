@@ -563,6 +563,14 @@ extern int usbg_get_gadget_strs(usbg_gadget *g, int lang,
 				struct usbg_gadget_strs *g_strs);
 
 /**
+ * @brief Get the array of languages available in this gadget
+ * @param g Pointer to gadget
+ * @param langs array of available language codes
+ * @return 0 on success usbg_error if error occurred
+ */
+extern int usbg_get_gadget_strs_langs(usbg_gadget *g, int **langs);
+
+/**
  * @brief Free gadget strings
  * @details This function releases the memory allocated for strings
  *          not for struct usbg_gadget_strs itself.
