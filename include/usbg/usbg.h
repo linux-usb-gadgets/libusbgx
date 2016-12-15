@@ -816,6 +816,14 @@ extern int usbg_get_config_strs(usbg_config *c, int lang,
 				struct usbg_config_strs *c_strs);
 
 /**
+ * @brief Get the array of languages available in this config
+ * @param c Pointer to configuration
+ * @param langs array of available language codes
+ * @return 0 on success usbg_error if error occurred
+ */
+extern int usbg_get_config_strs_langs(usbg_config *c, int **langs);
+
+/**
  * @brief Free configuration strings
  * @details This function releases the memory allocated for strings
  *          not for struct usbg_config_strs itself.

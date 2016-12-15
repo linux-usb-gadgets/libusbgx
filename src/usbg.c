@@ -1705,6 +1705,11 @@ int usbg_get_gadget_strs_langs(usbg_gadget *g, int **langs)
 	return usbg_get_strs_langs_by_path(g->path, g->name, langs);
 }
 
+int usbg_get_config_strs_langs(usbg_config *c, int **langs)
+{
+	return usbg_get_strs_langs_by_path(c->path, c->name, langs);
+}
+
 int usbg_set_gadget_str(usbg_gadget *g, usbg_gadget_str str, int lang,
 		const char *val)
 {
