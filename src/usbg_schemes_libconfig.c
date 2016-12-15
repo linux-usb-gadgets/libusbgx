@@ -95,20 +95,13 @@ static int usbg_export_config_bindings(usbg_config *c, config_setting_t *root)
 	return ret;
 }
 
-static int usbg_export_config_strs_lang(usbg_config *c, char *lang_str,
+static int usbg_export_config_strs_lang(usbg_config *c, int lang,
 					config_setting_t *root)
 {
 	config_setting_t *node;
 	struct usbg_config_strs strs;
-	int lang;
-	int usbg_ret, cfg_ret, ret2;
+	int usbg_ret, cfg_ret;
 	int ret = USBG_ERROR_NO_MEM;
-
-	ret2 = sscanf(lang_str, "%x", &lang);
-	if (ret2 != 1) {
-		ret = USBG_ERROR_OTHER_ERROR;
-		goto out;
-	}
 
 	usbg_ret = usbg_get_config_strs(c, lang, &strs);
 	if (usbg_ret != USBG_SUCCESS) {
@@ -150,44 +143,28 @@ static int usbg_export_config_strings(usbg_config *c, config_setting_t *root)
 {
 	config_setting_t *node;
 	int usbg_ret = USBG_SUCCESS;
-	int nmb, i;
-	int ret = USBG_ERROR_NO_MEM;
-	char spath[USBG_MAX_PATH_LENGTH];
-	struct dirent **dent;
+	int i;
+	int *langs;
 
-	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s", c->path,
-		       c->name, STRINGS_DIR);
-	if (nmb >= sizeof(spath)) {
-		ret = USBG_ERROR_PATH_TOO_LONG;
+	usbg_ret = usbg_get_config_strs_langs(c, &langs);
+	if (usbg_ret != USBG_SUCCESS)
 		goto out;
-	}
 
-	nmb = scandir(spath, &dent, file_select, alphasort);
-	if (nmb < 0) {
-		ret = usbg_translate_error(errno);
-		goto out;
-	}
-
-	for (i = 0; i < nmb; ++i) {
+	for (i = 0; langs[i]; ++i) {
 		node = config_setting_add(root, NULL, CONFIG_TYPE_GROUP);
-		if (!node)
-			goto out;
+		if (!node) {
+			usbg_ret = USBG_ERROR_NO_MEM;
+			break;
+		}
 
-		usbg_ret = usbg_export_config_strs_lang(c, dent[i]->d_name,
-							node);
+		usbg_ret = usbg_export_config_strs_lang(c, langs[i], node);
 		if (usbg_ret != USBG_SUCCESS)
 			break;
-
-		free(dent[i]);
 	}
-	/* This loop will be executed only if error occurred in previous one */
-	for (; i < nmb; ++i)
-		free(dent[i]);
 
-	free(dent);
-	ret = usbg_ret;
+	free(langs);
 out:
-	return ret;
+	return usbg_ret;
 }
 
 static int usbg_export_config_attrs(usbg_config *c, config_setting_t *root)
@@ -406,20 +383,13 @@ static int usbg_export_gadget_functions(usbg_gadget *g, config_setting_t *root)
 	return ret;
 }
 
-static int usbg_export_gadget_strs_lang(usbg_gadget *g, const char *lang_str,
+static int usbg_export_gadget_strs_lang(usbg_gadget *g, int lang,
 					config_setting_t *root)
 {
 	config_setting_t *node;
 	struct usbg_gadget_strs strs;
-	int lang;
 	int usbg_ret, cfg_ret;
-	int ret;
-
-	ret = sscanf(lang_str, "%x", &lang);
-	if (ret != 1) {
-		ret = USBG_ERROR_OTHER_ERROR;
-		goto out;
-	}
+	int ret = USBG_ERROR_NO_MEM;;
 
 	usbg_ret = usbg_get_gadget_strs(g, lang, &strs);
 	if (usbg_ret != USBG_SUCCESS) {
@@ -469,45 +439,29 @@ out:
 static int usbg_export_gadget_strings(usbg_gadget *g, config_setting_t *root)
 {
 	config_setting_t *node;
+	int *langs;
+	int i;
 	int usbg_ret = USBG_SUCCESS;
-	int nmb, i;
-	int ret = USBG_ERROR_NO_MEM;
-	char spath[USBG_MAX_PATH_LENGTH];
-	struct dirent **dent;
 
-	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s", g->path,
-		       g->name, STRINGS_DIR);
-	if (nmb >= sizeof(spath)) {
-		ret = USBG_ERROR_PATH_TOO_LONG;
+	usbg_ret = usbg_get_gadget_strs_langs(g, &langs);
+	if (usbg_ret != USBG_SUCCESS)
 		goto out;
-	}
 
-	nmb = scandir(spath, &dent, file_select, alphasort);
-	if (nmb < 0) {
-		ret = usbg_translate_error(errno);
-		goto out;
-	}
-
-	for (i = 0; i < nmb; ++i) {
+	for (i = 0; langs[i]; ++i) {
 		node = config_setting_add(root, NULL, CONFIG_TYPE_GROUP);
-		if (!node)
+		if (!node) {
+			usbg_ret = USBG_ERROR_NO_MEM;
 			break;
+		}
 
-		usbg_ret = usbg_export_gadget_strs_lang(g, dent[i]->d_name,
-							node);
+		usbg_ret = usbg_export_gadget_strs_lang(g, langs[i], node);
 		if (usbg_ret != USBG_SUCCESS)
 			break;
-
-		free(dent[i]);
 	}
-	/* This loop will be executed only if error occurred in previous one */
-	for (; i < nmb; ++i)
-		free(dent[i]);
 
-	free(dent);
-	ret = usbg_ret;
+	free(langs);
 out:
-	return ret;
+	return usbg_ret;
 }
 
 static int usbg_export_gadget_attrs(usbg_gadget *g, config_setting_t *root)
@@ -1601,4 +1555,3 @@ int usbg_get_gadget_import_error_line(usbg_state *s)
 
 	return config_error_line(s->last_failed_import);
 }
-
