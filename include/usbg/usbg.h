@@ -167,7 +167,7 @@ struct usbg_config_attrs
  */
 struct usbg_config_strs
 {
-	char configuration[USBG_MAX_STR_LENGTH];
+	char *configuration;
 };
 
 /**
@@ -815,6 +815,10 @@ extern int usbg_get_config_strs(usbg_config *c, int lang,
  */
 static inline void usbg_free_config_strs(struct usbg_config_strs *c_strs)
 {
+	if (!c_strs)
+		return;
+
+	free(c_strs->configuration);
 }
 
 /**

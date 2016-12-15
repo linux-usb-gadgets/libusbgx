@@ -534,8 +534,8 @@ static int usbg_parse_config_strs(const char *path, const char *name,
 	}
 
 	closedir(dir);
-	ret = usbg_read_string(spath, "", "configuration",
-			       c_strs->configuration);
+	ret = usbg_read_string_alloc(spath, "", "configuration",
+				     &c_strs->configuration);
 
 out:
 	return ret;
