@@ -1656,9 +1656,11 @@ static void test_set_config_string(void **state)
 static void try_get_config_strs(usbg_config *c, struct test_config *tc)
 {
 	struct usbg_config_strs strs;
+
 	push_config_strs(tc, LANG_US_ENG, tc->strs);
 	usbg_get_config_strs(c, LANG_US_ENG, &strs);
 	assert_string_equal(tc->strs->configuration, strs.configuration);
+	usbg_free_config_strs(&strs);
 }
 
 /**

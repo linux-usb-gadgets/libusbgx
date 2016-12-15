@@ -238,6 +238,8 @@ void show_config(usbg_config *c)
 
 	fprintf(stdout, "    configuration\t%s\n", c_strs.configuration);
 
+	usbg_free_config_strs(&c_strs);
+
 	usbg_for_each_binding(b, c) {
 		bname = usbg_get_binding_name(b);
 		f = usbg_get_binding_target(b);

@@ -138,6 +138,8 @@ static int usbg_export_config_strs_lang(usbg_config *c, char *lang_str,
 
 	cfg_ret = config_setting_set_string(node, strs.configuration);
 
+	usbg_free_config_strs(&strs);
+
 	ret = cfg_ret == CONFIG_TRUE ? USBG_SUCCESS : USBG_ERROR_OTHER_ERROR;
 out:
 	return ret;

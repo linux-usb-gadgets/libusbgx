@@ -808,6 +808,16 @@ extern int usbg_get_config_strs(usbg_config *c, int lang,
 				struct usbg_config_strs *c_strs);
 
 /**
+ * @brief Free configuration strings
+ * @details This function releases the memory allocated for strings
+ *          not for struct usbg_config_strs itself.
+ * @param c_strs Strings to be released
+ */
+static inline void usbg_free_config_strs(struct usbg_config_strs *c_strs)
+{
+}
+
+/**
  * @brief Set the USB configuration strings
  * @param c Pointer to configuration
  * @param lang USB language ID
