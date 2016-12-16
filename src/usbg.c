@@ -50,6 +50,7 @@ extern struct usbg_function_type usbg_f_type_midi;
 extern struct usbg_function_type usbg_f_type_ms;
 extern struct usbg_function_type usbg_f_type_phonet;
 extern struct usbg_function_type usbg_f_type_loopback;
+extern struct usbg_function_type usbg_f_type_hid;
 
 /**
  * @var function_types
@@ -69,6 +70,7 @@ struct usbg_function_type* function_types[] = {
 	[USBG_F_MASS_STORAGE] = &usbg_f_type_ms,
 	[USBG_F_PHONET] = &usbg_f_type_phonet,
 	[USBG_F_LOOPBACK] = &usbg_f_type_loopback,
+	[USBG_F_HID] = &usbg_f_type_hid,
 };
 
 ARRAY_SIZE_SENTINEL(function_types, USBG_FUNCTION_TYPE_MAX);
