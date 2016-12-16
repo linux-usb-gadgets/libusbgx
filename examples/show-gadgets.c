@@ -28,7 +28,7 @@
 #include <usbg/function/ffs.h>
 #include <usbg/function/phonet.h>
 #include <usbg/function/midi.h>
-
+#include <usbg/function/hid.h>
 
 /**
  * @file show-gadgets.c
@@ -128,6 +128,7 @@ void show_function(usbg_function *f)
 		struct usbg_f_midi_attrs midi;
 		int serial_port_num;
 		char *phonet_ifname;
+		struct usbg_f_hid_attrs hid;
 	} f_attrs;
 
 	instance = usbg_get_function_instance(f);
@@ -208,6 +209,23 @@ void show_function(usbg_function *f)
 		fprintf(stdout, "    out_ports\t\t%d\n", attrs->out_ports);
 		fprintf(stdout, "    buflen\t\t%d\n", attrs->buflen);
 		fprintf(stdout, "    qlen\t\t%d\n", attrs->qlen);
+		break;
+	}
+	case USBG_F_HID:
+	{
+		struct usbg_f_hid_attrs *attrs = &f_attrs.hid;
+		int i;
+
+		fprintf(stdout, "    dev\t\t\t%d:%d\n",
+			major(attrs->dev), minor(attrs->dev));
+		fprintf(stdout, "    protocol\t\t%d\n", attrs->protocol);
+		fprintf(stdout, "    report_desc\t");
+		for (i = 0; i < attrs->report_desc.len; ++i)
+			fprintf(stdout, "%x", attrs->report_desc.desc[i]);
+		fprintf(stdout, "\n");
+		fprintf(stdout, "    report_length\t%d\n",
+			attrs->report_length);
+		fprintf(stdout, "    subclass\t\t%d\n", attrs->subclass);
 		break;
 	}
 
