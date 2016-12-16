@@ -26,7 +26,6 @@ int usbg_read_buf_limited(const char *path, const char *name,
 {
 	char p[USBG_MAX_PATH_LENGTH];
 	FILE *fp;
-	char *ret_ptr;
 	int nmb;
 	int ret = USBG_SUCCESS;
 
@@ -43,15 +42,9 @@ int usbg_read_buf_limited(const char *path, const char *name,
 		goto out;
 	}
 
-	ret_ptr = fgets(buf, len, fp);
-	if (!ret_ptr) {
-		/* File is empty */
-		if (feof(fp))
-			buf[0] = '\0';
-		/* Error occurred */
-		else
-			ret = USBG_ERROR_IO;
-	}
+	ret= (int)fread(buf, sizeof(char), len, fp);
+	if (ret < len && ferror(fp))
+		ret = USBG_ERROR_IO;
 
 	fclose(fp);
 
@@ -73,7 +66,8 @@ int usbg_read_int(const char *path, const char *name, const char *file,
 	int ret;
 
 	ret = usbg_read_buf(path, name, file, buf);
-	if (ret == USBG_SUCCESS) {
+	if (ret >= 0) {
+		ret = 0;
 		*dest = strtol(buf, &pos, base);
 		if (!pos)
 			ret = USBG_ERROR_OTHER_ERROR;
@@ -112,12 +106,12 @@ int usbg_read_string_limited(const char *path, const char *name,
 
 	ret = usbg_read_buf_limited(path, name, file, buf, len);
 	/* Check whether read was successful */
-	if (ret == USBG_SUCCESS) {
+	if (ret >= 0) {
+		/* Truncate bufer if needed */
+		buf[ret < len - 1 ? ret : len -1] = '\0';
+		ret = 0;
 		if ((p = strchr(buf, '\n')) != NULL)
 				*p = '\0';
-		else
-			/* Truncate bufer if needed */
-			buf[len - 1] = '\0';
 	} else {
 		/* Set this as empty string */
 		*buf = '\0';

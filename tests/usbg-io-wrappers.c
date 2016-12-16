@@ -41,11 +41,20 @@ int fclose(FILE *fp)
  * @details Does not read any file, instead returns value from cmocka queue
  * @return value specified by caller previously
  */
-char *fgets(char *s, int size, FILE *stream)
+size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
+	char *data;
+	int len;
+	size_t ret;
+
 	check_expected(stream);
-	strncpy(s, mock_ptr_type(char *), size);
-	return s;
+	data = mock_ptr_type(char *);
+	len = mock_type(int);
+
+	ret = size * nmemb < len ? size * nmemb : len;
+	memcpy(ptr, data, ret);
+
+	return ret;
 }
 
 /**

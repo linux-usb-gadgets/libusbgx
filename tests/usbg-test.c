@@ -59,24 +59,19 @@ void cleanup_stack()
 static int file_id = 0;
 static int dir_id = 0;
 
-#define PUSH_FILE(file, content) do {\
+#define PUSH_FILE(file, content, len) do {\
 	file_id++;\
 	expect_path(fopen, path, file);\
 	will_return(fopen, file_id);\
-	expect_value(fgets, stream, file_id);\
-	will_return(fgets, content);\
+	expect_value(fread, stream, file_id);\
+	will_return(fread, content);\
+	will_return(fread, len);\
 	expect_value(fclose, fp, file_id);\
 	will_return(fclose, 0);\
 } while(0)
 
-#define PUSH_FILE_ALWAYS(dflt) do {\
-	expect_any_count(fopen, path, -1);\
-	will_return_always(fopen, 1);\
-	expect_any_count(fgets, stream, 1);\
-	will_return_always(fgets, dflt);\
-	expect_any_count(fclose, fp, 1);\
-	will_return_always(fclose, 0);\
-} while(0)
+#define PUSH_FILE_STR(file, content) \
+	PUSH_FILE(file, content, strlen(content) + 1);
 
 #define PUSH_EMPTY_DIR(p) do {\
 	expect_string(scandir, dirp, p);\
@@ -618,7 +613,7 @@ static void push_gadget(struct test_gadget *g)
 	char *path;
 
 	safe_asprintf(&path, "%s/%s/UDC", g->path, g->name);
-	PUSH_FILE(path, g->udc);
+	PUSH_FILE_STR(path, g->udc);
 
 	count = 0;
 	for (f = g->functions; f->instance; f++)
@@ -731,7 +726,7 @@ void push_gadget_attribute(struct test_gadget *gadget,
 		      usbg_get_gadget_attr_str(attr));
 	safe_asprintf(&content, "0x%x\n", value);
 
-	PUSH_FILE(path, content);
+	PUSH_FILE_STR(path, content);
 }
 
 void push_gadget_attrs(struct test_gadget *gadget,
@@ -807,7 +802,7 @@ void push_config_attribute(struct test_config *config, config_attr attr,
 		break;
 	}
 
-	PUSH_FILE(path, content);
+	PUSH_FILE_STR(path, content);
 }
 
 
@@ -943,7 +938,7 @@ static void push_gadget_str(struct test_gadget *gadget, const char *attr_name,
 
 	safe_asprintf(&path, "%s/%s/strings/0x%x/%s",
 			gadget->path, gadget->name, lang, attr_name);
-	PUSH_FILE(path, content);
+	PUSH_FILE_STR(path, content);
 }
 
 void push_gadget_strs(struct test_gadget *gadget, int lang,
@@ -998,7 +993,7 @@ void push_config_string(struct test_config *config, int lang, const char *str)
 
 	safe_asprintf(&path, "%s/configuration", path);
 
-	PUSH_FILE(path, str);
+	PUSH_FILE_STR(path, str);
 }
 
 void push_config_strs(struct test_config *config, int lang,
@@ -1037,7 +1032,7 @@ static void push_serial_attrs(struct test_function *func,
 
 	safe_asprintf(&path, "%s/%s/port_num", func->path, func->name);
 	safe_asprintf(&content, "%d\n", *port_num);
-	PUSH_FILE(path, content);
+	PUSH_FILE_STR(path, content);
 }
 
 static void push_net_attrs(struct test_function *func,
@@ -1051,7 +1046,7 @@ static void push_net_attrs(struct test_function *func,
 	content = safe_malloc(ETHER_ADDR_STR_LEN * sizeof(char));
 	ether_ntoa_r(&attrs->dev_addr, content);
 
-	PUSH_FILE(path, content);
+	PUSH_FILE_STR(path, content);
 
 	path = safe_malloc(USBG_MAX_PATH_LENGTH * sizeof(char));
 	sprintf(path, "%s/%s/host_addr",
@@ -1060,15 +1055,15 @@ static void push_net_attrs(struct test_function *func,
 	content = safe_malloc(ETHER_ADDR_STR_LEN * sizeof(char));
 	ether_ntoa_r(&attrs->host_addr, content);
 
-	PUSH_FILE(path, content);
+	PUSH_FILE_STR(path, content);
 
 	safe_asprintf(&path, "%s/%s/ifname", func->path, func->name);
 	safe_asprintf(&content, "%s\n", attrs->ifname);
-	PUSH_FILE(path, content);
+	PUSH_FILE_STR(path, content);
 
 	safe_asprintf(&path, "%s/%s/qmult", func->path, func->name);
 	safe_asprintf(&content, "%d\n", attrs->qmult);
-	PUSH_FILE(path, content);
+	PUSH_FILE_STR(path, content);
 }
 
 static void push_phonet_attrs(struct test_function *func,
@@ -1079,7 +1074,7 @@ static void push_phonet_attrs(struct test_function *func,
 
 	safe_asprintf(&path, "%s/%s/ifname", func->path, func->name);
 	safe_asprintf(&content, "%s\n", *ifname);
-	PUSH_FILE(path, content);
+	PUSH_FILE_STR(path, content);
 }
 
 void push_function_attrs(struct test_function *func, void *function_attrs)
