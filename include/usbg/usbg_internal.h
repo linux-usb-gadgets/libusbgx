@@ -17,6 +17,7 @@
 #include <string.h>
 #include <usbg/usbg.h>
 #include <malloc.h>
+#include <sys/types.h>
 #ifdef HAS_LIBCONFIG
 #include <libconfig.h>
 #endif
@@ -364,6 +365,9 @@ int usbg_get_ether_addr(const char *path, const char *name, const char *attr,
 
 int usbg_set_ether_addr(const char *path, const char *name, const char *attr,
 			void *val);
+
+int usbg_get_dev(const char *path, const char *name, const char *attr,
+		 void *val);
 
 /*
  * return:

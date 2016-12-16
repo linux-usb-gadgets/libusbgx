@@ -339,6 +339,26 @@ int usbg_set_ether_addr(const char *path, const char *name,
 	return usbg_write_string(path, name, attr, str_addr);
 }
 
+int usbg_get_dev(const char *path, const char *name, const char *attr,
+		 void *val)
+{
+	int major, minor;
+	char str_dev[USBG_MAX_STR_LENGTH];
+	int ret;
+
+	ret = usbg_read_string_limited(path, name, attr,
+				       str_dev, sizeof(str_dev));
+	if (ret < 0)
+		return ret;
+
+	ret = sscanf(str_dev, "%d:%d", &major, &minor);
+	if (ret < 2)
+		return USBG_ERROR_INVALID_VALUE;
+
+	*(dev_t *)val = makedev(major, minor);
+	return 0;
+}
+
 int usbg_get_config_node_int(config_setting_t *root,
 					   const char *node_name, void *val)
 {
