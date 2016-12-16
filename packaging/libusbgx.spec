@@ -75,6 +75,7 @@ make
 %{_bindir}/gadget-ffs
 %{_bindir}/gadget-midi
 %{_bindir}/gadget-ms
+%{_bindir}/gadget-hid
 %{_bindir}/gadget-export
 %{_bindir}/gadget-import
 %{_bindir}/show-udcs
