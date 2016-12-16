@@ -397,6 +397,9 @@ int usbg_get_config_node_ether_addr(config_setting_t *root,
 int usbg_set_config_node_int(config_setting_t *root,
 					   const char *node_name, void *val);
 
+int usbg_set_config_node_int_hex(config_setting_t *root,
+				 const char *node_name, void *val);
+
 int usbg_set_config_node_bool(config_setting_t *root,
 					   const char *node_name, void *val);
 
