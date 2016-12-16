@@ -491,6 +491,29 @@ int usbg_set_config_node_ether_addr(config_setting_t *root,
 	return usbg_set_config_node_string(root, node_name, &ptr);
 }
 
+int usbg_set_config_node_dev(config_setting_t *root,
+			     const char *node_name, void *val)
+{
+	dev_t *dev = (dev_t *)val;
+	config_setting_t *node;
+	int tmp;
+	int ret = 0;
+
+	node = config_setting_add(root, node_name, CONFIG_TYPE_GROUP);
+	if (!node)
+		return USBG_ERROR_NO_MEM;
+
+	tmp = major(*dev);
+	ret = usbg_set_config_node_int(node, "major", &tmp);
+	if (ret)
+		return ret;
+
+	tmp = minor(*dev);
+	ret = usbg_set_config_node_int(node, "minor", &tmp);
+
+	return ret;
+}
+
 void usbg_cleanup_function(struct usbg_function *f)
 {
 	free(f->path);
