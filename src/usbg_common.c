@@ -150,7 +150,7 @@ out:
 }
 
 int usbg_write_buf(const char *path, const char *name,
-		   const char *file, const char *buf)
+		   const char *file, const char *buf, int len)
 {
 	char p[USBG_MAX_PATH_LENGTH];
 	FILE *fp;
@@ -158,25 +158,28 @@ int usbg_write_buf(const char *path, const char *name,
 	int ret = USBG_SUCCESS;
 
 	nmb = snprintf(p, sizeof(p), "%s/%s/%s", path, name, file);
-	if (nmb < sizeof(p)) {
-		fp = fopen(p, "w");
-		if (fp) {
-			fputs(buf, fp);
-			fflush(fp);
-
-			ret = ferror(fp);
-			if (ret)
-				ret = usbg_translate_error(errno);
-
-			fclose(fp);
-		} else {
-			/* Set error correctly */
-			ret = usbg_translate_error(errno);
-		}
-	} else {
+	if (nmb >= sizeof(p)) {
 		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
 	}
 
+	fp = fopen(p, "w");
+	if (!fp) {
+		/* Set error correctly */
+		ret = usbg_translate_error(errno);
+		goto out;
+	}
+
+	ret = fwrite(buf, sizeof(char), len, fp);
+	if (ret < len) {
+		if (ferror(fp))
+			ret = usbg_translate_error(errno);
+		else
+			ret = USBG_ERROR_IO;
+	}
+
+	fclose(fp);
+out:
 	return ret;
 }
 
@@ -185,17 +188,29 @@ int usbg_write_int(const char *path, const char *name, const char *file,
 {
 	char buf[USBG_MAX_STR_LENGTH];
 	int nmb;
+	int ret;
 
 	nmb = snprintf(buf, USBG_MAX_STR_LENGTH, str, value);
-	return nmb < USBG_MAX_STR_LENGTH ?
-			usbg_write_buf(path, name, file, buf)
-			: USBG_ERROR_INVALID_PARAM;
+	if (nmb >= USBG_MAX_STR_LENGTH)
+		return USBG_ERROR_INVALID_PARAM;
+
+	ret = usbg_write_buf(path, name, file, buf, nmb);
+	if (ret > 0)
+		ret = 0;
+
+	return 0;
 }
 
 int usbg_write_string(const char *path, const char *name,
 		      const char *file, const char *buf)
 {
-	return usbg_write_buf(path, name, file, buf);
+	int ret;
+
+	ret = usbg_write_buf(path, name, file, buf, strlen(buf) + 1);
+	if (ret > 0)
+		ret = 0;
+
+	return 0;
 }
 
 int ubsg_rm_file(const char *path, const char *name)

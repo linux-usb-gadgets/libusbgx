@@ -247,7 +247,8 @@ int usbg_read_string_alloc(const char *path, const char *name,
 			   const char *file, char **dest);
 
 int usbg_write_buf(const char *path, const char *name,
-		   const char *file, const char *buf);
+		   const char *file, const char *buf, int len);
+
 int usbg_write_int(const char *path, const char *name, const char *file,
 		   int value, const char *str);
 

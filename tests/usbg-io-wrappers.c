@@ -10,7 +10,8 @@
 #include <dlfcn.h>
 #include <errno.h>
 
-typedef int (*fputs_f_type)(const char *, FILE *);
+typedef int (*fwrite_f_type)(const void *ptr, size_t size,
+			     size_t nmemb, FILE *stream);
 typedef int (*fflush_f_type)(FILE *);
 typedef fflush_f_type ferror_f_type;
 
@@ -151,23 +152,31 @@ ssize_t readlink(const char *path, char *buf, size_t bufsiz)
 }
 
 /**
- * @brief Simulates puts, with user-specified behavior
+ * @brief Simulates write, with user-specified behavior
  * @details Check if user is trying to write expected data
  * @return value received from cmocka queue
  */
-int fputs(const char *s, FILE *stream)
+size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
-	/* Cmocka (or anything else) may want to print some errors.
-	 * Especially when running fputs itself */
+	int ret;
+
+	/*
+	 * Cmocka (or anything else) may want to print some errors.
+	 * Especially when running fwrite() itself
+	 */
 	if (stream == stderr || stream == stdout) {
-		fputs_f_type orig_fputs;
-		orig_fputs = (fputs_f_type)dlsym(RTLD_NEXT, "fputs");
-		return orig_fputs(s, stream);
+		fwrite_f_type orig_fwrite;
+		orig_fwrite = (fwrite_f_type)dlsym(RTLD_NEXT, "fwrite");
+		return orig_fwrite(ptr, size, nmemb, stream);
 	}
 
 	check_expected(stream);
-	check_expected(s);
-	return mock_type(int);
+	check_expected(ptr);
+	ret = mock_type(int);
+	if (!ret)
+		ret = nmemb;
+
+	return ret;
 }
 
 int mkdir(const char *pathname, mode_t mode)

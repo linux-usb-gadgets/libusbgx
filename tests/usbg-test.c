@@ -115,24 +115,27 @@ static int dir_id = 0;
 	will_return(readlink, c);\
 } while(0)
 
-#define EXPECT_WRITE(file, content) do {\
+#define EXPECT_WRITE(file, content, len) do {	\
 	file_id++;\
 	expect_path(fopen, path, file);\
 	will_return(fopen, file_id);\
-	expect_value(fputs, stream, file_id);\
-	expect_string(fputs, s, content);\
-	will_return(fputs, 0);\
+	expect_value(fwrite, stream, file_id);\
+	expect_memory(fwrite, ptr, content, len); \
+	will_return(fwrite, len);\
 	expect_value(fclose, fp, file_id);\
 	will_return(fclose, 0);\
 } while(0)
+
+#define EXPECT_WRITE_STR(file, content)\
+	EXPECT_WRITE(file, content, strlen(content) + 1)
 
 #define EXPECT_HEX_WRITE(file, content) do {\
 	file_id++;\
 	expect_path(fopen, path, file);\
 	will_return(fopen, file_id);\
-	expect_value(fputs, stream, file_id);\
-	expect_check(fputs, s, hex_str_equal_display_error, content);\
-	will_return(fputs, 0);\
+	expect_value(fwrite, stream, file_id);\
+	expect_check(fwrite, ptr, hex_str_equal_display_error, content);\
+	will_return(fwrite, 0);\
 	expect_value(fclose, fp, file_id);\
 	will_return(fclose, 0);\
 } while(0)
@@ -840,7 +843,7 @@ void pull_config_attribute(struct test_config *config, config_attr attr,
 		EXPECT_HEX_WRITE(path, content);
 		break;
 	case FORMAT_DEC:
-		EXPECT_WRITE(path, content);
+		EXPECT_WRITE_STR(path, content);
 		break;
 	}
 }
@@ -902,7 +905,7 @@ static void pull_gadget_str(struct test_gadget *gadget, const char *attr_name,
 
 	safe_asprintf(&path, "%s/%s/strings/0x%x/%s",
 			gadget->path, gadget->name, lang, attr_name);
-	EXPECT_WRITE(path, content);
+	EXPECT_WRITE_STR(path, content);
 }
 
 void pull_gadget_string(struct test_gadget *gadget, int lang,
@@ -975,7 +978,7 @@ void pull_config_string(struct test_config *config, int lang, const char *str)
 
 	safe_asprintf(&path, "%s/configuration", path);
 
-	EXPECT_WRITE(path, str);
+	EXPECT_WRITE_STR(path, str);
 }
 
 void pull_config_strs(struct test_config *config, int lang,
@@ -1115,18 +1118,18 @@ static void pull_function_net_attrs(struct test_function *func,
 	content = safe_malloc(ETHER_ADDR_STR_LEN * sizeof(char));
 	usbg_ether_ntoa_r(&attrs->dev_addr, content);
 
-	EXPECT_WRITE(path, content);
+	EXPECT_WRITE_STR(path, content);
 
 	safe_asprintf(&path, "%s/%s/host_addr", func->path, func->name);
 
 	content = safe_malloc(ETHER_ADDR_STR_LEN * sizeof(char));
 	usbg_ether_ntoa_r(&attrs->host_addr, content);
 
-	EXPECT_WRITE(path, content);
+	EXPECT_WRITE_STR(path, content);
 
 	safe_asprintf(&path, "%s/%s/qmult", func->path, func->name);
 	safe_asprintf(&content, "%d\n", attrs->qmult);
-	EXPECT_WRITE(path, content);
+	EXPECT_WRITE_STR(path, content);
 }
 
 void pull_function_attrs(struct test_function *func, void *attrs)
