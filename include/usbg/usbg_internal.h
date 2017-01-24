@@ -52,6 +52,9 @@ struct usbg_function_type
 	/* Name of this function type */
 	char *name;
 
+	/* OS Descriptor interface name */
+	char **os_desc_iname;
+
 	/* Called to allocate instance of function */
 	int (*alloc_inst)(struct usbg_function_type *, usbg_function_type,
 			  const char *, const char *, usbg_gadget *,
