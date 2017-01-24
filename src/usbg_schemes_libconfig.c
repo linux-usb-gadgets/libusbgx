@@ -20,6 +20,7 @@
 #define USBG_NAME_TAG "name"
 #define USBG_ATTRS_TAG "attrs"
 #define USBG_STRINGS_TAG "strings"
+#define USBG_OS_DESCS_TAG "os_descs"
 #define USBG_FUNCTIONS_TAG "functions"
 #define USBG_CONFIGS_TAG "configs"
 #define USBG_LANG_TAG "lang"
@@ -510,6 +511,61 @@ out:
 	return ret;
 }
 
+static int usbg_export_gadget_os_descs(usbg_gadget *g, config_setting_t *root)
+{
+	config_setting_t *node;
+	struct usbg_gadget_os_descs g_os_descs = {0};
+	int usbg_ret, cfg_ret;
+	int ret = USBG_ERROR_NO_MEM;
+
+	usbg_ret = usbg_get_gadget_os_descs(g, &g_os_descs);
+	if (usbg_ret) {
+		ret = usbg_ret;
+		goto out;
+	}
+
+	node = config_setting_add(root, "use", CONFIG_TYPE_INT);
+	if (!node)
+		goto out;
+
+	cfg_ret = config_setting_set_int(node, g_os_descs.use);
+	if (cfg_ret != CONFIG_TRUE) {
+		ret = USBG_ERROR_OTHER_ERROR;
+		goto out;
+	}
+
+	node = config_setting_add(root, "qw_sign", CONFIG_TYPE_STRING);
+	if (!node)
+		goto out;
+
+	cfg_ret = config_setting_set_string(node, g_os_descs.qw_sign);
+	if (cfg_ret != CONFIG_TRUE) {
+		ret = USBG_ERROR_OTHER_ERROR;
+		goto out;
+	}
+
+	node = config_setting_add(root, "b_vendor_code", CONFIG_TYPE_INT);
+	if (!node)
+		goto out;
+
+	cfg_ret = config_setting_set_format(node, CONFIG_FORMAT_HEX);
+	if (cfg_ret != CONFIG_TRUE) {
+		ret = USBG_ERROR_OTHER_ERROR;
+		goto out;
+	}
+
+	cfg_ret = config_setting_set_int(node, g_os_descs.b_vendor_code);
+	if (cfg_ret != CONFIG_TRUE) {
+		ret = USBG_ERROR_OTHER_ERROR;
+		goto out;
+	}
+
+	ret = 0;
+out:
+	usbg_free_gadget_os_desc(&g_os_descs);
+	return ret;
+}
+
 static int usbg_export_gadget_prep(usbg_gadget *g, config_setting_t *root)
 {
 	config_setting_t *node;
@@ -525,6 +581,16 @@ static int usbg_export_gadget_prep(usbg_gadget *g, config_setting_t *root)
 
 	usbg_ret = usbg_export_gadget_attrs(g, node);
 	if (usbg_ret) {
+		ret = usbg_ret;
+		goto out;
+	}
+
+	node = config_setting_add(root, USBG_OS_DESCS_TAG, CONFIG_TYPE_GROUP);
+	if (!node)
+		goto out;
+
+	usbg_ret = usbg_export_gadget_os_descs(g, node);
+	if (usbg_ret && usbg_ret != USBG_ERROR_NOT_FOUND) {
 		ret = usbg_ret;
 		goto out;
 	}
@@ -1292,6 +1358,51 @@ out:
 
 }
 
+static int usbg_import_gadget_os_descs(config_setting_t *root, usbg_gadget *g)
+{
+	config_setting_t *node;
+	int usbg_ret;
+	int val;
+	int ret = USBG_ERROR_INVALID_TYPE;
+	struct usbg_gadget_os_descs g_os_descs = {0};
+
+#define GET_OPTIONAL_GADGET_ATTR(NAME, FIELD, TYPE)			\
+	do {								\
+		node = config_setting_get_member(root, #NAME);		\
+		if (node) {						\
+			if (!usbg_config_is_int(node))			\
+				goto out;				\
+			val = config_setting_get_int(node);		\
+			if (val < 0 || val > ((1L << (sizeof(TYPE)*8)) - 1)) { \
+				ret = USBG_ERROR_INVALID_VALUE;		\
+				goto out;				\
+			}						\
+			g_os_descs.FIELD = (TYPE)val;			\
+		}							\
+	} while (0)
+
+	GET_OPTIONAL_GADGET_ATTR(use, use, bool);
+	GET_OPTIONAL_GADGET_ATTR(b_vendor_code, b_vendor_code, uint8_t);
+
+#undef GET_OPTIONAL_GADGET_ATTR
+
+	node = config_setting_get_member(root, "qw_sign");
+	if (node) {
+		if (!usbg_config_is_string(node))
+			goto out;
+		/*
+		 * No need to strdup() the string
+		 * as memory is owned by libconfig
+		 */
+		g_os_descs.qw_sign = (char *)config_setting_get_string(node);
+	}
+
+	ret = usbg_set_gadget_os_descs(g, &g_os_descs);
+
+out:
+	return ret;
+}
+
 static int usbg_import_gadget_run(usbg_state *s, config_setting_t *root,
 				  const char *name, usbg_gadget **g)
 {
@@ -1357,6 +1468,19 @@ static int usbg_import_gadget_run(usbg_state *s, config_setting_t *root,
 			goto error2;
 		}
 		usbg_ret = usbg_import_gadget_configs(node, newg);
+		if (usbg_ret != USBG_SUCCESS)
+			goto error;
+	}
+
+	/* OS Descriptors are optional too, read after configs */
+	node = config_setting_get_member(root, USBG_OS_DESCS_TAG);
+	if (node) {
+		if (!config_setting_is_group(node)) {
+			ret = USBG_ERROR_INVALID_TYPE;
+			goto error2;
+		}
+
+		usbg_ret = usbg_import_gadget_os_descs(node, newg);
 		if (usbg_ret != USBG_SUCCESS)
 			goto error;
 	}
