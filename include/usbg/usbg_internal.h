@@ -381,6 +381,12 @@ typedef int (*usbg_import_node_func)(config_setting_t *root,
 typedef int (*usbg_export_node_func)(config_setting_t *root,
 				     const char *node_name, void *val);
 
+int usbg_get_config_node_os_desc(config_setting_t *root, const char *iname,
+				struct usbg_function_os_desc *f_os_desc);
+
+int usbg_set_config_node_os_desc(config_setting_t *root, const char *iname,
+				const struct usbg_function_os_desc *f_os_desc);
+
 #ifdef __cplusplus
 }
 #endif
