@@ -220,6 +220,15 @@ typedef enum
 	USBG_FUNCTION_TYPE_MAX,
 } usbg_function_type;
 
+/**
+ * @brief USB OS Descriptor function attributes
+ */
+struct usbg_function_os_desc
+{
+	char compatible_id[USBG_MAX_STR_LENGTH];
+	char sub_compatible_id[USBG_MAX_STR_LENGTH];
+};
+
 /* Error codes */
 
 /**
@@ -778,6 +787,24 @@ extern int usbg_get_function_attrs(usbg_function *f, void *f_attrs);
  * @return 0 on success, usbg_error if error occurred
  */
 extern int usbg_set_function_attrs(usbg_function *f, void *f_attrs);
+
+/**
+ * @brief Get OS Descriptor compatibility of given function
+ * @param f Pointer to function
+ * @param f_os_desc OS Descriptor compatibility to be filled
+ * @return 0 on success, usbg_error if error occurred
+ */
+extern int usbg_get_interf_os_desc(usbg_function *f,
+		struct usbg_function_os_desc *f_os_desc);
+
+/**
+ * @brief Set OS Descriptor compatibility of given function
+ * @param f Pointer to function
+ * @param f_os_desc OS Descriptor compatibility to be set
+ * @return 0 on success, usbg_error if error occurred
+ */
+extern int usbg_set_interf_os_desc(usbg_function *f,
+		const struct usbg_function_os_desc *f_os_desc);
 
 /* USB configurations allocation and configuration */
 
