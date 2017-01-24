@@ -98,6 +98,15 @@ const char *gadget_str_names[] =
 
 ARRAY_SIZE_SENTINEL(gadget_str_names, USBG_GADGET_STR_MAX);
 
+const char *gadget_os_desc_names[] =
+{
+	"use",
+	"b_vendor_code",
+	"qw_sign",
+};
+
+ARRAY_SIZE_SENTINEL(gadget_os_desc_names, USBG_GADGET_OS_DESC_MAX);
+
 int usbg_lookup_function_type(const char *name)
 {
 	int i = USBG_FUNCTION_TYPE_MIN;
@@ -165,6 +174,13 @@ const char *usbg_get_gadget_str_name(usbg_gadget_str str)
 	return str >= USBG_GADGET_STR_MIN &&
 		str < USBG_GADGET_STR_MAX ?
 		gadget_str_names[str] : NULL;
+}
+
+const char *usbg_get_gadget_os_desc_name(usbg_gadget_os_desc_strs str)
+{
+	return str >= USBG_GADGET_OS_DESC_MIN &&
+		str < USBG_GADGET_OS_DESC_MAX ?
+		gadget_os_desc_names[str] : NULL;
 }
 
 static int usbg_split_function_instance_type(const char *full_name,
@@ -798,6 +814,40 @@ free_product:
 	free(g_strs->product);
 free_mnf:
 	free(g_strs->manufacturer);
+out:
+	return ret;
+}
+
+static int usbg_parse_gadget_os_descs(const char *path, const char *name,
+		struct usbg_gadget_os_descs *g_os_descs)
+{
+	int ret;
+	int nmb;
+	char spath[USBG_MAX_PATH_LENGTH];
+	int val;
+
+	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s", path, name,
+			OS_DESC_DIR);
+	if (nmb >= sizeof(spath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	ret = usbg_read_string_alloc(spath, "", "qw_sign", &g_os_descs->qw_sign);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_read_hex(spath, "", "b_vendor_code", &val);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	g_os_descs->b_vendor_code = (unsigned char)val;
+
+	ret = usbg_read_int(spath, "", "use", 10, &val);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	g_os_descs->use = val ? true : false;
 out:
 	return ret;
 }
@@ -1848,6 +1898,49 @@ int usbg_set_gadget_product(usbg_gadget *g, int lang, const char *prd)
 	ret = usbg_check_dir(path);
 	if (ret == USBG_SUCCESS)
 		ret = usbg_write_string(path, "", "product", prd);
+
+out:
+	return ret;
+}
+
+int usbg_get_gadget_os_descs(usbg_gadget *g, struct usbg_gadget_os_descs *g_os_descs)
+{
+	return g && g_os_descs ?
+			usbg_parse_gadget_os_descs(g->path, g->name, g_os_descs)
+			: USBG_ERROR_INVALID_PARAM;
+}
+
+int usbg_set_gadget_os_descs(usbg_gadget *g,
+			     const struct usbg_gadget_os_descs *g_os_descs)
+{
+	int ret;
+	int nmb;
+	char spath[USBG_MAX_PATH_LENGTH];
+	int val;
+
+	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s", g->path, g->name,
+			OS_DESC_DIR);
+	if (nmb >= sizeof(spath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	ret = usbg_check_dir(spath);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_string(spath, "", "qw_sign", g_os_descs->qw_sign);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_hex8(spath, "", "b_vendor_code",
+				g_os_descs->b_vendor_code);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_dec(spath, "", "use", g_os_descs->use);
+	if (ret != USBG_SUCCESS)
+		goto out;
 
 out:
 	return ret;
