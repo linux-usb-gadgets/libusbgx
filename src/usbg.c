@@ -2010,6 +2010,68 @@ out:
 	return ret;
 }
 
+int usbg_get_interf_os_desc(usbg_function *f, const char *iname,
+			struct usbg_function_os_desc *f_os_desc)
+{
+	int ret = USBG_ERROR_NOT_SUPPORTED;
+	int nmb;
+	char spath[USBG_MAX_PATH_LENGTH];
+
+	if (!iname)
+		return ret;
+
+	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s/interface.%s", f->path,
+			f->name, OS_DESC_DIR, iname);
+	if (nmb >= sizeof(spath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	ret = usbg_read_string_alloc(spath, "", "compatible_id",
+				&f_os_desc->compatible_id);
+	if (ret)
+		return ret;
+
+	ret = usbg_read_string_alloc(spath, "", "sub_compatible_id",
+				&f_os_desc->sub_compatible_id);
+	if (ret)
+		return ret;
+
+out:
+	return ret;
+}
+
+int usbg_set_interf_os_desc(usbg_function *f, const char *iname,
+			const struct usbg_function_os_desc *f_os_desc)
+{
+	int ret = USBG_ERROR_NOT_SUPPORTED;
+	int nmb;
+	char spath[USBG_MAX_PATH_LENGTH];
+
+	if (!iname)
+		return ret;
+
+	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s/interface.%s", f->path,
+			f->name, OS_DESC_DIR, iname);
+	if (nmb >= sizeof(spath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	ret = usbg_write_string(spath, "", "compatible_id",
+			f_os_desc->compatible_id);
+	if (ret)
+		return ret;
+
+	ret = usbg_write_string(spath, "", "sub_compatible_id",
+			f_os_desc->sub_compatible_id);
+	if (ret)
+		return ret;
+
+out:
+	return ret;
+}
+
 int usbg_create_config(usbg_gadget *g, int id, const char *label,
 		       const struct usbg_config_attrs *c_attrs,
 		       const struct usbg_config_strs *c_strs,
