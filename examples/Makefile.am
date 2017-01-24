@@ -7,4 +7,4 @@ gadget_export_SOURCE = gadget-export.c
 gadget_import_SOURCE = gadget-import.c
 show_udcs_SOURCE = show-udcs.c
 AM_CPPFLAGS=-I$(top_srcdir)/include/
-AM_LDFLAGS=-L../src/ -lusbgx
+AM_LDFLAGS=-L$(top_srcdir)/src/ -lusbgx

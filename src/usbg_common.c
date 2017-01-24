@@ -327,6 +327,7 @@ int usbg_set_ether_addr(const char *path, const char *name,
 	return usbg_write_string(path, name, attr, str_addr);
 }
 
+#ifdef HAS_GADGET_SCHEMES
 int usbg_get_config_node_int(config_setting_t *root,
 					   const char *node_name, void *val)
 {
@@ -458,6 +459,57 @@ int usbg_set_config_node_ether_addr(config_setting_t *root,
 	usbg_ether_ntoa_r(val, str_addr);
 	return usbg_set_config_node_string(root, node_name, &ptr);
 }
+#else
+/* Dummy implementations.
+ */
+int usbg_get_config_node_int(config_setting_t *root,
+					   const char *node_name, void *val)
+{
+	return USBG_ERROR_NOT_SUPPORTED;
+}
+
+int usbg_get_config_node_bool(config_setting_t *root,
+					   const char *node_name, void *val)
+{
+	return USBG_ERROR_NOT_SUPPORTED;
+}
+
+int usbg_get_config_node_string(config_setting_t *root,
+					   const char *node_name, void *val)
+{
+	return USBG_ERROR_NOT_SUPPORTED;
+}
+
+int usbg_get_config_node_ether_addr(config_setting_t *root,
+					      const char *node_name, void *val)
+{
+	return USBG_ERROR_NOT_SUPPORTED;
+}
+
+int usbg_set_config_node_int(config_setting_t *root,
+					   const char *node_name, void *val)
+{
+	return USBG_ERROR_NOT_SUPPORTED;
+}
+
+int usbg_set_config_node_bool(config_setting_t *root,
+					   const char *node_name, void *val)
+{
+	return USBG_ERROR_NOT_SUPPORTED;
+}
+
+int usbg_set_config_node_string(config_setting_t *root,
+					   const char *node_name, void *val)
+{
+	return USBG_ERROR_NOT_SUPPORTED;
+}
+
+int usbg_set_config_node_ether_addr(config_setting_t *root,
+					      const char *node_name, void *val)
+{
+	return USBG_ERROR_NOT_SUPPORTED;
+}
+#endif /* HAS_GADGET_SCHEMES */
 
 void usbg_cleanup_function(struct usbg_function *f)
 {
