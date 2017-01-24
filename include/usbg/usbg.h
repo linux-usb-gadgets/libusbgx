@@ -154,6 +154,28 @@ struct usbg_gadget_strs
 };
 
 /**
+ * @brief USB gadget Microsoft OS Descriptors
+ */
+struct usbg_gadget_os_descs
+{
+	bool use;
+	uint8_t b_vendor_code;
+	char *qw_sign;
+};
+
+/**
+ * @typedef usbg_gadget_os_desc_strs
+ * @brief Microsoft OS Descriptors strings
+ */
+typedef enum {
+	USBG_GADGET_OS_DESC_MIN = 0,
+	OS_DESC_USE = USBG_GADGET_OS_DESC_MIN,
+	OS_DESC_B_VENDOR_CODE,
+	OS_DESC_QW_SIGN,
+	USBG_GADGET_OS_DESC_MAX,
+} usbg_gadget_os_desc_strs;
+
+/**
  * @brief USB configuration attributes
  */
 struct usbg_config_attrs
@@ -424,6 +446,13 @@ extern int usbg_lookup_gadget_str(const char *name);
 extern const char *usbg_get_gadget_str_name(usbg_gadget_str str);
 
 /**
+ * @brief Get name of selected OS Descriptor string
+ * @param str OS Descriptor string code
+ * @return Name of OS Descriptor associated with this code
+ */
+extern const char *usbg_get_gadget_os_desc_name(usbg_gadget_os_desc_strs str);
+
+/**
  * @brief Set selected attribute to value
  * @param g Pointer to gadget
  * @param attr Code of selected attribute
@@ -636,6 +665,41 @@ extern int usbg_set_gadget_manufacturer(usbg_gadget *g, int lang,
  */
 extern int usbg_set_gadget_product(usbg_gadget *g, int lang,
 				   const char *prd);
+
+/**
+ * @brief Get the USB gadget OS Descriptor
+ * @param g Pointer to gadget
+ * @param g_os_descs Structure to be filled
+ * @return 0 on success usbg_error if error occurred
+ */
+
+extern int usbg_get_gadget_os_descs(usbg_gadget *g,
+		struct usbg_gadget_os_descs *g_os_descs);
+
+/**
+ * @brief Free OS Descriptor attributes
+ * @details This function releases the memory allocated for USB
+ *          gadget OS Descriptor atrributes.
+ * @param g_os_desc OS Descriptor attributes to be released
+ */
+static inline void usbg_free_gadget_os_desc(
+			struct usbg_gadget_os_descs *g_os_desc)
+{
+	if (!g_os_desc)
+		return;
+
+	free(g_os_desc->qw_sign);
+}
+
+/**
+ * @brief Set the USB gadget OS Descriptor
+ * @param g Pointer to gadget
+ * @param g_os_descs Structure to be filled
+ * @return 0 on success usbg_error if error occurred
+ */
+
+extern int usbg_set_gadget_os_descs(usbg_gadget *g,
+		const struct usbg_gadget_os_descs *g_os_descs);
 
 /* USB function allocation and configuration */
 
