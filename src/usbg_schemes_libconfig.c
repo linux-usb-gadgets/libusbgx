@@ -28,6 +28,7 @@
 #define USBG_INSTANCE_TAG "instance"
 #define USBG_ID_TAG "id"
 #define USBG_FUNCTION_TAG "function"
+#define USBG_INTERFACE_TAG "interface"
 #define USBG_TAB_WIDTH 4
 
 static inline int generate_function_label(usbg_function *f, char *buf, int size)
@@ -305,6 +306,69 @@ out:
 	return ret;
 }
 
+static int usbg_set_config_node_os_desc(config_setting_t *root,
+					const char *iname,
+					struct usbg_function_os_desc *f_os_desc)
+{
+	config_setting_t *groot;
+	config_setting_t *node;
+	int cfg_ret;
+	int ret;
+
+	groot = config_setting_add(root, NULL, CONFIG_TYPE_GROUP);
+	if (!groot)
+		return USBG_ERROR_NO_MEM;
+
+	node = config_setting_add(groot, USBG_INTERFACE_TAG,
+				  CONFIG_TYPE_STRING);
+	if (!node)
+		return USBG_ERROR_NO_MEM;
+
+	cfg_ret = config_setting_set_string(node, iname);
+	if (cfg_ret != CONFIG_TRUE)
+		return USBG_ERROR_OTHER_ERROR;
+
+	if (f_os_desc->compatible_id) {
+		ret = usbg_set_config_node_string(groot, "compatible_id",
+						  &f_os_desc->compatible_id);
+		if (ret < 0)
+			return ret;
+	}
+
+	if (f_os_desc->sub_compatible_id) {
+		ret = usbg_set_config_node_string(groot, "sub_compatible_id",
+						  &f_os_desc->sub_compatible_id);
+		if (ret < 0)
+			return ret;
+	}
+
+	return USBG_SUCCESS;
+}
+
+static int usbg_export_function_os_descs(usbg_function *f,
+					 config_setting_t *root)
+{
+	int ret = 0;
+	struct usbg_function_os_desc f_os_desc;
+	char **iname = f->ops->os_desc_iname;
+
+	while (iname && *iname) {
+		memset(&f_os_desc, 0, sizeof(f_os_desc));
+
+		ret = usbg_get_interf_os_desc(f, *iname, &f_os_desc);
+		if (ret)
+			break;
+
+		ret = usbg_set_config_node_os_desc(root, *iname, &f_os_desc);
+		usbg_free_interf_os_desc(&f_os_desc);
+		if (ret < 0)
+			break;
+		++iname;
+	}
+
+	return ret;
+}
+
 /* This function does not import instance name because this is more property
  * of a gadget than a function itself */
 static int usbg_export_function_prep(usbg_function *f, config_setting_t *root)
@@ -329,6 +393,17 @@ static int usbg_export_function_prep(usbg_function *f, config_setting_t *root)
 		goto out;
 
 	ret = usbg_export_function_attrs(f, node);
+	if (ret)
+		goto out;
+
+	node = config_setting_add(root, USBG_OS_DESCS_TAG, CONFIG_TYPE_LIST);
+	if (!node)
+		goto out;
+
+	/* OS Descriptors are optional */
+	ret = usbg_export_function_os_descs(f, node);
+	if (ret == USBG_ERROR_NOT_SUPPORTED)
+		ret = USBG_SUCCESS;
 out:
 	return ret;
 }
@@ -765,6 +840,100 @@ out:
 	return ret;
 }
 
+static int usbg_get_config_node_os_desc(config_setting_t *node,
+					struct usbg_function_os_desc *f_os_desc)
+{
+	int ret;
+
+	ret = usbg_get_config_node_string(node, "compatible_id",
+					  &f_os_desc->compatible_id);
+	/* if error */
+	if (ret < 0)
+		return ret;
+
+	ret = usbg_get_config_node_string(node, "sub_compatible_id",
+					  &f_os_desc->sub_compatible_id);
+	/* if error */
+	if (ret < 0)
+		return ret;
+
+	return USBG_SUCCESS;
+}
+
+static int find_string(const char *str, char **array)
+{
+	int i;
+
+	if (!array)
+		return -ENOENT;
+
+	for (i = 0; array[i]; ++i)
+		if (strcmp(str, array[i]) == 0)
+			return i;
+
+	return -ENOENT;
+}
+
+static int usbg_import_function_os_descs(config_setting_t *root,
+					 usbg_function *f)
+{
+	config_setting_t *node;
+	int ret = USBG_SUCCESS;
+	struct usbg_function_os_desc f_os_desc;
+	char **allowed_names = f->ops->os_desc_iname;
+	int count, i;
+
+	count = config_setting_length(root);
+
+	for (i = 0; i < count; ++i) {
+		config_setting_t *interf_node;
+		const char *interface;
+
+		memset(&f_os_desc, 0, sizeof(f_os_desc));
+
+		node = config_setting_get_elem(root, i);
+		if (!node) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			break;
+		}
+
+		if (!config_setting_is_group(node)) {
+			ret = USBG_ERROR_INVALID_TYPE;
+			break;
+		}
+
+		/* Look for interface name */
+		interf_node = config_setting_get_member(node, USBG_INTERFACE_TAG);
+		if (!interf_node) {
+			ret = USBG_ERROR_MISSING_TAG;
+			break;
+		}
+
+		interface = config_setting_get_string(interf_node);
+		if (!interface) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			break;
+		}
+
+		ret = find_string(interface, allowed_names);
+		if (ret < 0) {
+			ret = USBG_ERROR_NOT_SUPPORTED;
+			break;
+		}
+
+		ret = usbg_get_config_node_os_desc(node, &f_os_desc);
+		if (ret)
+			break;
+
+		ret = usbg_set_interf_os_desc(f, interface, &f_os_desc);
+		/* no need to free as strings are allocated by libconfig */
+		if (ret)
+			break;
+	}
+
+	return ret;
+}
+
 static int usbg_import_function_run(usbg_gadget *g, config_setting_t *root,
 				    const char *instance, usbg_function **f)
 {
@@ -808,6 +977,16 @@ static int usbg_import_function_run(usbg_gadget *g, config_setting_t *root,
 			goto out;
 		}
 	}
+
+	node = config_setting_get_member(root, USBG_OS_DESCS_TAG);
+	if (node) {
+		usbg_ret = usbg_import_function_os_descs(node, *f);
+		if (usbg_ret != USBG_SUCCESS) {
+			ret = usbg_ret;
+			goto out;
+		}
+	}
+
 out:
 	return ret;
 }
