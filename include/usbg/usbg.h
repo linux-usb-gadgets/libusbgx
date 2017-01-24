@@ -216,6 +216,15 @@ typedef enum
 	USBG_FUNCTION_TYPE_MAX,
 } usbg_function_type;
 
+/**
+ * @brief USB OS Descriptor function attributes
+ */
+struct usbg_function_os_desc
+{
+	char *compatible_id;
+	char *sub_compatible_id;
+};
+
 /* Error codes */
 
 /**
@@ -789,6 +798,42 @@ extern int usbg_get_function_attrs(usbg_function *f, void *f_attrs);
  * @return 0 on success, usbg_error if error occurred
  */
 extern int usbg_set_function_attrs(usbg_function *f, void *f_attrs);
+
+/**
+ * @brief Get OS Descriptor compatibility of given function
+ * @param f Pointer to function
+ * @param iname Interface name
+ * @param f_os_desc OS Descriptor compatibility to be filled
+ * @return 0 on success, usbg_error if error occurred
+ */
+extern int usbg_get_interf_os_desc(usbg_function *f, const char *iname,
+		struct usbg_function_os_desc *f_os_desc);
+
+/**
+ * @brief Free OS Descriptor function attributes
+ * @details This function releases the memory allocated for function
+ *          atrributes for struct usbg_function_os_desc.
+ * @param f_os_desc OS Descriptor function attributes to be released
+ */
+static inline void usbg_free_interf_os_desc(
+			struct usbg_function_os_desc *f_os_desc)
+{
+	if (!f_os_desc)
+		return;
+
+	free(f_os_desc->compatible_id);
+	free(f_os_desc->sub_compatible_id);
+}
+
+/**
+ * @brief Set OS Descriptor compatibility of given function
+ * @param f Pointer to function
+ * @param iname Interface name
+ * @param f_os_desc OS Descriptor compatibility to be set
+ * @return 0 on success, usbg_error if error occurred
+ */
+extern int usbg_set_interf_os_desc(usbg_function *f, const char *iname,
+		const struct usbg_function_os_desc *f_os_desc);
 
 /* USB configurations allocation and configuration */
 
