@@ -29,6 +29,7 @@
 #define USBG_ID_TAG "id"
 #define USBG_FUNCTION_TAG "function"
 #define USBG_INTERFACE_TAG "interface"
+#define USBG_CONFIG_ID_TAG "config_id"
 #define USBG_TAB_WIDTH 4
 
 static inline int generate_function_label(usbg_function *f, char *buf, int size)
@@ -564,6 +565,19 @@ static int usbg_export_gadget_os_descs(usbg_gadget *g, config_setting_t *root)
 	struct usbg_gadget_os_descs g_os_descs = {0};
 	int usbg_ret, cfg_ret;
 	int ret = USBG_ERROR_NO_MEM;
+
+	if (g->os_desc_binding) {
+		node = config_setting_add(root, USBG_CONFIG_ID_TAG,
+					  CONFIG_TYPE_INT);
+		if (!node)
+			goto out;
+
+		cfg_ret = config_setting_set_int(node, g->os_desc_binding->id);
+		if (cfg_ret != CONFIG_TRUE) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			goto out;
+		}
+	}
 
 	usbg_ret = usbg_get_gadget_os_descs(g, &g_os_descs);
 	if (usbg_ret) {
@@ -1510,6 +1524,28 @@ static int usbg_import_gadget_os_descs(config_setting_t *root, usbg_gadget *g)
 	}
 
 	ret = usbg_set_gadget_os_descs(g, &g_os_descs);
+
+	/*
+	 * Configs are optional, because some config may not be
+	 * fully configured and not contain any config yet
+	 */
+	node = config_setting_get_member(root, USBG_CONFIG_ID_TAG);
+	if (node) {
+		usbg_config *target;
+		if (!usbg_config_is_int(node))
+			goto out;
+
+		val = config_setting_get_int(node);
+		target = usbg_get_config(g, val, NULL);
+		if (!target) {
+			ret = USBG_ERROR_NOT_FOUND;
+			goto out;
+		}
+
+		usbg_ret = usbg_set_os_desc_config(g, target);
+		if (usbg_ret != USBG_SUCCESS)
+			goto out;
+	}
 
 out:
 	usbg_free_gadget_os_desc(&g_os_descs);

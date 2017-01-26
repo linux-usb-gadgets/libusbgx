@@ -1004,6 +1004,14 @@ extern const char *usbg_get_binding_name(usbg_binding *b);
  */
 extern int usbg_get_binding_name_s(usbg_binding *b, char *buf, int len);
 
+/**
+ * @brief Set configuration used for hosts using OS Descriptors
+ * @param g Pointer to gadget
+ * @param c Pointer to config
+ * @return 0 on success, usbg_error on failure.
+ */
+extern int usbg_set_os_desc_config(usbg_gadget *g, usbg_config *c);
+
 /* USB gadget setup and teardown */
 
 /**

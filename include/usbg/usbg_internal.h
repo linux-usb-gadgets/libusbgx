@@ -110,6 +110,7 @@ struct usbg_gadget
 	usbg_state *parent;
 	config_t *last_failed_import;
 	usbg_udc *udc;
+	usbg_config *os_desc_binding;
 };
 
 struct usbg_config
