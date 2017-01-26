@@ -29,6 +29,7 @@
 #define USBG_ID_TAG "id"
 #define USBG_FUNCTION_TAG "function"
 #define USBG_INTERFACE_TAG "interface"
+#define USBG_CONFIG_TAG "config"
 #define USBG_TAB_WIDTH 4
 
 static inline int generate_function_label(usbg_function *f, char *buf, int size)
@@ -95,6 +96,11 @@ static int usbg_export_config_bindings(usbg_config *c, config_setting_t *root)
 	}
 
 	return ret;
+}
+
+static inline int generate_config_label(usbg_config *c, char *buf, int size)
+{
+	return snprintf(buf, size, "%s_%d", c->label, c->id);
 }
 
 static int usbg_export_config_strs_lang(usbg_config *c, int lang,
@@ -265,9 +271,17 @@ static int usbg_export_gadget_configs(usbg_gadget *g, config_setting_t *root)
 	config_setting_t *node, *id_node;
 	int ret = USBG_SUCCESS;
 	int cfg_ret;
+	char label[USBG_MAX_NAME_LENGTH];
+	int nmb;
 
 	TAILQ_FOREACH(c, &g->configs, cnode) {
-		node = config_setting_add(root, NULL, CONFIG_TYPE_GROUP);
+		nmb = generate_config_label(c, label, sizeof(label));
+		if (nmb >= sizeof(label)) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			break;
+		}
+
+		node = config_setting_add(root, label, CONFIG_TYPE_GROUP);
 		if (!node) {
 			ret = USBG_ERROR_NO_MEM;
 			break;
@@ -563,6 +577,28 @@ static int usbg_export_gadget_os_descs(usbg_gadget *g, config_setting_t *root)
 	struct usbg_gadget_os_descs os_descs;
 	int usbg_ret, cfg_ret;
 	int ret = USBG_ERROR_NO_MEM;
+	char label[USBG_MAX_NAME_LENGTH];
+	int nmb;
+
+	if (g->os_desc_binding) {
+		node = config_setting_add(root, USBG_CONFIG_TAG,
+					  CONFIG_TYPE_STRING);
+		if (!node)
+			goto out;
+
+		nmb = generate_config_label(g->os_desc_binding, label,
+					    sizeof(label));
+		if (nmb >= sizeof(label)) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			goto out;
+		}
+
+		cfg_ret = config_setting_set_string(node, label);
+		if (cfg_ret != CONFIG_TRUE) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			goto out;
+		}
+	}
 
 	usbg_ret = usbg_get_gadget_os_descs(g, &os_descs);
 	if (usbg_ret) {
@@ -633,6 +669,7 @@ static int usbg_export_gadget_prep(usbg_gadget *g, config_setting_t *root)
 	node = config_setting_add(root, USBG_OS_DESCS_TAG, CONFIG_TYPE_GROUP);
 	if (!node)
 		goto out;
+
 	usbg_ret = usbg_export_gadget_os_descs(g, node);
 	if (usbg_ret && usbg_ret != USBG_ERROR_NOT_FOUND) {
 		ret = usbg_ret;
@@ -662,7 +699,7 @@ static int usbg_export_gadget_prep(usbg_gadget *g, config_setting_t *root)
 	}
 
 	node = config_setting_add(root, USBG_CONFIGS_TAG,
-				     CONFIG_TYPE_LIST);
+				     CONFIG_TYPE_GROUP);
 	if (!node)
 		goto out;
 
@@ -787,6 +824,29 @@ out:
 	return ret;
 }
 
+static int split_config_label(const char *clabel, int *id, char *label)
+{
+	const char *floor;
+	int len;
+	int ret = USBG_ERROR_NOT_FOUND;
+
+	/* We assume that function type string doesn't contain '_' */
+	floor = strchr(clabel, '_');
+	/* if phrase before _ is longer than max name length we may
+	 * stop looking */
+	len = floor - clabel;
+	if (len >= USBG_MAX_NAME_LENGTH || floor == clabel)
+		goto out;
+
+	strncpy(label, clabel, len);
+	label[len] = '\0';
+
+	*id = atoi(floor + 1);
+
+	ret = USBG_SUCCESS;
+out:
+	return ret;
+}
 static void usbg_set_failed_import(config_t **to_set, config_t *failed)
 {
 	if (*to_set != NULL) {
@@ -1252,6 +1312,20 @@ error2:
 	return ret;
 }
 
+static usbg_config *usbg_lookup_config(usbg_gadget *g, const char *clabel)
+{
+	int usbg_ret;
+	int id;
+	char label[USBG_MAX_NAME_LENGTH];
+
+	/* if not let's check if label follows the naming convention */
+	usbg_ret = split_config_label(clabel, &id, label);
+	if (usbg_ret != USBG_SUCCESS)
+		return NULL;
+
+	return usbg_get_config(g, id, label);
+}
+
 static int usbg_import_gadget_configs(config_setting_t *root, usbg_gadget *g)
 {
 	config_setting_t *node, *id_node;
@@ -1507,6 +1581,30 @@ static int usbg_import_gadget_os_descs(config_setting_t *root, usbg_gadget *g)
 
 	ret = usbg_set_gadget_os_descs(g, &g_os_descs);
 
+	/* Configs are optional, because some config may not be
+	 * fully configured and not contain any config yet */
+	node = config_setting_get_member(root, USBG_CONFIG_TAG);
+	if (node) {
+		usbg_config *target;
+		if (!usbg_config_is_string(node))
+			goto out;
+
+		str = config_setting_get_string(node);
+		if (!str) {
+			ret = USBG_ERROR_OTHER_ERROR;
+			goto out;
+		}
+
+		target = usbg_lookup_config(g, str);
+		if (!target) {
+			ret = USBG_ERROR_NOT_FOUND;
+			goto out;
+		}
+
+		usbg_ret = usbg_set_os_desc_config(g, target);
+		if (usbg_ret != USBG_SUCCESS)
+			goto out;
+	}
 out:
 	return ret;
 
@@ -1554,19 +1652,6 @@ static int usbg_import_gadget_run(usbg_state *s, config_setting_t *root,
 			goto error;
 	}
 
-	/* OS Descriptors are optional too */
-	node = config_setting_get_member(root, USBG_OS_DESCS_TAG);
-	if (node) {
-		if (!config_setting_is_group(node)) {
-			ret = USBG_ERROR_INVALID_TYPE;
-			goto error2;
-		}
-
-		usbg_ret = usbg_import_gadget_os_descs(node, newg);
-		if (usbg_ret != USBG_SUCCESS)
-			goto error;
-	}
-
 	/* Functions too, because some gadgets may not be fully
 	* configured and don't have any function or have all functions
 	* defined inline in configurations */
@@ -1585,11 +1670,26 @@ static int usbg_import_gadget_run(usbg_state *s, config_setting_t *root,
 	 * so configs are also optional */
 	node = config_setting_get_member(root, USBG_CONFIGS_TAG);
 	if (node) {
-		if (!config_setting_is_list(node)) {
+		/* Allow list for backward compatibility */
+		if (!config_setting_is_list(node) &&
+		    !config_setting_is_group(node)) {
 			ret = USBG_ERROR_INVALID_TYPE;
 			goto error2;
 		}
 		usbg_ret = usbg_import_gadget_configs(node, newg);
+		if (usbg_ret != USBG_SUCCESS)
+			goto error;
+	}
+
+	/* OS Descriptors are optional too, read after configs */
+	node = config_setting_get_member(root, USBG_OS_DESCS_TAG);
+	if (node) {
+		if (!config_setting_is_group(node)) {
+			ret = USBG_ERROR_INVALID_TYPE;
+			goto error2;
+		}
+
+		usbg_ret = usbg_import_gadget_os_descs(node, newg);
 		if (usbg_ret != USBG_SUCCESS)
 			goto error;
 	}
