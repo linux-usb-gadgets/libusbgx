@@ -1594,19 +1594,6 @@ static int usbg_import_gadget_run(usbg_state *s, config_setting_t *root,
 			goto error;
 	}
 
-	/* OS Descriptors are optional too */
-	node = config_setting_get_member(root, USBG_OS_DESCS_TAG);
-	if (node) {
-		if (!config_setting_is_group(node)) {
-			ret = USBG_ERROR_INVALID_TYPE;
-			goto error2;
-		}
-
-		usbg_ret = usbg_import_gadget_os_descs(node, newg);
-		if (usbg_ret != USBG_SUCCESS)
-			goto error;
-	}
-
 	/* Functions too, because some gadgets may not be fully
 	* configured and don't have any function or have all functions
 	* defined inline in configurations */
@@ -1630,6 +1617,19 @@ static int usbg_import_gadget_run(usbg_state *s, config_setting_t *root,
 			goto error2;
 		}
 		usbg_ret = usbg_import_gadget_configs(node, newg);
+		if (usbg_ret != USBG_SUCCESS)
+			goto error;
+	}
+
+	/* OS Descriptors are optional too, read after configs */
+	node = config_setting_get_member(root, USBG_OS_DESCS_TAG);
+	if (node) {
+		if (!config_setting_is_group(node)) {
+			ret = USBG_ERROR_INVALID_TYPE;
+			goto error2;
+		}
+
+		usbg_ret = usbg_import_gadget_os_descs(node, newg);
 		if (usbg_ret != USBG_SUCCESS)
 			goto error;
 	}
