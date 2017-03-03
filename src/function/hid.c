@@ -44,6 +44,7 @@ struct usbg_f_hid {
 		.export = usbg_set_config_node_dev,		        \
 	}
 
+#ifdef HAS_LIBCONFIG
 static int hid_get_report(const char *path, const char *name, const char *attr,
 			  void *val)
 {
@@ -159,6 +160,14 @@ static int hid_set_config_node_report(config_setting_t *root,
 
 	return 0;
 }
+#else
+
+#define hid_get_report			NULL
+#define hid_set_report			NULL
+#define hid_get_config_node_report	NULL
+#define hid_set_config_node_report	NULL
+
+#endif
 
 #define HID_RD_ATTR(_name)						\
 	{								\

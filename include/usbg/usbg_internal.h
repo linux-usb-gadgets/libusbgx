@@ -19,18 +19,13 @@
 #include <malloc.h>
 #include <sys/types.h>
 #ifdef HAS_LIBCONFIG
-#include <libconfig.h>
+#include "usbg_internal_libconfig.h"
+#else
+#include "usbg_internal_none.h"
 #endif
-
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifndef HAS_LIBCONFIG
-	typedef struct _should_not_be_used config_t;
-	typedef struct _should_not_be_used config_setting_t;
-	void config_destroy(config_t *config);
 #endif
 
 /**
@@ -376,42 +371,11 @@ int usbg_get_dev(const char *path, const char *name, const char *attr,
  * above 0 when found suitable value
  */
 typedef int (*usbg_import_node_func)(config_setting_t *root,
-				  const char *node_name, void *val);
+				     const char *node_name, void *val);
 
 /* return 0 on success, usbg_error otherwise */
 typedef int (*usbg_export_node_func)(config_setting_t *root,
-				  const char *node_name, void *val);
-
-int usbg_get_config_node_int(config_setting_t *root,
-					   const char *node_name, void *val);
-
-int usbg_get_config_node_bool(config_setting_t *root,
-					   const char *node_name, void *val);
-
-int usbg_get_config_node_string(config_setting_t *root,
-					      const char *node_name, void *val);
-
-int usbg_get_config_node_ether_addr(config_setting_t *root,
-					      const char *node_name, void *val);
-
-int usbg_set_config_node_int(config_setting_t *root,
-					   const char *node_name, void *val);
-
-int usbg_set_config_node_int_hex(config_setting_t *root,
-				 const char *node_name, void *val);
-
-int usbg_set_config_node_bool(config_setting_t *root,
-					   const char *node_name, void *val);
-
-int usbg_set_config_node_string(config_setting_t *root,
-					      const char *node_name, void *val);
-
-int usbg_set_config_node_ether_addr(config_setting_t *root,
-					      const char *node_name, void *val);
-
-int usbg_set_config_node_dev(config_setting_t *root,
-				    const char *node_name, void *val);
-
+				     const char *node_name, void *val);
 
 #ifdef __cplusplus
 }
