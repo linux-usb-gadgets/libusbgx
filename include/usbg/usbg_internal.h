@@ -18,7 +18,7 @@
 #include <usbg/usbg.h>
 #include <malloc.h>
 #include <sys/types.h>
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 #include "usbg_internal_libconfig.h"
 #else
 #include "usbg_internal_none.h"

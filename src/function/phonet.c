@@ -15,7 +15,7 @@
 #include "usbg/function/phonet.h"
 
 #include <malloc.h>
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 #include <libconfig.h>
 #endif
 

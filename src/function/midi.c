@@ -15,7 +15,7 @@
 #include "usbg/function/midi.h"
 
 #include <malloc.h>
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 #include <libconfig.h>
 #endif
 
@@ -81,7 +81,7 @@ static void midi_cleanup_attrs(struct usbg_function *f, void *f_attrs)
 	usbg_f_midi_cleanup_attrs(f_attrs);
 }
 
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 
 static int midi_libconfig_import(struct usbg_function *f,
 				  config_setting_t *root)
@@ -129,7 +129,7 @@ static int midi_libconfig_export(struct usbg_function *f,
 	return ret;
 }
 
-#endif /* HAS_LIBCONFIG */
+#endif /* HAS_GADGET_SCHEMES */
 
 struct usbg_function_type usbg_f_type_midi = {
 	.name = "midi",
@@ -139,7 +139,7 @@ struct usbg_function_type usbg_f_type_midi = {
 	.get_attrs = midi_get_attrs,
 	.cleanup_attrs = midi_cleanup_attrs,
 
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 	.import = midi_libconfig_import,
 	.export = midi_libconfig_export,
 #endif

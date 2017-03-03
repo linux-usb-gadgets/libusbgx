@@ -15,7 +15,7 @@
 #include "usbg/function/ffs.h"
 
 #include <malloc.h>
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 #include <libconfig.h>
 #endif
 

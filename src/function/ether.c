@@ -15,7 +15,7 @@
 #include "usbg/function/net.h"
 
 #include <malloc.h>
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 #include <libconfig.h>
 #endif
 
@@ -99,7 +99,7 @@ static void ether_cleanup_attrs(struct usbg_function *f, void *f_attrs)
 	usbg_f_net_cleanup_attrs(f_attrs);
 }
 
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 
 static int ether_libconfig_import(struct usbg_function *f,
 				  config_setting_t *root)
@@ -161,7 +161,7 @@ static int ether_libconfig_export(struct usbg_function *f,
 
 #define ETHER_LIBCONFIG_DEP_OPS
 
-#endif /* HAS_LIBCONFIG */
+#endif /* HAS_GADGET_SCHEMES */
 
 #define ETHER_FUNCTION_OPTS			\
 	.alloc_inst = ether_alloc_inst,		\

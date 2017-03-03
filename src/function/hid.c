@@ -16,7 +16,7 @@
 
 #include <malloc.h>
 #include <assert.h>
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 #include <libconfig.h>
 #endif
 
@@ -44,7 +44,7 @@ struct usbg_f_hid {
 		.export = usbg_set_config_node_dev,		        \
 	}
 
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 static int hid_get_report(const char *path, const char *name, const char *attr,
 			  void *val)
 {
@@ -219,7 +219,7 @@ static void hid_cleanup_attrs(struct usbg_function *f, void *f_attrs)
 	usbg_f_hid_cleanup_attrs(f_attrs);
 }
 
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 
 static int hid_libconfig_import(struct usbg_function *f,
 				  config_setting_t *root)
@@ -270,7 +270,7 @@ static int hid_libconfig_export(struct usbg_function *f,
 	return ret;
 }
 
-#endif /* HAS_LIBCONFIG */
+#endif /* HAS_GADGET_SCHEMES */
 
 struct usbg_function_type usbg_f_type_hid = {
 	.name = "hid",
@@ -280,7 +280,7 @@ struct usbg_function_type usbg_f_type_hid = {
 	.get_attrs = hid_get_attrs,
 	.cleanup_attrs = hid_cleanup_attrs,
 
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 	.import = hid_libconfig_import,
 	.export = hid_libconfig_export,
 #endif

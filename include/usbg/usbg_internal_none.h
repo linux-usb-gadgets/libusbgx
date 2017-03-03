@@ -27,9 +27,17 @@ extern "C" {
 #define usbg_set_config_node_ether_addr NULL
 #define usbg_set_config_node_dev	NULL
 
+/*
+ * This define comes from libconfig header.
+ *
+ * This is a kind of hack to allow compile libusbgx without
+ * gadget schemes support but our test with libconfig support.
+ */
+#ifndef __libconfig_h
 typedef struct _should_not_be_used config_t;
 typedef struct _should_not_be_used config_setting_t;
 void config_destroy(config_t *config);
+#endif /* __libconfig_h */
 
 #ifdef __cplusplus
 }

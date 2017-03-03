@@ -19,7 +19,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 #include <libconfig.h>
 #endif
 
@@ -189,7 +189,7 @@ static int ms_get_attrs(struct usbg_function *f, void *f_attrs)
 				  (struct usbg_f_ms_attrs *)f_attrs);
 }
 
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 
 static int ms_import_lun_attrs(struct usbg_f_ms *mf, int lun_id,
 			       config_setting_t *root)
@@ -329,7 +329,7 @@ out:
 	return ret;
 }
 
-#endif /* HAS_LIBCONFIG */
+#endif /* HAS_GADGET_SCHEMES */
 
 static int ms_remove(struct usbg_function *f, int opts)
 {
@@ -360,7 +360,7 @@ struct usbg_function_type usbg_f_type_ms = {
 	.get_attrs = ms_get_attrs,
 	.cleanup_attrs = ms_cleanup_attrs,
 
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 	.import = ms_libconfig_import,
 	.export = ms_libconfig_export,
 #endif

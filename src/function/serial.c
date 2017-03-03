@@ -14,7 +14,7 @@
 #include "usbg/usbg_internal.h"
 #include "usbg/function/serial.h"
 
-#ifdef HAS_LIBCONFIG
+#ifdef HAS_GADGET_SCHEMES
 #include <libconfig.h>
 #endif
 
