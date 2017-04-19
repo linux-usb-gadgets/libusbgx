@@ -901,7 +901,6 @@ static int usbg_import_config_strs_lang(config_setting_t *root, usbg_config *c)
 {
 	config_setting_t *node;
 	int lang;
-	const char *str;
 	struct usbg_config_strs c_strs = {0};
 	int ret = USBG_ERROR_INVALID_TYPE;
 
