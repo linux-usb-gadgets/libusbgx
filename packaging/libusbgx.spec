@@ -63,6 +63,7 @@ make
 %{_includedir}/usbg/function/net.h
 %{_includedir}/usbg/function/phonet.h
 %{_includedir}/usbg/function/serial.h
+%{_includedir}/usbg/function/hid.h
 %{_libdir}/pkgconfig/libusbgx.pc
 %{_libdir}/libusbgx.so
 
