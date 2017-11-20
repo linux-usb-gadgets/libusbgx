@@ -164,15 +164,19 @@ int usbg_write_buf(const char *path, const char *name,
 		goto out;
 	}
 
-	ret = fwrite(buf, sizeof(char), len, fp);
-	if (ret < len) {
+	nmb = fwrite(buf, sizeof(char), len, fp);
+	if (nmb < len) {
 		if (ferror(fp))
-			ret = usbg_translate_error(errno);
+			nmb = usbg_translate_error(errno);
 		else
-			ret = USBG_ERROR_IO;
+			nmb = USBG_ERROR_IO;
 	}
 
-	fclose(fp);
+	ret = fclose(fp);
+	if (ret < 0)
+		ret = usbg_translate_error(errno);
+	else
+		ret = nmb;
 out:
 	return ret;
 }
@@ -192,7 +196,7 @@ int usbg_write_int(const char *path, const char *name, const char *file,
 	if (ret > 0)
 		ret = 0;
 
-	return 0;
+	return ret;
 }
 
 int usbg_write_string(const char *path, const char *name,
@@ -204,7 +208,7 @@ int usbg_write_string(const char *path, const char *name,
 	if (ret > 0)
 		ret = 0;
 
-	return 0;
+	return ret;
 }
 
 int ubsg_rm_file(const char *path, const char *name)
