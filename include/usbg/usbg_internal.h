@@ -52,6 +52,9 @@ struct usbg_function_type
 	/* Name of this function type */
 	char *name;
 
+	/* OS Descriptor interface name */
+	char *os_desc_iname;
+
 	/* Called to allocate instance of function */
 	int (*alloc_inst)(struct usbg_function_type *, usbg_function_type,
 			  const char *, const char *, usbg_gadget *,
@@ -107,6 +110,7 @@ struct usbg_gadget
 	usbg_state *parent;
 	config_t *last_failed_import;
 	usbg_udc *udc;
+	usbg_config *os_desc_binding;
 };
 
 struct usbg_config
@@ -203,6 +207,7 @@ struct usbg_udc
 #define CONFIGS_DIR "configs"
 #define FUNCTIONS_DIR "functions"
 #define GADGETS_DIR "usb_gadget"
+#define OS_DESC_DIR "os_desc"
 
 static inline int file_select(const struct dirent *dent)
 {
@@ -376,6 +381,12 @@ typedef int (*usbg_import_node_func)(config_setting_t *root,
 /* return 0 on success, usbg_error otherwise */
 typedef int (*usbg_export_node_func)(config_setting_t *root,
 				     const char *node_name, void *val);
+
+int usbg_get_config_node_os_desc(config_setting_t *root, const char *iname,
+				struct usbg_function_os_desc *f_os_desc);
+
+int usbg_set_config_node_os_desc(config_setting_t *root, const char *iname,
+				const struct usbg_function_os_desc *f_os_desc);
 
 #ifdef __cplusplus
 }

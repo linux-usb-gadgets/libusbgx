@@ -98,6 +98,15 @@ const char *gadget_str_names[] =
 
 ARRAY_SIZE_SENTINEL(gadget_str_names, USBG_GADGET_STR_MAX);
 
+const char *gadget_os_desc_names[] =
+{
+	"use",
+	"b_vendor_code",
+	"qw_sign",
+};
+
+ARRAY_SIZE_SENTINEL(gadget_os_desc_names, USBG_GADGET_OS_DESC_MAX);
+
 int usbg_lookup_function_type(const char *name)
 {
 	int i = USBG_FUNCTION_TYPE_MIN;
@@ -165,6 +174,13 @@ const char *usbg_get_gadget_str_name(usbg_gadget_str str)
 	return str >= USBG_GADGET_STR_MIN &&
 		str < USBG_GADGET_STR_MAX ?
 		gadget_str_names[str] : NULL;
+}
+
+const char *usbg_get_gadget_os_desc_name(usbg_gadget_os_desc_strs str)
+{
+	return str >= USBG_GADGET_OS_DESC_MIN &&
+		str < USBG_GADGET_OS_DESC_MAX ?
+		gadget_os_desc_names[str] : NULL;
 }
 
 static int usbg_split_function_instance_type(const char *full_name,
@@ -345,6 +361,7 @@ static usbg_gadget *usbg_allocate_gadget(const char *path, const char *name,
 	g->path = strdup(path);
 	g->parent = parent;
 	g->udc = NULL;
+	g->os_desc_binding = NULL;
 
 	if (!(g->name) || !(g->path))
 		goto cleanup;
@@ -629,6 +646,83 @@ out:
 	return ret;
 }
 
+static int usbg_parse_gadget_os_desc_binding(usbg_gadget *g)
+{
+	int i, n, nmb, id;
+	int ret = USBG_SUCCESS;
+	struct dirent **dent;
+	char bpath[USBG_MAX_PATH_LENGTH];
+	char target[USBG_MAX_PATH_LENGTH];
+	char *target_name;
+	usbg_config *c;
+	char *label = NULL;
+	int end;
+
+	end = snprintf(bpath, sizeof(bpath), "%s/%s/%s", g->path, g->name,
+			OS_DESC_DIR);
+	if (end >= sizeof(bpath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	n = scandir(bpath, &dent, bindings_select, alphasort);
+	if (n < 0) {
+		ret = usbg_translate_error(errno);
+		goto out;
+	}
+
+	/* Not having any binding is ok */
+	if (n < 1) {
+		ret = USBG_SUCCESS;
+		goto out;
+	}
+
+
+	/*
+	 * Only one configuration can be bound to os_descx, n should
+	 * equal 1.
+	 */
+	nmb = snprintf(&(bpath[end]), sizeof(bpath) - end,
+			"/%s", dent[0]->d_name);
+
+	for (i = 0; i < n; i++)
+		free(dent[i]);
+	free(dent);
+
+	if (nmb >= sizeof(bpath) - end) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	nmb = readlink(bpath, target, sizeof(target) - 1 );
+	if (nmb < 0) {
+		ret = usbg_translate_error(errno);
+		goto out;
+	}
+
+	/* readlink() don't add this, so we have to do it manually */
+	target[nmb] = '\0';
+	/* Target contains a full path but we only need function dir name */
+	target_name = strrchr(target, '/') + 1;
+	id = usbg_split_config_label_id(target_name, &label);
+	if (id <= 0) {
+		ret = id;
+		goto out;
+	}
+
+	c = usbg_get_config(g, id, label);
+	if (!c) {
+		ret = USBG_ERROR_NO_MEM;
+		goto out;
+	}
+
+	g->os_desc_binding = c;
+
+out:
+	return ret;
+}
+
+
 static int usbg_parse_config(const char *path, const char *name,
 		usbg_gadget *g)
 {
@@ -802,6 +896,40 @@ out:
 	return ret;
 }
 
+static int usbg_parse_gadget_os_descs(const char *path, const char *name,
+		struct usbg_gadget_os_descs *g_os_descs)
+{
+	int ret;
+	int nmb;
+	char spath[USBG_MAX_PATH_LENGTH];
+	int val;
+
+	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s", path, name,
+			OS_DESC_DIR);
+	if (nmb >= sizeof(spath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	ret = usbg_read_string_alloc(spath, "", "qw_sign", &g_os_descs->qw_sign);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_read_hex(spath, "", "b_vendor_code", &val);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	g_os_descs->b_vendor_code = (unsigned char)val;
+
+	ret = usbg_read_int(spath, "", "use", 10, &val);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	g_os_descs->use = val ? true : false;
+out:
+	return ret;
+}
+
 static inline int usbg_parse_gadget(usbg_gadget *g)
 {
 	int ret;
@@ -821,6 +949,10 @@ static inline int usbg_parse_gadget(usbg_gadget *g)
 		goto out;
 
 	ret = usbg_parse_configs(g->path, g);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_parse_gadget_os_desc_binding(g);
 out:
 	return ret;
 }
@@ -1098,6 +1230,11 @@ int usbg_rm_binding(usbg_binding *b)
 
 out:
 	return ret;
+}
+
+usbg_config *usbg_get_os_desc_binding(usbg_gadget *g)
+{
+	return g->os_desc_binding;
 }
 
 int usbg_rm_config(usbg_config *c, int opts)
@@ -1853,6 +1990,49 @@ out:
 	return ret;
 }
 
+int usbg_get_gadget_os_descs(usbg_gadget *g, struct usbg_gadget_os_descs *g_os_descs)
+{
+	return g && g_os_descs ?
+			usbg_parse_gadget_os_descs(g->path, g->name, g_os_descs)
+			: USBG_ERROR_INVALID_PARAM;
+}
+
+int usbg_set_gadget_os_descs(usbg_gadget *g,
+			     const struct usbg_gadget_os_descs *g_os_descs)
+{
+	int ret;
+	int nmb;
+	char spath[USBG_MAX_PATH_LENGTH];
+	int val;
+
+	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s", g->path, g->name,
+			OS_DESC_DIR);
+	if (nmb >= sizeof(spath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	ret = usbg_check_dir(spath);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_string(spath, "", "qw_sign", g_os_descs->qw_sign);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_hex8(spath, "", "b_vendor_code",
+				g_os_descs->b_vendor_code);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_dec(spath, "", "use", g_os_descs->use);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+out:
+	return ret;
+}
+
 int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 			 const char *instance, void *f_attrs, usbg_function **f)
 {
@@ -1913,6 +2093,70 @@ remove_dir:
 	usbg_rm_dir(fpath, "");
 free_func:
 	usbg_free_function(func);
+out:
+	return ret;
+}
+
+int usbg_get_interf_os_desc(usbg_function *f,
+			struct usbg_function_os_desc *f_os_desc)
+{
+	int ret = USBG_ERROR_NOT_SUPPORTED;
+	int nmb;
+	char spath[USBG_MAX_PATH_LENGTH];
+	const char *iname = f->ops->os_desc_iname;
+
+	if (!iname)
+		return ret;
+
+	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s/interface.%s", f->path,
+			f->name, OS_DESC_DIR, iname);
+	if (nmb >= sizeof(spath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	ret = usbg_read_string_alloc(spath, "", "compatible_id",
+				&f_os_desc->compatible_id);
+	if (ret)
+		return ret;
+
+	ret = usbg_read_string_alloc(spath, "", "sub_compatible_id",
+				&f_os_desc->sub_compatible_id);
+	if (ret)
+		return ret;
+
+out:
+	return ret;
+}
+
+int usbg_set_interf_os_desc(usbg_function *f,
+			const struct usbg_function_os_desc *f_os_desc)
+{
+	int ret = USBG_ERROR_NOT_SUPPORTED;
+	int nmb;
+	char spath[USBG_MAX_PATH_LENGTH];
+	const char *iname = f->ops->os_desc_iname;
+
+	if (!iname)
+		return ret;
+
+	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s/interface.%s", f->path,
+			f->name, OS_DESC_DIR, iname);
+	if (nmb >= sizeof(spath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	ret = usbg_write_string(spath, "", "compatible_id",
+			f_os_desc->compatible_id);
+	if (ret)
+		return ret;
+
+	ret = usbg_write_string(spath, "", "sub_compatible_id",
+			f_os_desc->sub_compatible_id);
+	if (ret)
+		return ret;
+
 out:
 	return ret;
 }
@@ -2195,6 +2439,50 @@ int usbg_get_binding_name_s(usbg_binding *b, char *buf, int len)
 		return USBG_ERROR_INVALID_PARAM;
 
 	return snprintf(buf, len, "%s", b->name);
+}
+
+int usbg_set_os_desc_config(usbg_gadget *g, usbg_config *c)
+{
+	char bpath[USBG_MAX_PATH_LENGTH];
+	char fpath[USBG_MAX_PATH_LENGTH];
+	int free_space, nmb;
+	int ret;
+
+	if (!g || !c) {
+		ret = USBG_ERROR_INVALID_PARAM;
+		goto out;
+	}
+
+	if (g->os_desc_binding) {
+		ERROR("os desc binding exist\n");
+		ret = USBG_ERROR_EXIST;
+		goto out;
+	}
+
+	nmb = snprintf(fpath, sizeof(fpath), "%s/%s", c->path, c->name);
+	if (nmb >= sizeof(fpath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	nmb = snprintf(bpath, sizeof(bpath), "%s/%s/%s/%s", g->path, g->name,
+			OS_DESC_DIR, c->name);
+	if (nmb >= sizeof(bpath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	ret = symlink(fpath, bpath);
+	if (ret != 0) {
+		ret = usbg_translate_error(errno);
+		goto out;
+	}
+
+	g->os_desc_binding = c;
+
+	return USBG_SUCCESS;
+out:
+	return ret;
 }
 
 int usbg_enable_gadget(usbg_gadget *g, usbg_udc *udc)
