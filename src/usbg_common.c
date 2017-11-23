@@ -363,6 +363,60 @@ int usbg_get_dev(const char *path, const char *name, const char *attr,
 	return 0;
 }
 
+int usbg_get_config_node_os_desc(config_setting_t *root, const char *iname,
+				struct usbg_function_os_desc *f_os_desc)
+{
+	const char *str_addr;
+	int ret;
+
+	ret = usbg_get_config_node_string(root, "compatible_id", &str_addr);
+	/* if error */
+	if (ret < 0)
+		return ret;
+
+	if (ret) {
+		strncpy(f_os_desc->compatible_id, str_addr, USBG_MAX_STR_LENGTH);
+		f_os_desc->compatible_id[USBG_MAX_STR_LENGTH - 1] = '\0';
+	}
+
+	ret = usbg_get_config_node_string(root, "sub_compatible_id", &str_addr);
+	/* if error */
+	if (ret < 0)
+		return ret;
+
+	if (ret) {
+		strncpy(f_os_desc->sub_compatible_id, str_addr, USBG_MAX_STR_LENGTH);
+		f_os_desc->sub_compatible_id[USBG_MAX_STR_LENGTH - 1] = '\0';
+	}
+
+	return 1;
+}
+
+int usbg_set_config_node_os_desc(config_setting_t *root, const char *iname,
+				const struct usbg_function_os_desc *f_os_desc)
+{
+	int ret;
+	config_setting_t *node;
+
+	node = config_setting_add(root, "compatible_id", CONFIG_TYPE_STRING);
+	if (!node)
+		return USBG_ERROR_NO_MEM;
+
+	ret = config_setting_set_string(node, f_os_desc->compatible_id);
+	if (ret != CONFIG_TRUE)
+		return USBG_ERROR_OTHER_ERROR;
+
+	node = config_setting_add(root, "sub_compatible_id", CONFIG_TYPE_STRING);
+	if (!node)
+		return USBG_ERROR_NO_MEM;
+
+	ret = config_setting_set_string(node, f_os_desc->sub_compatible_id);
+	if (ret != CONFIG_TRUE)
+		return USBG_ERROR_OTHER_ERROR;
+
+	return USBG_SUCCESS;
+}
+
 void usbg_cleanup_function(struct usbg_function *f)
 {
 	free(f->path);

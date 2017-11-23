@@ -54,6 +54,10 @@ extern "C" {
 #define USBG_MAX_NAME_LENGTH 40
 /* Dev name for ffs is a part of function name, we subtract 4 char for "ffs." */
 #define USBG_MAX_DEV_LENGTH (USBG_MAX_NAME_LENGTH - 4)
+/* ConfigFS just like SysFS uses page size as max size of file content */
+#define USBG_MAX_FILE_SIZE 4096
+/* OS Descriptors OS String identifier length */
+#define USBG_OS_STRING_QW_SIGN_LEN 14
 
 /**
  * @brief Additional option for usbg_rm_* functions.
@@ -154,6 +158,28 @@ struct usbg_gadget_strs
 };
 
 /**
+ * @brief USB gadget Microsoft OS Descriptors
+ */
+struct usbg_gadget_os_descs
+{
+	bool use;
+	uint8_t b_vendor_code;
+	char qw_sign[USBG_OS_STRING_QW_SIGN_LEN];
+};
+
+/**
+ * @typedef usbg_gadget_os_desc_strs
+ * @brief Microsoft OS Descriptors strings
+ */
+typedef enum {
+	USBG_GADGET_OS_DESC_MIN = 0,
+	OS_DESC_USE = USBG_GADGET_OS_DESC_MIN,
+	OS_DESC_B_VENDOR_CODE,
+	OS_DESC_QW_SIGN,
+	USBG_GADGET_OS_DESC_MAX,
+} usbg_gadget_os_desc_strs;
+
+/**
  * @brief USB configuration attributes
  */
 struct usbg_config_attrs
@@ -193,6 +219,15 @@ typedef enum
 	USBG_F_HID,
 	USBG_FUNCTION_TYPE_MAX,
 } usbg_function_type;
+
+/**
+ * @brief USB OS Descriptor function attributes
+ */
+struct usbg_function_os_desc
+{
+	char compatible_id[USBG_MAX_STR_LENGTH];
+	char sub_compatible_id[USBG_MAX_STR_LENGTH];
+};
 
 /* Error codes */
 
@@ -424,6 +459,13 @@ extern int usbg_lookup_gadget_str(const char *name);
 extern const char *usbg_get_gadget_str_name(usbg_gadget_str str);
 
 /**
+ * @brief Get name of selected OS Descriptor string
+ * @param str OS Descriptor string code
+ * @return Name of OS Descriptor associated with this code
+ */
+extern const char *usbg_get_gadget_os_desc_name(usbg_gadget_os_desc_strs str);
+
+/**
  * @brief Set selected attribute to value
  * @param g Pointer to gadget
  * @param attr Code of selected attribute
@@ -637,6 +679,26 @@ extern int usbg_set_gadget_manufacturer(usbg_gadget *g, int lang,
 extern int usbg_set_gadget_product(usbg_gadget *g, int lang,
 				   const char *prd);
 
+/**
+ * @brief Get the USB gadget OS Descriptor
+ * @param g Pointer to gadget
+ * @param g_os_descs Structure to be filled
+ * @return 0 on success usbg_error if error occurred
+ */
+
+extern int usbg_get_gadget_os_descs(usbg_gadget *g,
+		struct usbg_gadget_os_descs *g_os_descs);
+
+/**
+ * @brief Set the USB gadget OS Descriptor
+ * @param g Pointer to gadget
+ * @param g_os_descs Structure to be filled
+ * @return 0 on success usbg_error if error occurred
+ */
+
+extern int usbg_set_gadget_os_descs(usbg_gadget *g,
+		const struct usbg_gadget_os_descs *g_os_descs);
+
 /* USB function allocation and configuration */
 
 /**
@@ -725,6 +787,24 @@ extern int usbg_get_function_attrs(usbg_function *f, void *f_attrs);
  * @return 0 on success, usbg_error if error occurred
  */
 extern int usbg_set_function_attrs(usbg_function *f, void *f_attrs);
+
+/**
+ * @brief Get OS Descriptor compatibility of given function
+ * @param f Pointer to function
+ * @param f_os_desc OS Descriptor compatibility to be filled
+ * @return 0 on success, usbg_error if error occurred
+ */
+extern int usbg_get_interf_os_desc(usbg_function *f,
+		struct usbg_function_os_desc *f_os_desc);
+
+/**
+ * @brief Set OS Descriptor compatibility of given function
+ * @param f Pointer to function
+ * @param f_os_desc OS Descriptor compatibility to be set
+ * @return 0 on success, usbg_error if error occurred
+ */
+extern int usbg_set_interf_os_desc(usbg_function *f,
+		const struct usbg_function_os_desc *f_os_desc);
 
 /* USB configurations allocation and configuration */
 
@@ -894,6 +974,14 @@ extern const char *usbg_get_binding_name(usbg_binding *b);
  *         space had been available. (just like snprintf() family).
  */
 extern int usbg_get_binding_name_s(usbg_binding *b, char *buf, int len);
+
+/**
+ * @brief Set configuration used for hosts using OS Descriptors
+ * @param g Pointer to gadget
+ * @param c Pointer to config
+ * @return 0 on success, usbg_error on failure.
+ */
+extern int usbg_set_os_desc_config(usbg_gadget *g, usbg_config *c);
 
 /* USB gadget setup and teardown */
 
