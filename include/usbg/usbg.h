@@ -579,7 +579,7 @@ extern int usbg_get_gadget_strs_langs(usbg_gadget *g, int **langs);
  */
 static inline void usbg_free_gadget_strs(struct usbg_gadget_strs *g_strs)
 {
-	if (g_strs)
+	if (!g_strs)
 		return;
 
 	free(g_strs->manufacturer);
