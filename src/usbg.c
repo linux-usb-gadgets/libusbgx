@@ -1248,11 +1248,19 @@ int usbg_rm_config(usbg_config *c, int opts)
 	g = c->parent;
 
 	if (opts & USBG_RM_RECURSE) {
-		/* Recursive flag was given
-		 * so remove all bindings and strings */
+		/* 
+		 * Recursive flag was given
+		 * so remove all bindings and strings
+		 */
 		char spath[USBG_MAX_PATH_LENGTH];
 		int nmb;
 		usbg_binding *b;
+
+		if (c->parent->os_desc_binding == c) {
+			ret = usbg_set_os_desc_config(g, NULL);
+			if (ret != USBG_SUCCESS)
+				goto out;
+		}
 
 		while (!TAILQ_EMPTY(&c->bindings)) {
 			b = TAILQ_FIRST(&c->bindings);
