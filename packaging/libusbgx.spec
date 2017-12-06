@@ -80,5 +80,6 @@ make
 %{_bindir}/gadget-export
 %{_bindir}/gadget-import
 %{_bindir}/show-udcs
+%{_bindir}/gadget-rndis-os-desc
 
 %changelog
