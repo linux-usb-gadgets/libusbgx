@@ -262,7 +262,7 @@ int usbg_write_int(const char *path, const char *name, const char *file,
 int usbg_write_string(const char *path, const char *name,
 		      const char *file, const char *buf);
 
-int ubsg_rm_file(const char *path, const char *name);
+int usbg_rm_file(const char *path, const char *name);
 
 int usbg_rm_dir(const char *path, const char *name);
 

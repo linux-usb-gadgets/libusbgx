@@ -1221,7 +1221,7 @@ int usbg_rm_binding(usbg_binding *b)
 
 	c = b->parent;
 
-	ret = ubsg_rm_file(b->path, b->name);
+	ret = usbg_rm_file(b->path, b->name);
 	if (ret)
 		goto out;
 
@@ -2506,7 +2506,7 @@ static int usbg_rm_os_desc_link(usbg_gadget *g)
 		goto free_dent;
 	}
 
-	ret = ubsg_rm_file(bpath, dent[0]->d_name);
+	ret = usbg_rm_file(bpath, dent[0]->d_name);
 
 	for (i = 0; i < n; i++)
 		free(dent[i]);

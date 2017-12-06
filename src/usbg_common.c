@@ -211,7 +211,7 @@ int usbg_write_string(const char *path, const char *name,
 	return ret;
 }
 
-int ubsg_rm_file(const char *path, const char *name)
+int usbg_rm_file(const char *path, const char *name)
 {
 	int ret = USBG_SUCCESS;
 	int nmb;
