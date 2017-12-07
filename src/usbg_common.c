@@ -204,7 +204,7 @@ int usbg_write_string(const char *path, const char *name,
 {
 	int ret;
 
-	ret = usbg_write_buf(path, name, file, buf, strlen(buf) + 1);
+	ret = usbg_write_buf(path, name, file, buf, strlen(buf));
 	if (ret > 0)
 		ret = 0;
 
