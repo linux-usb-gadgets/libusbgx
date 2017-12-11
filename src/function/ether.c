@@ -193,6 +193,7 @@ struct usbg_function_type usbg_f_type_eem = {
 
 struct usbg_function_type usbg_f_type_rndis = {
 	.name = "rndis",
+	.os_desc_iname = "rndis",
 	ETHER_FUNCTION_OPTS
 };
 
