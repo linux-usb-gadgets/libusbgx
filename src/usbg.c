@@ -2048,7 +2048,7 @@ int usbg_create_function(usbg_gadget *g, usbg_function_type type,
 	int ret = USBG_ERROR_INVALID_PARAM;
 	int n, free_space;
 
-	if (!g || !f || !instance)
+	if (!g || !f || !instance || *instance == '\0')
 		return ret;
 
 	func = usbg_get_function(g, type, instance);
