@@ -610,7 +610,7 @@ static void push_gadget(struct test_gadget *g)
 	int count;
 	struct test_config *c;
 	struct test_function *f;
-	char *path;
+	char *path, *os_desc_path;
 
 	safe_asprintf(&path, "%s/%s/UDC", g->path, g->name);
 	PUSH_FILE_STR(path, g->udc);
@@ -633,6 +633,9 @@ static void push_gadget(struct test_gadget *g)
 
 	for (c = g->configs; c->label; c++)
 		push_config(c);
+
+	safe_asprintf(&os_desc_path, "%s/%s/os_desc", g->path, g->name);
+	PUSH_DIR(os_desc_path, 0);
 }
 
 void push_init(struct test_state *state)
