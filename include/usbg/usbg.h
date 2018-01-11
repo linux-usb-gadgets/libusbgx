@@ -213,6 +213,7 @@ typedef enum
 	USBG_F_MIDI,
 	USBG_F_LOOPBACK,
 	USBG_F_HID,
+	USBG_F_UAC2,
 	USBG_FUNCTION_TYPE_MAX,
 } usbg_function_type;
 
