@@ -29,6 +29,7 @@
 #include <usbg/function/phonet.h>
 #include <usbg/function/midi.h>
 #include <usbg/function/hid.h>
+#include <usbg/function/uac2.h>
 
 /**
  * @file show-gadgets.c
@@ -129,6 +130,7 @@ void show_function(usbg_function *f)
 		int serial_port_num;
 		char *phonet_ifname;
 		struct usbg_f_hid_attrs hid;
+		struct usbg_f_uac2_attrs uac2;
 	} f_attrs;
 
 	instance = usbg_get_function_instance(f);
@@ -226,6 +228,19 @@ void show_function(usbg_function *f)
 		fprintf(stdout, "    report_length\t%d\n",
 			attrs->report_length);
 		fprintf(stdout, "    subclass\t\t%d\n", attrs->subclass);
+		break;
+	}
+
+	case USBG_F_UAC2:
+	{
+		struct usbg_f_uac2_attrs *attrs = &f_attrs.uac2;
+
+		fprintf(stdout, "    c_chmask\t\t%d\n", attrs->c_chmask);
+		fprintf(stdout, "    c_srate\t\t%d\n", attrs->c_srate);
+		fprintf(stdout, "    c_ssize\t\t%d\n", attrs->c_ssize);
+		fprintf(stdout, "    p_chmask\t\t%d\n", attrs->p_chmask);
+		fprintf(stdout, "    p_srate\t\t%d\n", attrs->p_srate);
+		fprintf(stdout, "    p_ssize\t\t%d\n", attrs->p_ssize);
 		break;
 	}
 
