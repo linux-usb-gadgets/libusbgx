@@ -56,6 +56,7 @@ make
 %manifest %{name}.manifest
 %defattr(-,root,root)
 %{_includedir}/usbg/usbg.h
+%{_includedir}/usbg/usbg_version.h
 %{_includedir}/usbg/function/ffs.h
 %{_includedir}/usbg/function/loopback.h
 %{_includedir}/usbg/function/midi.h

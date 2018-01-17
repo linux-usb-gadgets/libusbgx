@@ -6,6 +6,9 @@ AM_PROG_CC_C_O
 AC_CONFIG_MACRO_DIR([m4])
 AC_DEFINE([_GNU_SOURCE], [], [Use GNU extensions])
 
+USBG_VERSION_HEX=`printf '0x%02x%02x%04x' $(printf '%s' "$PACKAGE_VERSION" | sed -e 's/\./ /g')`
+AC_SUBST([USBG_VERSION_HEX])
+
 AC_ARG_WITH([libconfig],
 	    AS_HELP_STRING([--without-libconfig], [build without using libconfig]),
 	                   [with_libconfig=$withval], [with_libconfig=yes])
@@ -52,6 +55,6 @@ AS_IF([test "x$enable_gadget_schemes" = xyes],
 AM_CONDITIONAL(TEST_GADGET_SCHEMES, [test "x$enable_gadget_schemes" != xno])
 
 LT_INIT
-AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile libusbgx.pc doxygen.cfg])
+AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile include/usbg/usbg_version.h libusbgx.pc doxygen.cfg])
 DX_INIT_DOXYGEN([$PACKAGE_NAME],[doxygen.cfg])
 AC_OUTPUT

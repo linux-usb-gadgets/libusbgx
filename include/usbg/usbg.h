@@ -30,6 +30,8 @@
 #include <stdio.h> /* For FILE * */
 #include <malloc.h>
 
+#include "usbg_version.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
