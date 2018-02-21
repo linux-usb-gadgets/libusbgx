@@ -1821,11 +1821,12 @@ static int usbg_get_strs_langs_by_path(const char *epath, const char *name,
 	}
 
 	buf = calloc(n + 1, sizeof(*buf));
-	if (!buf)
+	if (buf)
+		/* Keep the buffer 0 terminated */
+		buf[n] = 0;
+	else
 		ret = USBG_ERROR_NO_MEM;
 
-	/* Keep the buffer 0 terminated */
-	buf[n] = 0;
 	for (i = 0; i < n; i++) {
 		if (ret == USBG_SUCCESS) {
 			char *pos;
@@ -1841,10 +1842,10 @@ static int usbg_get_strs_langs_by_path(const char *epath, const char *name,
 	}
 	free(dent);
 
-	if (ret != USBG_SUCCESS)
-		free(buf);
-	else
+	if (ret == USBG_SUCCESS)
 		*langs = buf;
+	else
+		free(buf);
 out:
 	return ret;
 }
