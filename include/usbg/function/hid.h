@@ -56,6 +56,11 @@ union usbg_f_hid_attr_val {
 	unsigned int subclass;
 };
 
+#define USBG_F_HID_UINT_TO_ATTR_VAL(WHAT)			\
+	USBG_TO_UNION(usbg_f_hid_attr_val, protocol, WHAT)
+
+#define USBG_F_HID_RDESC_TO_ATTR_VAL(WHAT)			\
+	USBG_TO_UNION(usbg_f_hid_attr_val, report_desc, WHAT)
 /**
  * @brief Cast from generic function to hid function
  * @param[in] f function to be converted to hid funciton.
@@ -169,7 +174,7 @@ static inline int usbg_f_hid_set_protocol(usbg_f_hid *hf,
 					  unsigned int protocol)
 {
 	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_PROTOCOL,
-				       (union usbg_f_hid_attr_val)protocol);
+				       USBG_F_HID_UINT_TO_ATTR_VAL(protocol));
 }
 
 /**
@@ -195,7 +200,7 @@ static inline int usbg_f_hid_set_report_desc(usbg_f_hid *hf,
 					     struct usbg_f_hid_report_desc report_desc)
 {
 	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_REPORT_DESC,
-				       (union usbg_f_hid_attr_val)report_desc);
+				       USBG_F_HID_RDESC_TO_ATTR_VAL(report_desc));
 }
 
 /**
@@ -210,7 +215,7 @@ static inline int usbg_f_hid_get_report_desc_raw(usbg_f_hid *hf,
 {
 	struct usbg_f_hid_report_desc report_desc;
 	int ret;
-			
+
 	ret = usbg_f_hid_get_attr_val(hf, USBG_F_HID_REPORT_DESC,
 				      (union usbg_f_hid_attr_val *)&report_desc);
 	if (ret != USBG_SUCCESS)
@@ -238,7 +243,7 @@ static inline int usbg_f_hid_set_report_desc_raw(usbg_f_hid *hf,
 	};
 
 	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_REPORT_DESC,
-				       (union usbg_f_hid_attr_val)report_desc);
+				       USBG_F_HID_RDESC_TO_ATTR_VAL(report_desc));
 }
 
 /**
@@ -264,7 +269,7 @@ static inline int usbg_f_hid_set_report_length(usbg_f_hid *hf,
 					  unsigned int report_length)
 {
 	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_REPORT_LENGTH,
-				       (union usbg_f_hid_attr_val)report_length);
+				       USBG_F_HID_UINT_TO_ATTR_VAL(report_length));
 }
 
 /**
@@ -290,7 +295,7 @@ static inline int usbg_f_hid_set_subclass(usbg_f_hid *hf,
 					  unsigned int subclass)
 {
 	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_SUBCLASS,
-				       (union usbg_f_hid_attr_val)subclass);
+				       USBG_F_HID_UINT_TO_ATTR_VAL(subclass));
 }
 
 #ifdef __cplusplus
