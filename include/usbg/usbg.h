@@ -57,6 +57,9 @@ extern "C" {
 /* Dev name for ffs is a part of function name, we subtract 4 char for "ffs." */
 #define USBG_MAX_DEV_LENGTH (USBG_MAX_NAME_LENGTH - 4)
 
+#define USBG_TO_UNION(UNAME, FIELD, WHAT)	\
+	((union UNAME){ .FIELD = WHAT, })
+
 /**
  * @brief Additional option for usbg_rm_* functions.
  * @details This option allows to remove all content
