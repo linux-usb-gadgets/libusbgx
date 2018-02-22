@@ -53,6 +53,15 @@ union usbg_f_midi_attr_val {
 	unsigned int qlen;
 };
 
+#define USBG_F_MIDI_INT_TO_ATTR_VAL(WHAT)		\
+	USBG_TO_UNION(usbg_f_midi_attr_val, index, WHAT)
+
+#define USBG_F_MIDI_UINT_TO_ATTR_VAL(WHAT)		\
+	USBG_TO_UNION(usbg_f_midi_attr_val, qlen, WHAT)
+
+#define USBG_F_MIDI_CCHAR_PTR_TO_ATTR_VAL(WHAT)		\
+	USBG_TO_UNION(usbg_f_midi_attr_val, id, WHAT)
+
 /**
  * @brief Cast from generic function to midi function
  * @param[in] f function to be converted to midi funciton.
@@ -140,7 +149,7 @@ static inline int usbg_f_midi_get_index(usbg_f_midi *mf, int *index)
 static inline int usbg_f_midi_set_index(usbg_f_midi *mf, int index)
 {
 	return usbg_f_midi_set_attr_val(mf, USBG_F_MIDI_INDEX,
-					(union usbg_f_midi_attr_val)index);
+					USBG_F_MIDI_INT_TO_ATTR_VAL(index));
 }
 
 /**
@@ -180,7 +189,7 @@ int usbg_f_midi_get_id_s(usbg_f_midi *mf, char *buf, int len);
 static inline int usbg_f_midi_set_id(usbg_f_midi *mf, const char *id)
 {
 	return usbg_f_midi_set_attr_val(mf, USBG_F_MIDI_ID,
-					(union usbg_f_midi_attr_val)id);
+					USBG_F_MIDI_CCHAR_PTR_TO_ATTR_VAL(id));
 }
 
 /**
@@ -189,7 +198,7 @@ static inline int usbg_f_midi_set_id(usbg_f_midi *mf, const char *id)
  * @param[out] in_ports Number of in ports of MIDI adapter
  * @return 0 on success usbg_error if error occurred.
  */
-static inline int usbg_f_midi_get_in_ports(usbg_f_midi *mf, int *in_ports)
+static inline int usbg_f_midi_get_in_ports(usbg_f_midi *mf, unsigned *in_ports)
 {
 	return usbg_f_midi_get_attr_val(mf, USBG_F_MIDI_IN_PORTS,
 					(union usbg_f_midi_attr_val *)in_ports);
@@ -201,10 +210,10 @@ static inline int usbg_f_midi_get_in_ports(usbg_f_midi *mf, int *in_ports)
  * @param[in] in_ports number of in ports of MIDI adapters which should be set
  * @return 0 on success usbg_error if error occurred.
  */
-static inline int usbg_f_midi_set_in_ports(usbg_f_midi *mf, int in_ports)
+static inline int usbg_f_midi_set_in_ports(usbg_f_midi *mf, unsigned in_ports)
 {
 	return usbg_f_midi_set_attr_val(mf, USBG_F_MIDI_IN_PORTS,
-					(union usbg_f_midi_attr_val)in_ports);
+					USBG_F_MIDI_UINT_TO_ATTR_VAL(in_ports));
 }
 
 /**
@@ -213,7 +222,7 @@ static inline int usbg_f_midi_set_in_ports(usbg_f_midi *mf, int in_ports)
  * @param[out] out_ports Number of out ports of MIDI adapter
  * @return 0 on success usbg_error if error occurred.
  */
-static inline int usbg_f_midi_get_out_ports(usbg_f_midi *mf, int *out_ports)
+static inline int usbg_f_midi_get_out_ports(usbg_f_midi *mf, unsigned *out_ports)
 {
 	return usbg_f_midi_get_attr_val(mf, USBG_F_MIDI_OUT_PORTS,
 					(union usbg_f_midi_attr_val *)out_ports);
@@ -225,10 +234,10 @@ static inline int usbg_f_midi_get_out_ports(usbg_f_midi *mf, int *out_ports)
  * @param[in] out_ports number of out ports of MIDI adapters which should be set
  * @return 0 on success usbg_error if error occurred.
  */
-static inline int usbg_f_midi_set_out_ports(usbg_f_midi *mf, int out_ports)
+static inline int usbg_f_midi_set_out_ports(usbg_f_midi *mf, unsigned out_ports)
 {
 	return usbg_f_midi_set_attr_val(mf, USBG_F_MIDI_OUT_PORTS,
-					(union usbg_f_midi_attr_val)out_ports);
+					USBG_F_MIDI_UINT_TO_ATTR_VAL(out_ports));
 }
 
 /**
@@ -253,10 +262,10 @@ static inline int usbg_f_midi_get_buflen(usbg_f_midi *mf, int *buflen)
  * @param[in] buflen Current queue length
  * @return 0 on success usbg_error if error occurred.
  */
-static inline int usbg_f_midi_set_buflen(usbg_f_midi *mf, int buflen)
+static inline int usbg_f_midi_set_buflen(usbg_f_midi *mf, unsigned buflen)
 {
 	return usbg_f_midi_set_attr_val(mf, USBG_F_MIDI_BUFLEN,
-					(union usbg_f_midi_attr_val)buflen);
+					USBG_F_MIDI_UINT_TO_ATTR_VAL(buflen));
 }
 
 /**
@@ -265,7 +274,7 @@ static inline int usbg_f_midi_set_buflen(usbg_f_midi *mf, int buflen)
  * @param[out] qlen Current queue length
  * @return 0 on success usbg_error if error occurred.
  */
-static inline int usbg_f_midi_get_qlen(usbg_f_midi *mf, int *qlen)
+static inline int usbg_f_midi_get_qlen(usbg_f_midi *mf, unsigned *qlen)
 {
 	return usbg_f_midi_get_attr_val(mf, USBG_F_MIDI_QLEN,
 					(union usbg_f_midi_attr_val *)qlen);
@@ -277,10 +286,10 @@ static inline int usbg_f_midi_get_qlen(usbg_f_midi *mf, int *qlen)
  * @param[in] qlen Current queue length
  * @return 0 on success usbg_error if error occurred.
  */
-static inline int usbg_f_midi_set_qlen(usbg_f_midi *mf, int qlen)
+static inline int usbg_f_midi_set_qlen(usbg_f_midi *mf, unsigned qlen)
 {
 	return usbg_f_midi_set_attr_val(mf, USBG_F_MIDI_QLEN,
-					(union usbg_f_midi_attr_val)qlen);
+					USBG_F_MIDI_UINT_TO_ATTR_VAL(qlen));
 }
 
 #ifdef __cplusplus
