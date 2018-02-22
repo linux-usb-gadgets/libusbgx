@@ -47,6 +47,12 @@ union usbg_f_net_attr_val {
 	int qmult;
 };
 
+#define USBG_F_NET_ETHER_ADDR_TO_ATTR_VAL(WHAT)		\
+	USBG_TO_UNION(usbg_f_net_attr_val, dev_addr, WHAT)
+
+#define USBG_F_NET_INT_TO_ATTR_VAL(WHAT)		\
+	USBG_TO_UNION(usbg_f_net_attr_val, qmult, WHAT)
+
 /**
  * @brief Cast from generic function to net function
  * @param[in] f function to be converted to net funciton.
@@ -135,7 +141,7 @@ static inline int usbg_f_net_set_dev_addr(usbg_f_net *nf,
 			     const struct ether_addr *addr)
 {
 	return usbg_f_net_set_attr_val(nf, USBG_F_NET_DEV_ADDR,
-				       (union usbg_f_net_attr_val)*addr);
+				       USBG_F_NET_ETHER_ADDR_TO_ATTR_VAL(*addr));
 }
 
 /**
@@ -161,7 +167,7 @@ static inline int usbg_f_net_set_host_addr(usbg_f_net *nf,
 					   const struct ether_addr *addr)
 {
 	return usbg_f_net_set_attr_val(nf, USBG_F_NET_HOST_ADDR,
-				       (union usbg_f_net_attr_val)*addr);
+				       USBG_F_NET_ETHER_ADDR_TO_ATTR_VAL(*addr));
 }
 
 /**
@@ -212,7 +218,7 @@ static inline int usbg_f_net_get_qmult(usbg_f_net *nf, int *qmult)
 static inline int usbg_f_net_set_qmult(usbg_f_net *nf, int qmult)
 {
 	return usbg_f_net_set_attr_val(nf, USBG_F_NET_QMULT,
-				       (union usbg_f_net_attr_val)qmult);
+				       USBG_F_NET_INT_TO_ATTR_VAL(qmult));
 }
 
 #ifdef __cplusplus
