@@ -56,6 +56,14 @@ union usbg_f_ms_lun_attr_val {
 	const char *file;
 };
 
+#define USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(WHAT)		\
+	USBG_TO_UNION(usbg_f_ms_lun_attr_val, cdrom, WHAT)
+
+#define USBG_F_MS_LUN_CCHAR_PTR_TO_ATTR_VAL(WHAT)		\
+	USBG_TO_UNION(usbg_f_ms_lun_attr_val, file, WHAT)
+
+
+
 /**
  * @brief Cast from generic function to mass storage function
  * @param[in] f function to be converted to ms funciton.
@@ -176,7 +184,7 @@ static inline int usbg_f_ms_set_lun_cdrom(usbg_f_ms *mf, int lun_id,
 					  bool cdrom)
 {
 	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_CDROM,
-					  (union usbg_f_ms_lun_attr_val)cdrom);
+					  USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(cdrom));
 }
 
 /**
@@ -202,7 +210,7 @@ static inline int usbg_f_ms_get_lun_ro(usbg_f_ms *mf, int lun_id, bool *ro)
 static inline int usbg_f_ms_set_lun_ro(usbg_f_ms *mf, int lun_id, bool ro)
 {
 	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_RO,
-					  (union usbg_f_ms_lun_attr_val)ro);
+					  USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(ro));
 }
 
 /**
@@ -232,7 +240,7 @@ static inline int usbg_f_ms_set_lun_nofua(usbg_f_ms *mf, int lun_id,
 				bool nofua)
 {
 	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_NOFUA,
-					  (union usbg_f_ms_lun_attr_val)nofua);
+					  USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(nofua));
 }
 
 /**
@@ -260,7 +268,7 @@ static inline int usbg_f_ms_set_lun_removable(usbg_f_ms *mf, int lun_id,
 				bool removable)
 {
 	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_REMOVABLE,
-					  (union usbg_f_ms_lun_attr_val)removable);
+					  USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(removable));
 }
 
 /**
@@ -306,7 +314,7 @@ static inline int usbg_f_ms_set_lun_file(usbg_f_ms *mf, int lun_id,
 			   const char *file)
 {
 	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_FILE,
-					  (union usbg_f_ms_lun_attr_val)file);
+					  USBG_F_MS_LUN_CCHAR_PTR_TO_ATTR_VAL(file));
 }
 
 /**
