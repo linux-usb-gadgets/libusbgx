@@ -1,6 +1,7 @@
 AC_INIT([libusbgx], [0.1.0], [k.opasiak@samsung.com])
 AM_INIT_AUTOMAKE([1.12 -Wall -Werror foreign serial-tests])
 AC_PROG_CC
+AC_PROG_CXX
 AM_PROG_AR
 AM_PROG_CC_C_O
 AC_CONFIG_MACRO_DIR([m4])
