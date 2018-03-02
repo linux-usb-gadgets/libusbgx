@@ -1,3 +1,12 @@
+Wed, 09 Sep 2024 Michael Grzeschik <m.grzeschik@pengutronix.de> 0.3.0
+	- Add meson build support
+	- Add support for usb9pfs
+	- Add more controls for USB Audio Class 2 (UAC2)
+	- Add support for USB Video Class (UVC)
+	- Add support for Printer8664b79
+	- Improved support for network gadget
+	- Many smaller fixes
+
 Fri, 02 Ma 2018 Krzysztof Opasiak <k.opasiak@samsung.com> 0.2.0
 	- Use prefix for our enums
 	- Use string names similar to USB spec
