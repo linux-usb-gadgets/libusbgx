@@ -1,3 +1,11 @@
+Fri, 02 Ma 2018 Krzysztof Opasiak <k.opasiak@samsung.com> 0.2.0
+	- Use prefix for our enums
+	- Use string names similar to USB spec
+	- Get rid of static buffers
+	- Add support for HID function
+	- Fix C++ compilation issues
+	- Many smaller fixes
+
 Wed, 23 Dec 2015 Krzysztof Opasiak <k.opasiak@samsung.com> 0.1.0
 	- Rework most of the API to be more flexible and usable
 	- Introduce internal API for adding function support
