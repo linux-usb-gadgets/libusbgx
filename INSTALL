@@ -1,3 +1,9 @@
+Prerequisites:
+
+- autoconf
+- libtool
+- libconfig-dev
+
 Installing libusbgx:
 
 $ autoreconf -i
