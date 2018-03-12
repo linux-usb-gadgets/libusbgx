@@ -7,5 +7,5 @@ gadget_export_SOURCE = gadget-export.c
 gadget_import_SOURCE = gadget-import.c
 gadget_rndis_os_desc_SOURCES = gadget-rndis-os-desc.c
 show_udcs_SOURCE = show-udcs.c
-AM_CPPFLAGS=-I$(top_srcdir)/include/
+AM_CPPFLAGS=-I$(top_srcdir)/include/ -I$(top_builddir)/include/usbg
 AM_LDFLAGS=-L../src/ -lusbgx
