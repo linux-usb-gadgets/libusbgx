@@ -23,6 +23,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <sys/sysmacros.h>
 #include <usbg/usbg.h>
 
 int main(void)
