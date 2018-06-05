@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/sysmacros.h>
 #include <usbg/usbg.h>
 
 int main(int argc, char **argv)
