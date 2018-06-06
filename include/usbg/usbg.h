@@ -23,6 +23,7 @@
 
 #include <dirent.h>
 #include <sys/queue.h>
+#include <sys/sysmacros.h>
 #include <netinet/ether.h>
 #include <stdint.h>
 #include <limits.h>
