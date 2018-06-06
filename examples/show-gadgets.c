@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/sysmacros.h>
 #include <netinet/ether.h>
 #include <usbg/usbg.h>
 #include <usbg/function/ms.h>
