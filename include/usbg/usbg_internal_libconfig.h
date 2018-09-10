@@ -12,6 +12,7 @@
 #ifndef USBG_INTERNAL_LIBCONFIG_H
 #define USBG_INTERNAL_LIBCONFIG_H
 
+#include <sys/sysmacros.h>
 #include <libconfig.h>
 #ifdef __cplusplus
 extern "C" {
