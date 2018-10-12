@@ -1,0 +1,18 @@
+get_filename_component(LibUsbgx_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+include(CMakeFindDependencyMacro)
+
+list(APPEND CMAKE_MODULE_PATH ${LibUsbgx_CMAKE_DIR})
+list(REMOVE_AT CMAKE_MODULE_PATH -1)
+
+set(LibUsbgx_INCLUDE_DIRS "@includedir@")
+
+if(NOT TARGET LibUsbgx::LibUsbgx)
+	add_library(LibUsbgx::LibUsbgx SHARED IMPORTED)
+	set_property(TARGET LibUsbgx::LibUsbgx APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+
+	set_target_properties(LibUsbgx::LibUsbgx PROPERTIES 
+		IMPORTED_LOCATION "@libdir@"
+		INTERFACE_INCLUDE_DIRECTORIES "@includedir@")
+endif()
+
+set(LibUsbgx_LIBRARIES LibUsbgx::LibUsbgx)
