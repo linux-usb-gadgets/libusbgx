@@ -56,6 +56,6 @@ AS_IF([test "x$enable_gadget_schemes" = xyes],
 AM_CONDITIONAL(TEST_GADGET_SCHEMES, [test "x$enable_gadget_schemes" != xno])
 
 LT_INIT
-AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile include/usbg/usbg_version.h libusbgx.pc doxygen.cfg])
+AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile include/usbg/usbg_version.h libusbgx.pc doxygen.cfg LibUsbgxConfig.cmake])
 DX_INIT_DOXYGEN([$PACKAGE_NAME],[doxygen.cfg])
 AC_OUTPUT
