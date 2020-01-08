@@ -1,5 +1,6 @@
-bin_PROGRAMS = show-gadgets gadget-acm-ecm gadget-vid-pid-remove gadget-ffs gadget-export gadget-import show-udcs gadget-ms gadget-midi gadget-hid gadget-rndis-os-desc gadget-uac2
+bin_PROGRAMS = show-gadgets gadget-acm-ecm gadget-vid-pid-remove gadget-uvc gadget-ffs gadget-export gadget-import show-udcs gadget-ms gadget-midi gadget-hid gadget-rndis-os-desc gadget-uac2
 gadget_acm_ecm_SOURCES = gadget-acm-ecm.c
+gadget_uvc_SOURCES = gadget-uvc.c
 show_gadgets_SOURCES = show-gadgets.c
 gadget_vid_pid_remove_SOURCES = gadget-vid-pid-remove.c
 gadget_ffs_SOURCES = gadget-ffs.c
