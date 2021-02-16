@@ -158,7 +158,7 @@ static inline int usbg_f_net_get_host_addr(usbg_f_net *nf,
 }
 
 /**
- * @brief Set the value of device side MAC address
+ * @brief Set the value of host side MAC address
  * @param[in] nf Pointer to net function
  * @param[in] val Value of attribute which should be set
  * @return 0 on success usbg_error if error occurred.
