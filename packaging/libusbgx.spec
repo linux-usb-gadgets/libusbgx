@@ -82,6 +82,7 @@ make
 %{_bindir}/gadget-export
 %{_bindir}/gadget-import
 %{_bindir}/gadget-uac2
+%{_bindir}/gadget-printer
 %{_bindir}/show-udcs
 %{_bindir}/gadget-rndis-os-desc
 

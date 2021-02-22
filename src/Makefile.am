@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = std-options subdir-objects
 lib_LTLIBRARIES = libusbgx.la
-libusbgx_la_SOURCES = usbg.c usbg_error.c usbg_common.c function/ether.c function/ffs.c function/midi.c function/ms.c function/phonet.c function/serial.c function/loopback.c function/hid.c function/uac2.c
+libusbgx_la_SOURCES = usbg.c usbg_error.c usbg_common.c function/ether.c function/ffs.c function/midi.c function/ms.c function/phonet.c function/serial.c function/loopback.c function/hid.c function/uac2.c function/printer.c
 if TEST_GADGET_SCHEMES
 libusbgx_la_SOURCES += usbg_schemes_libconfig.c usbg_common_libconfig.c
 else

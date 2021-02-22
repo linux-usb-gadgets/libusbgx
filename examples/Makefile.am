@@ -1,4 +1,4 @@
-bin_PROGRAMS = show-gadgets gadget-acm-ecm gadget-vid-pid-remove gadget-ffs gadget-export gadget-import show-udcs gadget-ms gadget-midi gadget-hid gadget-rndis-os-desc gadget-uac2
+bin_PROGRAMS = show-gadgets gadget-acm-ecm gadget-vid-pid-remove gadget-ffs gadget-export gadget-import show-udcs gadget-ms gadget-midi gadget-hid gadget-rndis-os-desc gadget-uac2 gadget-printer
 gadget_acm_ecm_SOURCES = gadget-acm-ecm.c
 show_gadgets_SOURCES = show-gadgets.c
 gadget_vid_pid_remove_SOURCES = gadget-vid-pid-remove.c
@@ -6,6 +6,7 @@ gadget_ffs_SOURCES = gadget-ffs.c
 gadget_export_SOURCE = gadget-export.c
 gadget_import_SOURCE = gadget-import.c
 gadget_rndis_os_desc_SOURCES = gadget-rndis-os-desc.c
+gadget_printer_SOURCE = gadget_printer.c
 show_udcs_SOURCE = show-udcs.c
 AM_CPPFLAGS=-I$(top_srcdir)/include/ -I$(top_builddir)/include/usbg
 AM_LDFLAGS=-L../src/ -lusbgx
