@@ -220,6 +220,7 @@ typedef enum
 	USBG_F_HID,
 	USBG_F_UAC2,
 	USBG_F_UVC,
+	USBG_F_PRINTER,
 	USBG_FUNCTION_TYPE_MAX,
 } usbg_function_type;
 
