@@ -23,10 +23,9 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <usbg/usbg.h>
-
-#define VENDOR		0x1d6b
-#define PRODUCT		0x0104
 
 int remove_gadget(usbg_gadget *g)
 {
@@ -60,13 +59,29 @@ out:
 	return usbg_ret;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
 	int usbg_ret;
 	int ret = -EINVAL;
 	usbg_state *s;
 	usbg_gadget *g;
 	struct usbg_gadget_attrs g_attrs;
+	char *cp;
+	int vendor = 0x1d6b, product = 0x0104;
+
+	if (argc >= 2) {
+		cp = strchr(argv[1], ':');
+		if (!cp) {
+			ret = -EINVAL;
+			fprintf(stderr, "Usage: gadget-vid-pid-remove vid:pid\n");
+			goto out1;
+		}
+		*cp++ = 0;
+		if (&argv[1])
+			vendor = strtoul(argv[1], NULL, 16);
+		if (*cp)
+			product = strtoul(cp, NULL, 16);
+	}
 
 	usbg_ret = usbg_init("/sys/kernel/config", &s);
 	if (usbg_ret != USBG_SUCCESS) {
@@ -88,7 +103,7 @@ int main(void)
 		}
 
 		/* Compare attrs with given values and remove if suitable */
-		if (g_attrs.idVendor == VENDOR && g_attrs.idProduct == PRODUCT) {
+		if (g_attrs.idVendor == vendor && g_attrs.idProduct == product) {
 			usbg_gadget *g_next = usbg_get_next_gadget(g);
 
 			usbg_ret = remove_gadget(g);
