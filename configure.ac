@@ -36,11 +36,17 @@ AS_IF([test "x$with_libconfig" = xyes], [
 			    AC_DEFINE(HAVE_LIBCONFIG_15, 1, [detected libconfig equal to or greater than 1.5]),
 			    AC_DEFINE(HAVE_LIBCONFIG_15, 0, []))
 			  ])
+	libconfig_req="libconfig"
 	CFLAGS="$CFLAGS $LIBCONFIG_CFLAGS"
 	LIBS="$LIBS $LIBCONFIG_LIBS"
 ], [
+	libconfig_req=""
 	enable_gadget_schemes=no
 ])
+
+REQUIRES="$libconfig_req"
+
+AC_SUBST([REQUIRES])
 
 AM_CONDITIONAL(BUILD_EXAMPLES, [test "x$enable_examples" = xyes])
 
