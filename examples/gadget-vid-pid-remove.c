@@ -116,6 +116,8 @@ int main(int argc, char **argv)
 		}
 	}
 
+	ret = 0;
+
 out2:
 	usbg_cleanup(s);
 out1:
