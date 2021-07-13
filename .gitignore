@@ -5,6 +5,8 @@
 /include/usbg/usbg_version.h
 /src/.deps
 /src/.libs
+/src/function/.deps
+/src/function/.dirstamp
 /tests/*
 !/tests/*.*
 /tests/.deps
