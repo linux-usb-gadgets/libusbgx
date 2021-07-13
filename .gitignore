@@ -27,3 +27,4 @@ Makefile.in
 /install-sh
 /doxygen.cfg
 /libusbgx.pc
+/LibUsbgxConfig.cmake
