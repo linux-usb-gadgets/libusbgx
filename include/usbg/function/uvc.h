@@ -19,9 +19,6 @@
 extern "C" {
 #endif
 
-
-#define USBG_UVC_MAX_PATH_LENGTH 1024
-
 struct usbg_f_uvc;
 typedef struct usbg_f_uvc usbg_f_uvc;
 
