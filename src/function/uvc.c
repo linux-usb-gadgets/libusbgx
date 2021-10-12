@@ -375,11 +375,11 @@ int usbg_f_uvc_set_attrs(usbg_f_uvc *uvcf, const struct usbg_f_uvc_attrs *attrs)
 			ERROR("Error: %d", ret);
 	}
 
-	ret = uvc_set_class(path, "control");
+	ret = uvc_set_class(uvcf, UVC_PATH_CONTROL);
 	if (ret != USBG_SUCCESS)
 		return ret;
 
-	ret = uvc_set_class(path, "streaming");
+	ret = uvc_set_class(uvcf, UVC_PATH_STREAMING);
 	if (ret != USBG_SUCCESS)
 		return ret;
 
