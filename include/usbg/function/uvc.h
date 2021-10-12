@@ -22,23 +22,80 @@ extern "C" {
 struct usbg_f_uvc;
 typedef struct usbg_f_uvc usbg_f_uvc;
 
-enum uvc_format
+struct usbg_f_uvc_frame_attrs
 {
-	UVC_FORMAT_MJPEG,
-	UVC_FORMAT_UNCOMPRESSED
+	int bFrameIndex;
+	int bmCapabilities;
+	int dwMinBitRate;
+	int dwMaxBitRate;
+	int dwMaxVideoFrameBufferSize;
+	int dwDefaultFrameInterval;
+	int dwFrameInterval;
+	int wWidth;
+	int wHeight;
 };
 
 struct usbg_f_uvc_format_attrs
 {
-	enum uvc_format format;
-	const char *dwFrameInterval;
-	int height;
-	int width;
+	int bmaControls;
+	int bFormatIndex;
+	int bDefaultFrameIndex;
+	int bAspectRatioX;
+	int bAspectRatioY;
+	int bmInterfaceFlags;
+	const char *format;
+	struct usbg_f_uvc_frame_attrs **frames;
 };
 
 struct usbg_f_uvc_attrs
 {
 	struct usbg_f_uvc_format_attrs **formats;
+};
+
+enum usbg_f_uvc_frame_attr {
+	USBG_F_UVC_FRAME_ATTR_MIN = 0,
+	USBG_F_UVC_FRAME_INDEX = USBG_F_UVC_FRAME_ATTR_MIN,
+	USBG_F_UVC_FRAME_CAPABILITIES,
+	USBG_F_UVC_FRAME_MIN_BITRATE,
+	USBG_F_UVC_FRAME_MAX_BITRATE,
+	USBG_F_UVC_FRAME_MAX_VIDEO_BUFFERSIZE,
+	USBG_F_UVC_FRAME_DEFAULT_INTERVAL,
+	USBG_F_UVC_FRAME_INTERVAL,
+	USBG_F_UVC_FRAME_HEIGHT,
+	USBG_F_UVC_FRAME_WIDTH,
+	USBG_F_UVC_FRAME_ATTR_MAX
+};
+
+enum usbg_f_uvc_format_attr {
+	USBG_F_UVC_FORMAT_ATTR_MIN = 0,
+	USBG_F_UVC_FORMAT_CONTROLS = USBG_F_UVC_FORMAT_ATTR_MIN,
+	USBG_F_UVC_FORMAT_INTERFACE_FLAGS,
+	USBG_F_UVC_FORMAT_ASPECTRATIO_Y,
+	USBG_F_UVC_FORMAT_ASPECTRATIO_X,
+	USBG_F_UVC_FORMAT_DEFAULT_FRAME_INDEX,
+	USBG_F_UVC_FORMAT_FORMAT_INDEX,
+	USBG_F_UVC_FORMAT_ATTR_MAX
+};
+
+
+union usbg_f_uvc_frame_attr_val {
+	int bmCapabilities;
+	int dwMinBitRate;
+	int dwMaxBitRate;
+	int dwMaxVideoFrameBufferSize;
+	int dwDefaultFrameInterval;
+	int dwFrameInterval;
+	int wWidth;
+	int wHeight;
+};
+
+union usbg_f_uvc_format_attr_val {
+	int bmaControls;
+	int bFormatIndex;
+	int bDefaultFrameIndex;
+	int bAspectRatioX;
+	int bAspectRatioY;
+	int bmInterfaceFlags;
 };
 
 /**
@@ -63,17 +120,6 @@ usbg_function *usbg_from_uvc_function(usbg_f_uvc *ff);
  */
 static inline void usbg_f_uvc_cleanup_attrs(struct usbg_f_uvc_attrs *attrs)
 {
-	struct usbg_f_uvc_format_attrs **format_attrs;
-	int i;
-
-	if (attrs) {
-		for(format_attrs = attrs->formats, i = 0; format_attrs[i]; ++i) {
-			if (format_attrs[i]) {
-				free((char *)format_attrs[i]->dwFrameInterval);
-				format_attrs[i]->dwFrameInterval = NULL;
-			}
-		}
-	}
 }
 
 int usbg_f_uvc_get_attrs(usbg_f_uvc *uvcf, struct usbg_f_uvc_attrs *attrs);

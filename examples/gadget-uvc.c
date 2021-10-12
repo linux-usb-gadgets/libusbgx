@@ -60,35 +60,61 @@ int main(void)
 		.configuration = "UVC"
 	};
 
+	struct usbg_f_uvc_frame_attrs uvc_frame_attrs_array[] = {
+		{
+			.bFrameIndex = 1,
+			.dwFrameInterval = 2000000,
+			.wHeight = 480,
+			.wWidth = 640,
+		}, {
+			.bFrameIndex = 2,
+			.dwFrameInterval = 2000000,
+			.wHeight = 1080,
+			.wWidth = 1920,
+		}, {
+			.bFrameIndex = 3,
+			.dwFrameInterval = 333333,
+			.wHeight = 1080,
+			.wWidth = 1920,
+		}, {
+			.bFrameIndex = 4,
+			.dwFrameInterval = 333333,
+			.wHeight = 2160,
+			.wWidth = 3840,
+		}
+	};
+
+	struct usbg_f_uvc_frame_attrs *uvc_frame_mjpeg_attrs[] = {
+		&uvc_frame_attrs_array[0],
+		&uvc_frame_attrs_array[1],
+		&uvc_frame_attrs_array[2],
+		&uvc_frame_attrs_array[3],
+		NULL,
+	};
+
+	struct usbg_f_uvc_frame_attrs *uvc_frame_uncompressed_attrs[] = {
+		&uvc_frame_attrs_array[0],
+		&uvc_frame_attrs_array[1],
+		&uvc_frame_attrs_array[2],
+		&uvc_frame_attrs_array[3],
+		NULL,
+	};
+
 	struct usbg_f_uvc_format_attrs uvc_format_attrs_array[] = {
 		{
-			.format = UVC_FORMAT_MJPEG,
-			.dwFrameInterval = "333333",
-			.height = 1080,
-			.width = 1920,
+			.frames = uvc_frame_mjpeg_attrs,
+			.format = "mjpeg/m",
+			.bDefaultFrameIndex = 3,
 		}, {
-			.format = UVC_FORMAT_MJPEG,
-			.dwFrameInterval = "333333",
-			.height = 2160,
-			.width = 3840,
-		}, {
-			.format = UVC_FORMAT_UNCOMPRESSED,
-			.dwFrameInterval = "333333",
-			.height = 1080,
-			.width = 1920,
-		}, {
-			.format = UVC_FORMAT_UNCOMPRESSED,
-			.dwFrameInterval = "333333",
-			.height = 2160,
-			.width = 3840,
+			.frames = uvc_frame_uncompressed_attrs,
+			.format = "uncompressed/u",
+			.bDefaultFrameIndex = 2,
 		}
 	};
 
 	struct usbg_f_uvc_format_attrs *uvc_format_attrs[] = {
-		&uvc_format_attrs_array[3],
-		&uvc_format_attrs_array[2],
-		&uvc_format_attrs_array[1],
 		&uvc_format_attrs_array[0],
+		&uvc_format_attrs_array[1],
 		NULL,
 	};
 
