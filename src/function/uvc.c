@@ -289,7 +289,7 @@ static int uvc_remove(struct usbg_function *f, int opts)
 	usbg_f_uvc *uvcf = usbg_to_uvc_function(f);
 	char streaming_path[USBG_MAX_PATH_LENGTH];
 	char control_path[USBG_MAX_PATH_LENGTH];
-	char path[USBG_UVC_MAX_PATH_LENGTH];
+	char path[USBG_MAX_PATH_LENGTH];
 	int nmb, ret = USBG_SUCCESS;
 
 	nmb = snprintf(path, sizeof(path), "%s/%s", uvcf->func.path, uvcf->func.name);
@@ -352,7 +352,7 @@ int usbg_f_uvc_get_attrs(usbg_f_uvc *uvcf, struct usbg_f_uvc_attrs *attrs)
 int usbg_f_uvc_set_attrs(usbg_f_uvc *uvcf, const struct usbg_f_uvc_attrs *attrs)
 {
 	int nmb, ret = USBG_SUCCESS;
-	char path[USBG_UVC_MAX_PATH_LENGTH];
+	char path[USBG_MAX_PATH_LENGTH];
 	struct usbg_f_uvc_format_attrs **format_attrs;
 	int i;
 
