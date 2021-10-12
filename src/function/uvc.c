@@ -362,6 +362,9 @@ int usbg_f_uvc_set_attrs(usbg_f_uvc *uvcf, const struct usbg_f_uvc_attrs *attrs)
 	unsigned nmb;
 	int i;
 
+	if (!attrs)
+		return USBG_ERROR_INVALID_PARAM;
+
 	nmb = snprintf(path, sizeof(path), "%s/%s", uvcf->func.path, uvcf->func.name);
 	if (nmb >= sizeof(path))
 		return USBG_ERROR_PATH_TOO_LONG;
