@@ -177,7 +177,6 @@ static int uvc_set_frame(char *format_path, char *format, const struct usbg_f_uv
 	int nmb, ret, i;
 	char frame_path[USBG_MAX_PATH_LENGTH];
 	char full_frame_path[USBG_MAX_PATH_LENGTH];
-	char frame_interval[USBG_MAX_PATH_LENGTH];
 	char frame_name[32];
 
 	nmb = snprintf(frame_name, sizeof(frame_name), "%dp", attrs->height);
