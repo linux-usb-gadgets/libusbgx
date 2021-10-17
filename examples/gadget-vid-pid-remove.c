@@ -27,6 +27,9 @@
 #include <stdlib.h>
 #include <usbg/usbg.h>
 
+#define VENDOR		0x1d6b
+#define PRODUCT		0x0104
+
 int remove_gadget(usbg_gadget *g)
 {
 	int usbg_ret;
@@ -67,7 +70,7 @@ int main(int argc, char **argv)
 	usbg_gadget *g;
 	struct usbg_gadget_attrs g_attrs;
 	char *cp;
-	int vendor = 0x1d6b, product = 0x0104;
+	int vendor = VENDOR, product = PRODUCT;
 
 	if (argc >= 2) {
 		cp = strchr(argv[1], ':');
