@@ -70,7 +70,7 @@ int main(void)
 			.format = UVC_FORMAT_MJPEG,
 			.dwFrameInterval = "333333",
 			.height = 2160,
-			.width = 3940,
+			.width = 3840,
 		}, {
 			.format = UVC_FORMAT_UNCOMPRESSED,
 			.dwFrameInterval = "333333",
@@ -80,7 +80,7 @@ int main(void)
 			.format = UVC_FORMAT_UNCOMPRESSED,
 			.dwFrameInterval = "333333",
 			.height = 2160,
-			.width = 3940,
+			.width = 3840,
 		}
 	};
 
