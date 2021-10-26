@@ -32,12 +32,207 @@
 #define UVC_PATH_STREAMING_UNCOMPRESSED	"uncompressed/u"
 #define UVC_PATH_STREAMING_MJPEG	"mjpeg/m"
 
+#define MAX_FRAMES 16
+#define MAX_FORMATS 2
+
+const char * format_names[MAX_FORMATS] = {
+	UVC_PATH_STREAMING_MJPEG,
+	UVC_PATH_STREAMING_UNCOMPRESSED,
+};
+
+struct formats {
+	bool frames[MAX_FRAMES];
+	bool frames_initiated;
+};
+
 struct usbg_f_uvc
 {
 	struct usbg_function func;
+	struct formats formats[MAX_FORMATS];
+	bool formats_initiated;
 };
 
-GENERIC_ALLOC_INST(uvc, struct usbg_f_uvc, func);
+#define UVC_DEC_ATTR(_name)						\
+	{								\
+		.name = #_name,						\
+		.offset = offsetof(struct usbg_f_uvc_frame_attrs, _name),     \
+		.get = usbg_get_dec,				        \
+		.set = usbg_set_dec,				        \
+		.import = usbg_get_config_node_int,	                \
+		.export = usbg_set_config_node_int,		        \
+	}
+
+struct {
+	const char *name;
+	size_t offset;
+	usbg_attr_get_func get;
+	usbg_attr_set_func set;
+	usbg_import_node_func import;
+	usbg_export_node_func export;
+} uvc_frame_attr[USBG_F_UVC_FRAME_ATTR_MAX] = {
+	[USBG_F_UVC_FRAME_INDEX] = UVC_DEC_ATTR(bFrameIndex),
+	[USBG_F_UVC_FRAME_CAPABILITIES] = UVC_DEC_ATTR(bmCapabilities),
+	[USBG_F_UVC_FRAME_MIN_BITRATE] = UVC_DEC_ATTR(dwMinBitRate),
+	[USBG_F_UVC_FRAME_MAX_BITRATE] = UVC_DEC_ATTR(dwMaxBitRate),
+	[USBG_F_UVC_FRAME_MAX_VIDEO_BUFFERSIZE] = UVC_DEC_ATTR(dwMaxVideoFrameBufferSize),
+	[USBG_F_UVC_FRAME_DEFAULT_INTERVAL] = UVC_DEC_ATTR(dwDefaultFrameInterval),
+	[USBG_F_UVC_FRAME_INTERVAL] = UVC_DEC_ATTR(dwFrameInterval),
+	[USBG_F_UVC_FRAME_HEIGHT] = UVC_DEC_ATTR(wHeight),
+	[USBG_F_UVC_FRAME_WIDTH] = UVC_DEC_ATTR(wWidth),
+};
+
+#undef UVC_DEC_ATTR
+
+#define UVC_DEC_ATTR(_name)						\
+	{								\
+		.name = #_name,						\
+		.offset = offsetof(struct usbg_f_uvc_format_attrs, _name),     \
+		.get = usbg_get_dec,				        \
+		.set = usbg_set_dec,				        \
+		.import = usbg_get_config_node_int,	                \
+		.export = usbg_set_config_node_int,		        \
+	}
+
+#define UVC_DEC_ATTR_RO(_name)						\
+	{								\
+		.name = #_name,						\
+		.ro = true,						\
+		.offset = offsetof(struct usbg_f_uvc_format_attrs, _name),     \
+		.get = usbg_get_dec,				        \
+		.export = usbg_set_config_node_int,		        \
+	}
+
+struct {
+	const char *name;
+	size_t offset;
+	bool ro;
+	usbg_attr_get_func get;
+	usbg_attr_set_func set;
+	usbg_import_node_func import;
+	usbg_export_node_func export;
+} uvc_format_attr[USBG_F_UVC_FORMAT_ATTR_MAX] = {
+	[USBG_F_UVC_FORMAT_CONTROLS] = UVC_DEC_ATTR_RO(bmaControls),
+	[USBG_F_UVC_FORMAT_INTERFACE_FLAGS] = UVC_DEC_ATTR_RO(bmInterfaceFlags),
+	[USBG_F_UVC_FORMAT_ASPECTRATIO_X] = UVC_DEC_ATTR_RO(bAspectRatioX),
+	[USBG_F_UVC_FORMAT_ASPECTRATIO_Y] = UVC_DEC_ATTR_RO(bAspectRatioY),
+	[USBG_F_UVC_FORMAT_DEFAULT_FRAME_INDEX] = UVC_DEC_ATTR(bDefaultFrameIndex),
+	[USBG_F_UVC_FORMAT_FORMAT_INDEX] = UVC_DEC_ATTR_RO(bFormatIndex),
+};
+
+
+#undef UVC_DEC_ATTR
+#undef UVC_DEC_ATTR_RO
+
+static inline int frame_select(const struct dirent *dent)
+{
+	int ret;
+	int id;
+
+	ret = file_select(dent);
+	if (!ret)
+		goto out;
+
+	ret = sscanf(dent->d_name, "frame.%d", &id);
+out:
+	return ret;
+}
+
+static inline int frame_sort(const struct dirent **d1, const struct dirent **d2)
+{
+	int ret;
+	int id1, id2;
+
+	ret = sscanf((*d1)->d_name, "frame.%d", &id1);
+	if (ret != 1)
+		goto err;
+
+	ret = sscanf((*d2)->d_name, "frame.%d", &id2);
+	if (ret != 1)
+		goto err;
+
+	return id1 < id2 ? -1 : id1 > id2;
+err:
+	/*
+	 * This should not happened because dentries has been
+	 * already checked by frame_select function. This
+	 * error procedure is just in case.
+	 */
+	return -1;
+}
+
+int init_frames(struct usbg_f_uvc *uvc, int j)
+{
+	struct dirent **dent;
+	char fpath[USBG_MAX_PATH_LENGTH];
+	unsigned nmb, i, id;
+	int ret = 0;
+
+	nmb = snprintf(fpath, sizeof(fpath), "%s/%s/" UVC_PATH_STREAMING "/%s/",
+		       uvc->func.path, uvc->func.name, format_names[j]);
+	if (nmb >= sizeof(fpath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		return ret;
+	}
+
+	nmb = scandir(fpath, &dent, frame_select, frame_sort);
+	if (nmb < 0) {
+		ret = usbg_translate_error(errno);
+		return ret;
+	}
+
+	for (i = 0; i < nmb; ++i) {
+		/* don't check the error as we know that name is valid */
+		sscanf(dent[i]->d_name, "frame.%d", &id);
+		uvc->formats[j].frames[id] = true;
+		free(dent[i]);
+	}
+	free(dent);
+
+	uvc->formats[j].frames_initiated = true;
+
+	return 0;
+}
+
+static inline struct formats *get_formats_mask(struct usbg_f_uvc *uvc)
+{
+	int i, ret;
+
+	if (!uvc->formats_initiated) {
+		uvc->formats_initiated = true;
+		for (i = 0; i < MAX_FORMATS; ++i) {
+			ret = init_frames(uvc, i);
+			if (ret)
+				uvc->formats_initiated = false;
+		}
+	}
+
+	return uvc->formats;
+}
+
+GENERIC_ALLOC_INST(uvc_internal, struct usbg_f_uvc, func);
+static int uvc_alloc_inst(struct usbg_function_type *type,
+			 usbg_function_type type_code,
+			 const char *instance, const char *path,
+			 struct usbg_gadget *parent,
+			 struct usbg_function **f)
+{
+	struct usbg_f_uvc *uvcf;
+	int ret;
+
+	ret = uvc_internal_alloc_inst(type, type_code, instance,
+				     path, parent, f);
+	if (ret)
+		goto out;
+
+	uvcf = usbg_to_uvc_function(*f);
+	if (!uvcf)
+		return -ENOMEM;
+
+	memset(uvcf->formats, 0, sizeof(uvcf->formats));
+	uvcf->formats_initiated = false;
+out:
+	return ret;
+}
 
 GENERIC_FREE_INST(uvc, struct usbg_f_uvc, func);
 
@@ -56,22 +251,151 @@ static void uvc_cleanup_attrs(struct usbg_function *f, void *f_attrs)
 	return usbg_f_uvc_cleanup_attrs(f_attrs);
 }
 
-static int uvc_libconfig_import(struct usbg_function *f, config_setting_t *root)
+int usbg_f_uvc_get_frame_attr_val(usbg_f_uvc *uvcf, const char* format, int frame_id,
+			       enum usbg_f_uvc_frame_attr fattr,
+			       union usbg_f_uvc_frame_attr_val *val)
 {
-	return USBG_SUCCESS;
+	char fpath[USBG_MAX_PATH_LENGTH];
+	unsigned nmb;
+
+	nmb = snprintf(fpath, sizeof(fpath), "%s/%s/" UVC_PATH_STREAMING "/%s/frame.%d/",
+		       uvcf->func.path, uvcf->func.name, format, frame_id);
+	if (nmb >= sizeof(fpath))
+		return USBG_ERROR_PATH_TOO_LONG;
+
+	return uvc_frame_attr[fattr].get(fpath, "",
+				    uvc_frame_attr[fattr].name, val);
 }
 
-static int uvc_libconfig_export(struct usbg_function *f, config_setting_t *root)
+int usbg_f_uvc_set_frame_attr_val(usbg_f_uvc *uvcf, const char* format, int frame_id,
+			       enum usbg_f_uvc_frame_attr fattr,
+			       union usbg_f_uvc_frame_attr_val val)
 {
-	return USBG_SUCCESS;
+	char fpath[USBG_MAX_PATH_LENGTH];
+	unsigned nmb;
+
+	nmb = snprintf(fpath, sizeof(fpath), "%s/%s/" UVC_PATH_STREAMING "/%s/frame.%d/",
+		       uvcf->func.path, uvcf->func.name, format, frame_id);
+	if (nmb >= sizeof(fpath))
+		return USBG_ERROR_PATH_TOO_LONG;
+
+	return uvc_frame_attr[fattr].set(fpath, "",
+				       uvc_frame_attr[fattr].name, &val);
+}
+
+int usbg_f_uvc_get_frame_attrs(usbg_f_uvc *uvcf, const char* format, int frame_id,
+			struct usbg_f_uvc_frame_attrs *fattrs)
+{
+	int i;
+	int ret = 0;
+
+	for (i = USBG_F_UVC_FRAME_ATTR_MIN; i < USBG_F_UVC_FRAME_ATTR_MAX; ++i) {
+		ret = usbg_f_uvc_get_frame_attr_val(uvcf, format, frame_id, i,
+					       (union usbg_f_uvc_frame_attr_val *)
+					       ((char *)fattrs
+						+ uvc_frame_attr[i].offset));
+		if (ret)
+			break;
+	}
+
+	fattrs->bFrameIndex = frame_id;
+
+	return ret;
+}
+
+int usbg_f_uvc_set_frame_attrs(usbg_f_uvc *uvcf, const char* format, int frame_id,
+			    const struct usbg_f_uvc_frame_attrs *fattrs)
+{
+	int i;
+	int ret = 0;
+
+	for (i = USBG_F_UVC_FRAME_ATTR_MIN; i < USBG_F_UVC_FRAME_ATTR_MAX; ++i) {
+		ret = usbg_f_uvc_set_frame_attr_val(uvcf, format, frame_id, i,
+					       *(union usbg_f_uvc_frame_attr_val *)
+					       ((char *)fattrs
+						+ uvc_frame_attr[i].offset));
+		if (ret)
+			break;
+	}
+
+	return ret;
+}
+
+int usbg_f_uvc_get_format_attr_val(usbg_f_uvc *uvcf, const char* format,
+			       enum usbg_f_uvc_format_attr fattr,
+			       union usbg_f_uvc_format_attr_val *val)
+{
+	char fpath[USBG_MAX_PATH_LENGTH];
+	unsigned nmb;
+
+	nmb = snprintf(fpath, sizeof(fpath), "%s/%s/" UVC_PATH_STREAMING "/%s/",
+		       uvcf->func.path, uvcf->func.name, format);
+	if (nmb >= sizeof(fpath))
+		return USBG_ERROR_PATH_TOO_LONG;
+
+	return uvc_format_attr[fattr].get(fpath, "",
+				    uvc_format_attr[fattr].name, val);
+}
+
+int usbg_f_uvc_set_format_attr_val(usbg_f_uvc *uvcf, const char* format,
+			       enum usbg_f_uvc_format_attr fattr,
+			       union usbg_f_uvc_format_attr_val val)
+{
+	char fpath[USBG_MAX_PATH_LENGTH];
+	unsigned nmb;
+
+	nmb = snprintf(fpath, sizeof(fpath), "%s/%s/" UVC_PATH_STREAMING "/%s/",
+		       uvcf->func.path, uvcf->func.name, format);
+	if (nmb >= sizeof(fpath))
+		return USBG_ERROR_PATH_TOO_LONG;
+
+	return uvc_format_attr[fattr].set(fpath, "",
+				       uvc_format_attr[fattr].name, &val);
+}
+
+int usbg_f_uvc_get_format_attrs(usbg_f_uvc *uvcf, const char* format,
+			struct usbg_f_uvc_format_attrs *fattrs)
+{
+	int i;
+	int ret = 0;
+
+	for (i = USBG_F_UVC_FORMAT_ATTR_MIN; i < USBG_F_UVC_FORMAT_ATTR_MAX; ++i) {
+		ret = usbg_f_uvc_get_format_attr_val(uvcf, format, i,
+					       (union usbg_f_uvc_format_attr_val *)
+					       ((char *)fattrs
+						+ uvc_format_attr[i].offset));
+		if (ret)
+			break;
+	}
+
+	return ret;
+}
+
+int usbg_f_uvc_set_format_attrs(usbg_f_uvc *uvcf, const char* format,
+			    const struct usbg_f_uvc_format_attrs *fattrs)
+{
+	int i;
+	int ret = 0;
+
+	for (i = USBG_F_UVC_FORMAT_ATTR_MIN; i < USBG_F_UVC_FORMAT_ATTR_MAX; ++i) {
+		ret = usbg_f_uvc_set_format_attr_val(uvcf, format, i,
+					       *(union usbg_f_uvc_format_attr_val *)
+					       ((char *)fattrs
+						+ uvc_format_attr[i].offset));
+		if (ret)
+			break;
+	}
+
+	return ret;
 }
 
 static int uvc_create_dir(const char *path)
 {
 	char tmp[USBG_MAX_PATH_LENGTH];
+	int ret = USBG_SUCCESS;
 	char *p = NULL;
+	unsigned nmb;
 	size_t len;
-	int nmb, ret = USBG_SUCCESS;
 
 	nmb = snprintf(tmp, sizeof(tmp), "%s", path);
 	if(nmb >= sizeof(tmp))
@@ -96,13 +420,16 @@ static int uvc_create_dir(const char *path)
 
 	if((mkdir(tmp, S_IRWXU | S_IRWXG | S_IRWXO) != 0) && errno != EEXIST)
 		return usbg_translate_error(errno);
+
+	return ret;
 }
 
 static int uvc_link(char *path, char *to, char *from)
 {
 	char oldname[USBG_MAX_PATH_LENGTH];
 	char newname[USBG_MAX_PATH_LENGTH];
-	int nmb;
+	int ret = USBG_SUCCESS;
+	unsigned nmb;
 
 	nmb = snprintf(oldname, sizeof(oldname), "%s/%s", path, to);
 	if (nmb >= sizeof(oldname))
@@ -114,15 +441,18 @@ static int uvc_link(char *path, char *to, char *from)
 
 	if(symlink(oldname, newname))
 		return usbg_translate_error(errno);
+
+	return ret;
 }
 
-static int uvc_set_class(char *func_path, char *cs)
+static int uvc_set_class(usbg_f_uvc *uvcf, char *cs)
 {
-	int ret, nmb;
 	char path[USBG_MAX_PATH_LENGTH];
 	char header_path[USBG_MAX_PATH_LENGTH];
+	unsigned nmb;
+	int ret;
 
-	nmb = snprintf(path, sizeof(path), "%s/%s", func_path, cs);
+	nmb = snprintf(path, sizeof(path), "%s/%s/%s", uvcf->func.path, uvcf->func.name, cs);
 	if (nmb >= sizeof(path))
 		return USBG_ERROR_PATH_TOO_LONG;
 
@@ -172,15 +502,340 @@ static int uvc_set_class(char *func_path, char *cs)
 	return uvc_link(path, UVC_PATH_HEADER, UVC_PATH_CLASS_SS);
 }
 
-static int uvc_set_frame(char *format_path, char *format, const struct usbg_f_uvc_format_attrs *attrs)
+#ifdef HAS_GADGET_SCHEMES
+
+int usbg_f_uvc_get_nframes(const bool *frames)
 {
-	int nmb, ret, i;
+	int nframes = 0;
+	int i;
+
+	if (!frames)
+		return USBG_ERROR_INVALID_PARAM;
+
+	for (i = 0; i < MAX_FRAMES; ++i)
+		nframes += frames[i] ? 1 : 0;
+
+	return nframes;
+}
+
+int usbg_f_uvc_create_frame(usbg_f_uvc *uvcf, const char* format, bool *frames,
+			 int frame_id, struct usbg_f_uvc_frame_attrs *fattrs)
+{
+	char frame_path[USBG_MAX_PATH_LENGTH];
+	unsigned nmb;
+	int ret;
+
+	if (frame_id >= MAX_FRAMES)
+		return USBG_ERROR_INVALID_PARAM;
+
+	if (frames[frame_id])
+		return USBG_ERROR_EXIST;
+
+	nmb = snprintf(frame_path, sizeof(frame_path), "%s/%s/" UVC_PATH_STREAMING "/%s/frame.%d/",
+		       uvcf->func.path, uvcf->func.name, format, frame_id);
+	if (nmb >= sizeof(frame_path))
+		return USBG_ERROR_PATH_TOO_LONG;
+
+	ret = uvc_create_dir(frame_path);
+	if (ret)
+		return usbg_translate_error(errno);
+
+	if (fattrs) {
+		ret = usbg_f_uvc_set_frame_attrs(uvcf, format, frame_id, fattrs);
+		if (ret)
+			goto remove_frame;
+	}
+
+	frames[frame_id] = true;
+	return 0;
+
+remove_frame:
+	rmdir(frame_path);
+	return ret;
+}
+
+static int uvc_import_frame_attrs(struct usbg_f_uvc *uvcf, const char* format,
+				  int frame_id, config_setting_t *root)
+{
+	union usbg_f_uvc_frame_attr_val val;
+	int ret = 0;
+	int i;
+
+	for (i = USBG_F_UVC_FRAME_ATTR_MIN; i < USBG_F_UVC_FRAME_ATTR_MAX; ++i) {
+		ret = uvc_frame_attr[i].import(root, uvc_frame_attr[i].name, &val);
+		/* node not  found */
+		if (ret == 0)
+			continue;
+		/* error */
+		if (ret < 0)
+			break;
+
+		ret = usbg_f_uvc_set_frame_attr_val(uvcf, format, frame_id, i, val);
+		if (ret)
+			break;
+	}
+
+	return ret;
+}
+
+static int uvc_import_format_attrs(struct usbg_f_uvc *uvcf, const char* format,
+				    config_setting_t *root)
+{
+	union usbg_f_uvc_format_attr_val val;
+	int ret = 0;
+	int i;
+
+	for (i = USBG_F_UVC_FORMAT_ATTR_MIN; i < USBG_F_UVC_FORMAT_ATTR_MAX; ++i) {
+		if (uvc_format_attr[i].ro)
+			continue;
+
+		ret = uvc_format_attr[i].import(root, uvc_format_attr[i].name, &val);
+		/* node not  found */
+		if (ret == 0)
+			continue;
+		/* error */
+		if (ret < 0)
+			break;
+
+		ret = usbg_f_uvc_set_format_attr_val(uvcf, format, i, val);
+		if (ret)
+			break;
+	}
+
+	return ret;
+}
+
+static int uvc_import_format(struct usbg_f_uvc *uvcf, const char *format, bool *frames, config_setting_t *root)
+{
+	config_setting_t *frames_node, *node;
+	int i, nframes;
+	int ret = 0;
+
+	frames_node = config_setting_get_member(root, "frames");
+	if (!frames_node) {
+		ret = USBG_ERROR_INVALID_PARAM;
+		goto out;
+	}
+
+	if (!config_setting_is_list(frames_node)) {
+		ret = USBG_ERROR_INVALID_TYPE;
+		goto out;
+	}
+
+	nframes = config_setting_length(frames_node);
+	for (i = 0; i < nframes; ++i) {
+		node = config_setting_get_elem(frames_node, i);
+		if (!node) {
+			ret = USBG_ERROR_INVALID_FORMAT;
+			goto out;
+		}
+
+		if (!config_setting_is_group(node)) {
+			ret = USBG_ERROR_INVALID_TYPE;
+			goto out;
+		}
+		if (!frames[i]) {
+			ret = usbg_f_uvc_create_frame(uvcf, format, frames, i, NULL);
+			if (ret)
+				goto out;
+		}
+		ret = uvc_import_frame_attrs(uvcf, format, i, node);
+		if (ret)
+			goto out;
+	}
+
+out:
+	return ret;
+};
+
+static int uvc_libconfig_import(struct usbg_function *f, config_setting_t *root)
+{
+	struct usbg_f_uvc *uvcf = usbg_to_uvc_function(f);
+	config_setting_t *formats_node, *node;
+	int ret, i, nformats;
+	unsigned nmb;
+	char fp[USBG_MAX_PATH_LENGTH];
+	const char *format;
+	struct formats *formats;
+
+	formats_node = config_setting_get_member(root, "formats");
+	if (!formats_node) {
+		ret = USBG_ERROR_INVALID_PARAM;
+		goto out;
+	}
+
+	if (!config_setting_is_group(formats_node)) {
+		ret = USBG_ERROR_INVALID_TYPE;
+		goto out;
+	}
+
+	nformats = config_setting_length(formats_node);
+	formats = get_formats_mask(uvcf);
+	for (i = 0; i < nformats; ++i) {
+		node = config_setting_get_elem(formats_node, i);
+		if (!node) {
+			ret = USBG_ERROR_INVALID_FORMAT;
+			goto out;
+		}
+
+		if (!config_setting_is_group(node)) {
+			ret = USBG_ERROR_INVALID_TYPE;
+			goto out;
+		}
+
+		format = config_setting_name(node);
+
+		nmb = snprintf(fp, sizeof(fp), "%s/%c", format, format[0]);
+		if (nmb >= sizeof(fp))
+			return USBG_ERROR_PATH_TOO_LONG;
+
+		ret = uvc_import_format(uvcf, fp, formats[i].frames, node);
+		if (ret)
+			goto out;
+
+		ret = uvc_import_format_attrs(uvcf, fp, node);
+		if (ret)
+			goto out;
+	}
+
+	ret = uvc_set_class(uvcf, UVC_PATH_CONTROL);
+	if (ret != USBG_SUCCESS)
+		return ret;
+
+	ret = uvc_set_class(uvcf, UVC_PATH_STREAMING);
+	if (ret != USBG_SUCCESS)
+		return ret;
+
+out:
+	return ret;
+
+}
+
+static int uvc_export_format_attrs(struct usbg_f_uvc *uvcf, const char *format,
+				  config_setting_t *root)
+{
+	union usbg_f_uvc_format_attr_val val;
+	int ret = 0;
+	int i;
+
+	for (i = USBG_F_UVC_FORMAT_ATTR_MIN; i < USBG_F_UVC_FORMAT_ATTR_MAX; ++i) {
+		ret = usbg_f_uvc_get_format_attr_val(uvcf, format, i, &val);
+		if (ret)
+			break;
+
+		ret = uvc_format_attr[i].export(root, uvc_format_attr[i].name, &val);
+		if (ret)
+			break;
+	}
+
+	return ret;
+}
+
+static int uvc_export_frame_attrs(struct usbg_f_uvc *uvcf, const char *format,
+				  int frame_id, config_setting_t *root)
+{
+	union usbg_f_uvc_frame_attr_val val;
+	int ret = 0;
+	int i;
+
+	for (i = USBG_F_UVC_FRAME_ATTR_MIN; i < USBG_F_UVC_FRAME_ATTR_MAX; ++i) {
+		ret = usbg_f_uvc_get_frame_attr_val(uvcf, format, frame_id, i, &val);
+		if (ret)
+			break;
+
+		ret = uvc_frame_attr[i].export(root, uvc_frame_attr[i].name, &val);
+		if (ret)
+			break;
+	}
+
+	return ret;
+}
+
+static int uvc_export_frames(struct usbg_f_uvc *uvcf, const char *format,
+			     bool *frames, config_setting_t *root)
+{
+	config_setting_t *frames_node, *node;
+	int i, nframes;
+	int ret = 0;
+
+	frames_node = config_setting_add(root, "frames", CONFIG_TYPE_LIST);
+	if (!frames_node) {
+		ret = USBG_ERROR_INVALID_FORMAT;
+		goto out;
+	}
+
+	nframes = usbg_f_uvc_get_nframes(frames);
+	if (nframes < 0)
+		return nframes;
+	for (i = 0; i < nframes; ++i) {
+		node = config_setting_add(frames_node, "", CONFIG_TYPE_GROUP);
+		if (!node)
+			goto out;
+
+		ret = uvc_export_frame_attrs(uvcf, format, i, node);
+		if (ret)
+			goto out;
+	}
+
+out:
+	return ret;
+};
+
+static int uvc_libconfig_export(struct usbg_function *f, config_setting_t *root)
+{
+	struct usbg_f_uvc *uvcf = usbg_to_uvc_function(f);
+	config_setting_t *formats_node, *node;
+	char fp[USBG_MAX_PATH_LENGTH];
+	struct formats *formats;
+	int i, ret = 0;
+	char *p;
+
+	formats_node = config_setting_add(root, "formats", CONFIG_TYPE_GROUP);
+	if (!formats_node) {
+		ret = USBG_ERROR_INVALID_PARAM;
+		goto out;
+	}
+
+	formats = get_formats_mask(uvcf);
+	for (i = 0; i < MAX_FORMATS; ++i) {
+
+		/* remove trailing /m and /u from format */
+		strcpy(fp, format_names[i]);
+		p = fp + strlen(fp) - 2; *p = '\0';
+
+		node = config_setting_add(formats_node, fp, CONFIG_TYPE_GROUP);
+		if (!node)
+			goto out;
+
+		ret = uvc_export_frames(uvcf, format_names[i], formats[i].frames, node);
+		if (ret)
+			goto out;
+
+		ret = uvc_export_format_attrs(uvcf, format_names[i], node);
+		if (ret)
+			goto out;
+	}
+
+out:
+	return ret;
+}
+
+#endif
+
+static int uvc_set_format(char *format_path, const char *format, const struct usbg_f_uvc_format_attrs *attrs)
+{
+	return usbg_write_dec(format_path, format, "bDefaultFrameIndex", attrs->bDefaultFrameIndex);
+}
+
+static int uvc_set_frame(char *format_path, const char *format, const struct usbg_f_uvc_frame_attrs *attrs)
+{
 	char frame_path[USBG_MAX_PATH_LENGTH];
 	char full_frame_path[USBG_MAX_PATH_LENGTH];
-	char frame_interval[USBG_MAX_PATH_LENGTH];
 	char frame_name[32];
+	unsigned nmb;
+	int ret;
 
-	nmb = snprintf(frame_name, sizeof(frame_name), "%dp", attrs->height);
+	nmb = snprintf(frame_name, sizeof(frame_name), "frame.%d", attrs->bFrameIndex);
 	if (nmb >= sizeof(frame_name))
 		return USBG_ERROR_PATH_TOO_LONG;
 
@@ -196,30 +851,43 @@ static int uvc_set_frame(char *format_path, char *format, const struct usbg_f_uv
 	if (ret != USBG_SUCCESS)
 		return ret;
 
-	ret = usbg_write_string(frame_path, frame_name, "dwFrameInterval", attrs->dwFrameInterval);
+	ret = usbg_write_dec(frame_path, frame_name, "dwFrameInterval", attrs->dwFrameInterval);
 	if (ret != USBG_SUCCESS)
 		return ret;
 
-	ret = usbg_write_dec(frame_path, frame_name, "wHeight", attrs->height);
+	ret = usbg_write_dec(frame_path, frame_name, "dwMaxVideoFrameBufferSize", attrs->wHeight * attrs->wWidth);
 	if (ret != USBG_SUCCESS)
 		return ret;
 
-	return usbg_write_dec(frame_path, frame_name, "wWidth", attrs->width);
+	ret = usbg_write_dec(frame_path, frame_name, "wHeight", attrs->wHeight);
+	if (ret != USBG_SUCCESS)
+		return ret;
+
+	return usbg_write_dec(frame_path, frame_name, "wWidth", attrs->wWidth);
 }
 
-static int uvc_set_streaming(char *func_path, const struct usbg_f_uvc_format_attrs *attrs)
+static int uvc_set_streaming(char *func_path, const char *format, const struct usbg_f_uvc_format_attrs *attrs)
 {
+	struct usbg_f_uvc_frame_attrs **frame_attrs;
 	char streaming_path[USBG_MAX_PATH_LENGTH];
-	int ret, nmb;
+	unsigned nmb;
+	int ret, i;
 
 	nmb = snprintf(streaming_path, sizeof(streaming_path), "%s/" UVC_PATH_STREAMING, func_path);
 	if (nmb >= sizeof(streaming_path))
 		return USBG_ERROR_PATH_TOO_LONG;
 
-	if (attrs->format == UVC_FORMAT_UNCOMPRESSED)
-		ret = uvc_set_frame(streaming_path, UVC_PATH_STREAMING_UNCOMPRESSED, attrs);
-	else
-		ret = uvc_set_frame(streaming_path, UVC_PATH_STREAMING_MJPEG, attrs);
+	for(frame_attrs = attrs->frames, i = 0; frame_attrs[i]; ++i) {
+		if (frame_attrs[i]) {
+			ret = uvc_set_frame(streaming_path, format, frame_attrs[i]);
+			if(ret != USBG_SUCCESS)
+				ERROR("Error: %d", ret);
+		}
+	}
+
+	ret = uvc_set_format(streaming_path, format, attrs);
+	if(ret != USBG_SUCCESS)
+		ERROR("Error: %d", ret);
 
 	return ret;
 }
@@ -289,8 +957,9 @@ static int uvc_remove(struct usbg_function *f, int opts)
 	usbg_f_uvc *uvcf = usbg_to_uvc_function(f);
 	char streaming_path[USBG_MAX_PATH_LENGTH];
 	char control_path[USBG_MAX_PATH_LENGTH];
-	char path[USBG_UVC_MAX_PATH_LENGTH];
-	int nmb, ret = USBG_SUCCESS;
+	char path[USBG_MAX_PATH_LENGTH];
+	int ret = USBG_SUCCESS;
+	unsigned nmb;
 
 	nmb = snprintf(path, sizeof(path), "%s/%s", uvcf->func.path, uvcf->func.name);
 	if (nmb >= sizeof(path))
@@ -316,7 +985,7 @@ static int uvc_remove(struct usbg_function *f, int opts)
 	if(remove_dir(control_path) < 0)
 		return USBG_ERROR_PATH_TOO_LONG;
 
-	return 0;
+	return ret;
 };
 
 struct usbg_function_type usbg_f_type_uvc = {
@@ -326,8 +995,10 @@ struct usbg_function_type usbg_f_type_uvc = {
 	.set_attrs = uvc_set_attrs,
 	.get_attrs = uvc_get_attrs,
 	.cleanup_attrs = uvc_cleanup_attrs,
+#ifdef HAS_GADGET_SCHEMES
 	.import = uvc_libconfig_import,
 	.export = uvc_libconfig_export,
+#endif
 	.remove = uvc_remove,
 };
 
@@ -351,26 +1022,30 @@ int usbg_f_uvc_get_attrs(usbg_f_uvc *uvcf, struct usbg_f_uvc_attrs *attrs)
 
 int usbg_f_uvc_set_attrs(usbg_f_uvc *uvcf, const struct usbg_f_uvc_attrs *attrs)
 {
-	int nmb, ret = USBG_SUCCESS;
-	char path[USBG_UVC_MAX_PATH_LENGTH];
+	char path[USBG_MAX_PATH_LENGTH];
 	struct usbg_f_uvc_format_attrs **format_attrs;
+	int ret = USBG_SUCCESS;
+	unsigned nmb;
 	int i;
+
+	if (!attrs)
+		return USBG_ERROR_INVALID_PARAM;
 
 	nmb = snprintf(path, sizeof(path), "%s/%s", uvcf->func.path, uvcf->func.name);
 	if (nmb >= sizeof(path))
 		return USBG_ERROR_PATH_TOO_LONG;
 
 	for(format_attrs = attrs->formats, i = 0; format_attrs[i]; ++i) {
-		ret = uvc_set_streaming(path, format_attrs[i]);
+		ret = uvc_set_streaming(path, format_attrs[i]->format, format_attrs[i]);
 		if(ret != USBG_SUCCESS)
 			ERROR("Error: %d", ret);
 	}
 
-	ret = uvc_set_class(path, "control");
+	ret = uvc_set_class(uvcf, UVC_PATH_CONTROL);
 	if (ret != USBG_SUCCESS)
 		return ret;
 
-	ret = uvc_set_class(path, "streaming");
+	ret = uvc_set_class(uvcf, UVC_PATH_STREAMING);
 	if (ret != USBG_SUCCESS)
 		return ret;
 
