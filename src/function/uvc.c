@@ -96,6 +96,8 @@ static int uvc_create_dir(const char *path)
 
 	if((mkdir(tmp, S_IRWXU | S_IRWXG | S_IRWXO) != 0) && errno != EEXIST)
 		return usbg_translate_error(errno);
+
+	return ret;
 }
 
 static int uvc_link(char *path, char *to, char *from)
@@ -118,9 +120,10 @@ static int uvc_link(char *path, char *to, char *from)
 
 static int uvc_set_class(char *func_path, char *cs)
 {
-	int ret, nmb;
 	char path[USBG_MAX_PATH_LENGTH];
 	char header_path[USBG_MAX_PATH_LENGTH];
+	unsigned nmb;
+	int ret;
 
 	nmb = snprintf(path, sizeof(path), "%s/%s", func_path, cs);
 	if (nmb >= sizeof(path))
@@ -174,11 +177,12 @@ static int uvc_set_class(char *func_path, char *cs)
 
 static int uvc_set_frame(char *format_path, char *format, const struct usbg_f_uvc_format_attrs *attrs)
 {
-	int nmb, ret, i;
 	char frame_path[USBG_MAX_PATH_LENGTH];
 	char full_frame_path[USBG_MAX_PATH_LENGTH];
 	char frame_interval[USBG_MAX_PATH_LENGTH];
 	char frame_name[32];
+	unsigned nmb;
+	int ret;
 
 	nmb = snprintf(frame_name, sizeof(frame_name), "%dp", attrs->height);
 	if (nmb >= sizeof(frame_name))
@@ -210,7 +214,8 @@ static int uvc_set_frame(char *format_path, char *format, const struct usbg_f_uv
 static int uvc_set_streaming(char *func_path, const struct usbg_f_uvc_format_attrs *attrs)
 {
 	char streaming_path[USBG_MAX_PATH_LENGTH];
-	int ret, nmb;
+	unsigned nmb;
+	int ret;
 
 	nmb = snprintf(streaming_path, sizeof(streaming_path), "%s/" UVC_PATH_STREAMING, func_path);
 	if (nmb >= sizeof(streaming_path))
@@ -290,7 +295,8 @@ static int uvc_remove(struct usbg_function *f, int opts)
 	char streaming_path[USBG_MAX_PATH_LENGTH];
 	char control_path[USBG_MAX_PATH_LENGTH];
 	char path[USBG_UVC_MAX_PATH_LENGTH];
-	int nmb, ret = USBG_SUCCESS;
+	int ret = USBG_SUCCESS;
+	unsigned nmb;
 
 	nmb = snprintf(path, sizeof(path), "%s/%s", uvcf->func.path, uvcf->func.name);
 	if (nmb >= sizeof(path))
@@ -316,7 +322,7 @@ static int uvc_remove(struct usbg_function *f, int opts)
 	if(remove_dir(control_path) < 0)
 		return USBG_ERROR_PATH_TOO_LONG;
 
-	return 0;
+	return ret;
 };
 
 struct usbg_function_type usbg_f_type_uvc = {
@@ -351,9 +357,10 @@ int usbg_f_uvc_get_attrs(usbg_f_uvc *uvcf, struct usbg_f_uvc_attrs *attrs)
 
 int usbg_f_uvc_set_attrs(usbg_f_uvc *uvcf, const struct usbg_f_uvc_attrs *attrs)
 {
-	int nmb, ret = USBG_SUCCESS;
 	char path[USBG_UVC_MAX_PATH_LENGTH];
 	struct usbg_f_uvc_format_attrs **format_attrs;
+	int ret = USBG_SUCCESS;
+	unsigned nmb;
 	int i;
 
 	nmb = snprintf(path, sizeof(path), "%s/%s", uvcf->func.path, uvcf->func.name);
