@@ -127,8 +127,8 @@ int usbg_f_net_set_attr_val(usbg_f_net *nf, enum usbg_f_net_attr attr,
 static inline int usbg_f_net_get_dev_addr(usbg_f_net *nf,
 					  struct ether_addr *addr)
 {
-	return usbg_f_net_get_attr_val(nf, USBG_F_NET_DEV_ADDR,
-				      &USBG_F_NET_ETHER_ADDR_TO_ATTR_VAL(*addr));
+	union usbg_f_net_attr_val val = { .dev_addr = *addr, };
+	return usbg_f_net_get_attr_val(nf, USBG_F_NET_DEV_ADDR, &val);
 }
 
 /**
@@ -153,8 +153,8 @@ static inline int usbg_f_net_set_dev_addr(usbg_f_net *nf,
 static inline int usbg_f_net_get_host_addr(usbg_f_net *nf,
 					   struct ether_addr *addr)
 {
-	return usbg_f_net_get_attr_val(nf, USBG_F_NET_HOST_ADDR,
-				      &USBG_F_NET_ETHER_ADDR_TO_ATTR_VAL(*addr));
+	union usbg_f_net_attr_val val = { .host_addr = *addr, };
+	return usbg_f_net_get_attr_val(nf, USBG_F_NET_HOST_ADDR, &val);
 }
 
 /**
