@@ -164,8 +164,7 @@ int init_frames(struct usbg_f_uvc *uvc, int j)
 {
 	struct dirent **dent;
 	char fpath[USBG_MAX_PATH_LENGTH];
-	unsigned nmb, i, id;
-	int ret = 0;
+	int nmb, i, id, ret = 0;
 
 	nmb = snprintf(fpath, sizeof(fpath), "%s/%s/" UVC_PATH_STREAMING "/%s/",
 		       uvc->func.path, uvc->func.name, format_names[j]);
@@ -256,7 +255,7 @@ int usbg_f_uvc_get_frame_attr_val(usbg_f_uvc *uvcf, const char* format, int fram
 			       union usbg_f_uvc_frame_attr_val *val)
 {
 	char fpath[USBG_MAX_PATH_LENGTH];
-	unsigned nmb;
+	int nmb;
 
 	nmb = snprintf(fpath, sizeof(fpath), "%s/%s/" UVC_PATH_STREAMING "/%s/frame.%d/",
 		       uvcf->func.path, uvcf->func.name, format, frame_id);
@@ -272,7 +271,7 @@ int usbg_f_uvc_set_frame_attr_val(usbg_f_uvc *uvcf, const char* format, int fram
 			       union usbg_f_uvc_frame_attr_val val)
 {
 	char fpath[USBG_MAX_PATH_LENGTH];
-	unsigned nmb;
+	int nmb;
 
 	nmb = snprintf(fpath, sizeof(fpath), "%s/%s/" UVC_PATH_STREAMING "/%s/frame.%d/",
 		       uvcf->func.path, uvcf->func.name, format, frame_id);
@@ -326,7 +325,7 @@ int usbg_f_uvc_get_format_attr_val(usbg_f_uvc *uvcf, const char* format,
 			       union usbg_f_uvc_format_attr_val *val)
 {
 	char fpath[USBG_MAX_PATH_LENGTH];
-	unsigned nmb;
+	int nmb;
 
 	nmb = snprintf(fpath, sizeof(fpath), "%s/%s/" UVC_PATH_STREAMING "/%s/",
 		       uvcf->func.path, uvcf->func.name, format);
@@ -342,7 +341,7 @@ int usbg_f_uvc_set_format_attr_val(usbg_f_uvc *uvcf, const char* format,
 			       union usbg_f_uvc_format_attr_val val)
 {
 	char fpath[USBG_MAX_PATH_LENGTH];
-	unsigned nmb;
+	int nmb;
 
 	nmb = snprintf(fpath, sizeof(fpath), "%s/%s/" UVC_PATH_STREAMING "/%s/",
 		       uvcf->func.path, uvcf->func.name, format);
@@ -392,9 +391,8 @@ int usbg_f_uvc_set_format_attrs(usbg_f_uvc *uvcf, const char* format,
 static int uvc_create_dir(const char *path)
 {
 	char tmp[USBG_MAX_PATH_LENGTH];
-	int ret = USBG_SUCCESS;
+	int nmb, ret = USBG_SUCCESS;
 	char *p = NULL;
-	unsigned nmb;
 	size_t len;
 
 	nmb = snprintf(tmp, sizeof(tmp), "%s", path);
@@ -429,7 +427,7 @@ static int uvc_link(char *path, char *to, char *from)
 	char oldname[USBG_MAX_PATH_LENGTH];
 	char newname[USBG_MAX_PATH_LENGTH];
 	int ret = USBG_SUCCESS;
-	unsigned nmb;
+	int nmb;
 
 	nmb = snprintf(oldname, sizeof(oldname), "%s/%s", path, to);
 	if (nmb >= sizeof(oldname))
@@ -449,7 +447,7 @@ static int uvc_set_class(usbg_f_uvc *uvcf, char *cs)
 {
 	char path[USBG_MAX_PATH_LENGTH];
 	char header_path[USBG_MAX_PATH_LENGTH];
-	unsigned nmb;
+	int nmb;
 	int ret;
 
 	nmb = snprintf(path, sizeof(path), "%s/%s/%s", uvcf->func.path, uvcf->func.name, cs);
@@ -522,7 +520,7 @@ int usbg_f_uvc_create_frame(usbg_f_uvc *uvcf, const char* format, bool *frames,
 			 int frame_id, struct usbg_f_uvc_frame_attrs *fattrs)
 {
 	char frame_path[USBG_MAX_PATH_LENGTH];
-	unsigned nmb;
+	int nmb;
 	int ret;
 
 	if (frame_id >= MAX_FRAMES)
@@ -652,8 +650,7 @@ static int uvc_libconfig_import(struct usbg_function *f, config_setting_t *root)
 {
 	struct usbg_f_uvc *uvcf = usbg_to_uvc_function(f);
 	config_setting_t *formats_node, *node;
-	int ret, i, nformats;
-	unsigned nmb;
+	int nmb, ret, i, nformats;
 	char fp[USBG_MAX_PATH_LENGTH];
 	const char *format;
 	struct formats *formats;
@@ -832,8 +829,7 @@ static int uvc_set_frame(char *format_path, const char *format, const struct usb
 	char frame_path[USBG_MAX_PATH_LENGTH];
 	char full_frame_path[USBG_MAX_PATH_LENGTH];
 	char frame_name[32];
-	unsigned nmb;
-	int ret;
+	int nmb, ret;
 
 	nmb = snprintf(frame_name, sizeof(frame_name), "frame.%d", attrs->bFrameIndex);
 	if (nmb >= sizeof(frame_name))
@@ -870,8 +866,7 @@ static int uvc_set_streaming(char *func_path, const char *format, const struct u
 {
 	struct usbg_f_uvc_frame_attrs **frame_attrs;
 	char streaming_path[USBG_MAX_PATH_LENGTH];
-	unsigned nmb;
-	int ret, i;
+	int nmb, ret, i;
 
 	nmb = snprintf(streaming_path, sizeof(streaming_path), "%s/" UVC_PATH_STREAMING, func_path);
 	if (nmb >= sizeof(streaming_path))
@@ -958,8 +953,7 @@ static int uvc_remove(struct usbg_function *f, int opts)
 	char streaming_path[USBG_MAX_PATH_LENGTH];
 	char control_path[USBG_MAX_PATH_LENGTH];
 	char path[USBG_MAX_PATH_LENGTH];
-	int ret = USBG_SUCCESS;
-	unsigned nmb;
+	int nmb, ret = USBG_SUCCESS;
 
 	nmb = snprintf(path, sizeof(path), "%s/%s", uvcf->func.path, uvcf->func.name);
 	if (nmb >= sizeof(path))
@@ -1025,8 +1019,7 @@ int usbg_f_uvc_set_attrs(usbg_f_uvc *uvcf, const struct usbg_f_uvc_attrs *attrs)
 	char path[USBG_MAX_PATH_LENGTH];
 	struct usbg_f_uvc_format_attrs **format_attrs;
 	int ret = USBG_SUCCESS;
-	unsigned nmb;
-	int i;
+	int nmb, i;
 
 	if (!attrs)
 		return USBG_ERROR_INVALID_PARAM;
