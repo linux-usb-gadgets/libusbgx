@@ -173,8 +173,8 @@ int init_frames(struct usbg_f_uvc *uvc, int j)
 		return ret;
 	}
 
-	ret = scandir(fpath, &dent, frame_select, frame_sort);
-	if (ret < 0) {
+	nmb = scandir(fpath, &dent, frame_select, frame_sort);
+	if (nmb < 0) {
 		ret = usbg_translate_error(errno);
 		return ret;
 	}
