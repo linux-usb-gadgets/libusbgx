@@ -22,6 +22,14 @@ extern "C" {
 struct usbg_f_uvc;
 typedef struct usbg_f_uvc usbg_f_uvc;
 
+struct usbg_f_uvc_config_attrs
+{
+	int streaming_maxburst;
+	int streaming_maxpacket;
+	int streaming_interval;
+	const char *function_name;
+};
+
 struct usbg_f_uvc_frame_attrs
 {
 	int bFrameIndex;
@@ -52,6 +60,15 @@ struct usbg_f_uvc_attrs
 	struct usbg_f_uvc_format_attrs **formats;
 };
 
+enum usbg_f_uvc_config_attr {
+	USBG_F_UVC_CONFIG_ATTR_MIN = 0,
+	USBG_F_UVC_CONFIG_MAXBURST = USBG_F_UVC_CONFIG_ATTR_MIN,
+	USBG_F_UVC_CONFIG_MAXPACKET,
+	USBG_F_UVC_CONFIG_INTERVAL,
+	USBG_F_UVC_CONFIG_FUNCTION_NAME,
+	USBG_F_UVC_CONFIG_ATTR_MAX
+};
+
 enum usbg_f_uvc_frame_attr {
 	USBG_F_UVC_FRAME_ATTR_MIN = 0,
 	USBG_F_UVC_FRAME_INDEX = USBG_F_UVC_FRAME_ATTR_MIN,
@@ -77,6 +94,12 @@ enum usbg_f_uvc_format_attr {
 	USBG_F_UVC_FORMAT_ATTR_MAX
 };
 
+union usbg_f_uvc_config_attr_val {
+	int streaming_maxburst;
+	int streaming_maxpacket;
+	int streaming_interval;
+	const char *function_name;
+};
 
 union usbg_f_uvc_frame_attr_val {
 	int bmCapabilities;
