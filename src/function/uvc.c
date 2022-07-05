@@ -725,6 +725,9 @@ static int uvc_export_format_attrs(struct usbg_f_uvc *uvcf, const char *format,
 			break;
 	}
 
+	if (ret == USBG_ERROR_NOT_FOUND)
+		ret = 0;
+
 	return ret;
 }
 
@@ -744,6 +747,9 @@ static int uvc_export_frame_attrs(struct usbg_f_uvc *uvcf, const char *format,
 		if (ret)
 			break;
 	}
+
+	if (ret == USBG_ERROR_NOT_FOUND)
+		ret = 0;
 
 	return ret;
 }
