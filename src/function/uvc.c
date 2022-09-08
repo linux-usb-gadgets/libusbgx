@@ -55,6 +55,42 @@ struct usbg_f_uvc
 #define UVC_DEC_ATTR(_name)						\
 	{								\
 		.name = #_name,						\
+		.offset = offsetof(struct usbg_f_uvc_config_attrs, _name),     \
+		.get = usbg_get_dec,				        \
+		.set = usbg_set_dec,				        \
+		.import = usbg_get_config_node_int,	                \
+		.export = usbg_set_config_node_int,		        \
+	}
+
+#define UVC_STRING_ATTR(_name)					\
+	{								\
+		.name = #_name,						\
+		.offset = offsetof(struct usbg_f_uvc_config_attrs, _name),     \
+		.get = usbg_get_string,				        \
+		.set = usbg_set_string,				        \
+		.export = usbg_set_config_node_string,		        \
+		.import = usbg_get_config_node_string,	                \
+	}
+
+struct {
+	const char *name;
+	size_t offset;
+	usbg_attr_get_func get;
+	usbg_attr_set_func set;
+	usbg_import_node_func import;
+	usbg_export_node_func export;
+} uvc_config_attr[USBG_F_UVC_CONFIG_ATTR_MAX] = {
+	[USBG_F_UVC_CONFIG_MAXBURST] = UVC_DEC_ATTR(streaming_maxburst),
+	[USBG_F_UVC_CONFIG_MAXPACKET] = UVC_DEC_ATTR(streaming_maxpacket),
+	[USBG_F_UVC_CONFIG_INTERVAL] = UVC_DEC_ATTR(streaming_interval),
+	[USBG_F_UVC_CONFIG_FUNCTION_NAME] = UVC_STRING_ATTR(function_name),
+};
+
+#undef UVC_DEC_ATTR
+
+#define UVC_DEC_ATTR(_name)						\
+	{								\
+		.name = #_name,						\
 		.offset = offsetof(struct usbg_f_uvc_frame_attrs, _name),     \
 		.get = usbg_get_dec,				        \
 		.set = usbg_set_dec,				        \
@@ -173,8 +209,8 @@ int init_frames(struct usbg_f_uvc *uvc, int j)
 		return ret;
 	}
 
-	ret = scandir(fpath, &dent, frame_select, frame_sort);
-	if (ret < 0) {
+	nmb = scandir(fpath, &dent, frame_select, frame_sort);
+	if (nmb < 0) {
 		ret = usbg_translate_error(errno);
 		return ret;
 	}
@@ -248,6 +284,71 @@ static int uvc_get_attrs(struct usbg_function *f, void *f_attrs)
 static void uvc_cleanup_attrs(struct usbg_function *f, void *f_attrs)
 {
 	return usbg_f_uvc_cleanup_attrs(f_attrs);
+}
+
+int usbg_f_uvc_get_config_attr_val(usbg_f_uvc *uvcf, enum usbg_f_uvc_config_attr iattr,
+			       union usbg_f_uvc_config_attr_val *val)
+{
+	char ipath[USBG_MAX_PATH_LENGTH];
+	int nmb;
+
+	nmb = snprintf(ipath, sizeof(ipath), "%s/%s/",
+		       uvcf->func.path, uvcf->func.name);
+	if (nmb >= sizeof(ipath))
+		return USBG_ERROR_PATH_TOO_LONG;
+
+
+	return uvc_config_attr[iattr].get(ipath, "",
+				    uvc_config_attr[iattr].name, val);
+}
+
+int usbg_f_uvc_set_config_attr_val(usbg_f_uvc *uvcf, enum usbg_f_uvc_config_attr iattr,
+			       union usbg_f_uvc_config_attr_val val)
+{
+	char ipath[USBG_MAX_PATH_LENGTH];
+	int nmb;
+
+	nmb = snprintf(ipath, sizeof(ipath), "%s/%s/",
+		       uvcf->func.path, uvcf->func.name);
+	if (nmb >= sizeof(ipath))
+		return USBG_ERROR_PATH_TOO_LONG;
+
+	return uvc_config_attr[iattr].set(ipath, "",
+				       uvc_config_attr[iattr].name, &val);
+}
+
+int usbg_f_uvc_get_config_attrs(usbg_f_uvc *uvcf, struct usbg_f_uvc_config_attrs *iattrs)
+{
+	int i;
+	int ret = 0;
+
+	for (i = USBG_F_UVC_CONFIG_ATTR_MIN; i < USBG_F_UVC_CONFIG_ATTR_MAX; ++i) {
+		ret = usbg_f_uvc_get_config_attr_val(uvcf, i,
+					       (union usbg_f_uvc_config_attr_val *)
+					       ((char *)iattrs
+						+ uvc_config_attr[i].offset));
+		if (ret)
+			break;
+	}
+
+	return ret;
+}
+
+int usbg_f_uvc_set_config_attrs(usbg_f_uvc *uvcf, const struct usbg_f_uvc_config_attrs *iattrs)
+{
+	int i;
+	int ret = 0;
+
+	for (i = USBG_F_UVC_FRAME_ATTR_MIN; i < USBG_F_UVC_FRAME_ATTR_MAX; ++i) {
+		ret = usbg_f_uvc_set_config_attr_val(uvcf, i,
+					       *(union usbg_f_uvc_config_attr_val *)
+					       ((char *)iattrs
+						+ uvc_config_attr[i].offset));
+		if (ret)
+			break;
+	}
+
+	return ret;
 }
 
 int usbg_f_uvc_get_frame_attr_val(usbg_f_uvc *uvcf, const char* format, int frame_id,
@@ -646,6 +747,41 @@ out:
 	return ret;
 };
 
+static int uvc_import_config(struct usbg_f_uvc *uvcf, config_setting_t *root)
+{
+	union usbg_f_uvc_config_attr_val val;
+	config_setting_t *config_node;
+	int ret = 0;
+	int i;
+
+	config_node = config_setting_get_member(root, "config");
+	if (!config_node) {
+		ret = USBG_ERROR_INVALID_PARAM;
+		return ret;
+	}
+
+	if (!config_setting_is_group(config_node)) {
+		ret = USBG_ERROR_INVALID_TYPE;
+		return ret;
+	}
+
+	for (i = USBG_F_UVC_CONFIG_ATTR_MIN; i < USBG_F_UVC_CONFIG_ATTR_MAX; ++i) {
+		ret = uvc_config_attr[i].import(config_node, uvc_config_attr[i].name, &val);
+		/* node not  found */
+		if (ret == 0)
+			continue;
+		/* error */
+		if (ret < 0)
+			break;
+
+		ret = usbg_f_uvc_set_config_attr_val(uvcf, i, val);
+		if (ret)
+			break;
+	}
+
+	return ret;
+}
+
 static int uvc_libconfig_import(struct usbg_function *f, config_setting_t *root)
 {
 	struct usbg_f_uvc *uvcf = usbg_to_uvc_function(f);
@@ -695,6 +831,10 @@ static int uvc_libconfig_import(struct usbg_function *f, config_setting_t *root)
 			goto out;
 	}
 
+	ret = uvc_import_config(uvcf, root);
+	if (ret != USBG_SUCCESS)
+		return ret;
+
 	ret = uvc_set_class(uvcf, UVC_PATH_CONTROL);
 	if (ret != USBG_SUCCESS)
 		return ret;
@@ -707,6 +847,31 @@ out:
 	return ret;
 
 }
+
+static int uvc_export_config(struct usbg_f_uvc *uvcf, config_setting_t *root)
+{
+	config_setting_t *config_node;
+	union usbg_f_uvc_config_attr_val val;
+	int i;
+	int ret = 0;
+
+	config_node = config_setting_add(root, "config", CONFIG_TYPE_GROUP);
+	if (!config_node)
+		goto out;
+
+	for (i = USBG_F_UVC_CONFIG_ATTR_MIN; i < USBG_F_UVC_CONFIG_ATTR_MAX; ++i) {
+		ret = usbg_f_uvc_get_config_attr_val(uvcf, i, &val);
+		if (ret)
+			break;
+
+		ret = uvc_config_attr[i].export(config_node, uvc_config_attr[i].name, &val);
+		if (ret)
+			break;
+	}
+
+out:
+	return ret;
+};
 
 static int uvc_export_format_attrs(struct usbg_f_uvc *uvcf, const char *format,
 				  config_setting_t *root)
@@ -724,6 +889,9 @@ static int uvc_export_format_attrs(struct usbg_f_uvc *uvcf, const char *format,
 		if (ret)
 			break;
 	}
+
+	if (ret == USBG_ERROR_NOT_FOUND)
+		ret = 0;
 
 	return ret;
 }
@@ -744,6 +912,9 @@ static int uvc_export_frame_attrs(struct usbg_f_uvc *uvcf, const char *format,
 		if (ret)
 			break;
 	}
+
+	if (ret == USBG_ERROR_NOT_FOUND)
+		ret = 0;
 
 	return ret;
 }
@@ -812,6 +983,8 @@ static int uvc_libconfig_export(struct usbg_function *f, config_setting_t *root)
 		if (ret)
 			goto out;
 	}
+
+	ret = uvc_export_config(uvcf, root);
 
 out:
 	return ret;
