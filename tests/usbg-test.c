@@ -1067,6 +1067,18 @@ static void push_net_attrs(struct test_function *func,
 	safe_asprintf(&path, "%s/%s/qmult", func->path, func->name);
 	safe_asprintf(&content, "%d\n", attrs->qmult);
 	PUSH_FILE_STR(path, content);
+
+	safe_asprintf(&path, "%s/%s/class", func->path, func->name);
+	safe_asprintf(&content, "%d\n", attrs->class);
+	PUSH_FILE_STR(path, content);
+
+	safe_asprintf(&path, "%s/%s/subclass", func->path, func->name);
+	safe_asprintf(&content, "%d\n", attrs->subclass);
+	PUSH_FILE_STR(path, content);
+
+	safe_asprintf(&path, "%s/%s/protocol", func->path, func->name);
+	safe_asprintf(&content, "%d\n", attrs->protocol);
+	PUSH_FILE_STR(path, content);
 }
 
 static void push_phonet_attrs(struct test_function *func,
@@ -1127,6 +1139,18 @@ static void pull_function_net_attrs(struct test_function *func,
 
 	safe_asprintf(&path, "%s/%s/qmult", func->path, func->name);
 	safe_asprintf(&content, "%d\n", attrs->qmult);
+	EXPECT_WRITE_STR(path, content);
+
+	safe_asprintf(&path, "%s/%s/class", func->path, func->name);
+	safe_asprintf(&content, "%d\n", attrs->class);
+	EXPECT_WRITE_STR(path, content);
+
+	safe_asprintf(&path, "%s/%s/subclass", func->path, func->name);
+	safe_asprintf(&content, "%d\n", attrs->subclass);
+	EXPECT_WRITE_STR(path, content);
+
+	safe_asprintf(&path, "%s/%s/protocol", func->path, func->name);
+	safe_asprintf(&content, "%d\n", attrs->protocol);
 	EXPECT_WRITE_STR(path, content);
 }
 
@@ -1317,6 +1341,9 @@ void assert_f_net_attrs_equal(struct usbg_f_net_attrs *actual,
 	assert_ether_addrs_equal(&actual->host_addr, &expected->host_addr);
 	assert_string_equal(actual->ifname, expected->ifname);
 	assert_int_equal(actual->qmult, expected->qmult);
+	assert_int_equal(actual->class, expected->class);
+	assert_int_equal(actual->subclass, expected->subclass);
+	assert_int_equal(actual->protocol, expected->protocol);
 }
 
 void assert_f_phonet_attrs_equal(char  **actual, char **expected)
