@@ -67,6 +67,9 @@ static struct {
 	[USBG_F_NET_HOST_ADDR] = NET_ETHER_ADDR_ATTR(host_addr),
 	[USBG_F_NET_IFNAME] = NET_RO_STRING_ATTR(ifname),
 	[USBG_F_NET_QMULT] = NET_DEC_ATTR(qmult),
+	[USBG_F_NET_CLASS] = NET_DEC_ATTR(class),
+	[USBG_F_NET_SUBCLASS] = NET_DEC_ATTR(subclass),
+	[USBG_F_NET_PROTOCOL] = NET_DEC_ATTR(protocol)
 };
 
 #undef NET_DEC_ATTR
