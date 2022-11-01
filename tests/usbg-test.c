@@ -1069,7 +1069,7 @@ static void push_net_attrs(struct test_function *func,
 	PUSH_FILE_STR(path, content);
 
 	safe_asprintf(&path, "%s/%s/class", func->path, func->name);
-	safe_asprintf(&content, "%d\n", attrs->class);
+	safe_asprintf(&content, "%d\n", attrs->class_);
 	PUSH_FILE_STR(path, content);
 
 	safe_asprintf(&path, "%s/%s/subclass", func->path, func->name);
@@ -1142,7 +1142,7 @@ static void pull_function_net_attrs(struct test_function *func,
 	EXPECT_WRITE_STR(path, content);
 
 	safe_asprintf(&path, "%s/%s/class", func->path, func->name);
-	safe_asprintf(&content, "%d\n", attrs->class);
+	safe_asprintf(&content, "%d\n", attrs->class_);
 	EXPECT_WRITE_STR(path, content);
 
 	safe_asprintf(&path, "%s/%s/subclass", func->path, func->name);
@@ -1341,7 +1341,7 @@ void assert_f_net_attrs_equal(struct usbg_f_net_attrs *actual,
 	assert_ether_addrs_equal(&actual->host_addr, &expected->host_addr);
 	assert_string_equal(actual->ifname, expected->ifname);
 	assert_int_equal(actual->qmult, expected->qmult);
-	assert_int_equal(actual->class, expected->class);
+	assert_int_equal(actual->class_, expected->class_);
 	assert_int_equal(actual->subclass, expected->subclass);
 	assert_int_equal(actual->protocol, expected->protocol);
 }
