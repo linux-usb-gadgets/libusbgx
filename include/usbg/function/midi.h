@@ -126,7 +126,7 @@ int usbg_f_midi_get_attr_val(usbg_f_midi *mf, enum usbg_f_midi_attr attr,
  * @return 0 on success usbg_error if error occurred.
  */
 int usbg_f_midi_set_attr_val(usbg_f_midi *mf, enum usbg_f_midi_attr attr,
-			    union usbg_f_midi_attr_val val);
+			    const union usbg_f_midi_attr_val *val);
 
 /**
  * @brief Get the index value of MIDI adapter
@@ -149,7 +149,7 @@ static inline int usbg_f_midi_get_index(usbg_f_midi *mf, int *index)
 static inline int usbg_f_midi_set_index(usbg_f_midi *mf, int index)
 {
 	return usbg_f_midi_set_attr_val(mf, USBG_F_MIDI_INDEX,
-					USBG_F_MIDI_INT_TO_ATTR_VAL(index));
+					&USBG_F_MIDI_INT_TO_ATTR_VAL(index));
 }
 
 /**
@@ -189,7 +189,7 @@ int usbg_f_midi_get_id_s(usbg_f_midi *mf, char *buf, int len);
 static inline int usbg_f_midi_set_id(usbg_f_midi *mf, const char *id)
 {
 	return usbg_f_midi_set_attr_val(mf, USBG_F_MIDI_ID,
-					USBG_F_MIDI_CCHAR_PTR_TO_ATTR_VAL(id));
+					&USBG_F_MIDI_CCHAR_PTR_TO_ATTR_VAL(id));
 }
 
 /**
@@ -213,7 +213,7 @@ static inline int usbg_f_midi_get_in_ports(usbg_f_midi *mf, unsigned *in_ports)
 static inline int usbg_f_midi_set_in_ports(usbg_f_midi *mf, unsigned in_ports)
 {
 	return usbg_f_midi_set_attr_val(mf, USBG_F_MIDI_IN_PORTS,
-					USBG_F_MIDI_UINT_TO_ATTR_VAL(in_ports));
+					&USBG_F_MIDI_UINT_TO_ATTR_VAL(in_ports));
 }
 
 /**
@@ -237,7 +237,7 @@ static inline int usbg_f_midi_get_out_ports(usbg_f_midi *mf, unsigned *out_ports
 static inline int usbg_f_midi_set_out_ports(usbg_f_midi *mf, unsigned out_ports)
 {
 	return usbg_f_midi_set_attr_val(mf, USBG_F_MIDI_OUT_PORTS,
-					USBG_F_MIDI_UINT_TO_ATTR_VAL(out_ports));
+					&USBG_F_MIDI_UINT_TO_ATTR_VAL(out_ports));
 }
 
 /**
@@ -265,7 +265,7 @@ static inline int usbg_f_midi_get_buflen(usbg_f_midi *mf, int *buflen)
 static inline int usbg_f_midi_set_buflen(usbg_f_midi *mf, unsigned buflen)
 {
 	return usbg_f_midi_set_attr_val(mf, USBG_F_MIDI_BUFLEN,
-					USBG_F_MIDI_UINT_TO_ATTR_VAL(buflen));
+					&USBG_F_MIDI_UINT_TO_ATTR_VAL(buflen));
 }
 
 /**
@@ -289,7 +289,7 @@ static inline int usbg_f_midi_get_qlen(usbg_f_midi *mf, unsigned *qlen)
 static inline int usbg_f_midi_set_qlen(usbg_f_midi *mf, unsigned qlen)
 {
 	return usbg_f_midi_set_attr_val(mf, USBG_F_MIDI_QLEN,
-					USBG_F_MIDI_UINT_TO_ATTR_VAL(qlen));
+					&USBG_F_MIDI_UINT_TO_ATTR_VAL(qlen));
 }
 
 #ifdef __cplusplus

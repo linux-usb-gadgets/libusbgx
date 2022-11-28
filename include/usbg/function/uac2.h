@@ -115,7 +115,7 @@ int usbg_f_uac2_get_attr_val(usbg_f_uac2 *af, enum usbg_f_uac2_attr attr,
  * @return 0 on success usbg_error if error occurred.
  */
 int usbg_f_uac2_set_attr_val(usbg_f_uac2 *af, enum usbg_f_uac2_attr attr,
-			     union usbg_f_uac2_attr_val val);
+			     const union usbg_f_uac2_attr_val *val);
 
 /**
  * @brief Get the capture channel mask of UAC2 adapter
@@ -138,7 +138,7 @@ static inline int usbg_f_uac2_get_c_chmask(usbg_f_uac2 *af, int *c_chmask)
 static inline int usbg_f_uac2_set_c_chmask(usbg_f_uac2 *af, int c_chmask)
 {
 	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_C_CHMASK,
-					USBG_F_UAC2_INT_TO_ATTR_VAL(c_chmask));
+					&USBG_F_UAC2_INT_TO_ATTR_VAL(c_chmask));
 }
 
 /**
@@ -162,7 +162,7 @@ static inline int usbg_f_uac2_get_c_srate(usbg_f_uac2 *af, int *c_srate)
 static inline int usbg_f_uac2_set_c_srate(usbg_f_uac2 *af, int c_srate)
 {
 	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_C_SRATE,
-					USBG_F_UAC2_INT_TO_ATTR_VAL(c_srate));
+					&USBG_F_UAC2_INT_TO_ATTR_VAL(c_srate));
 }
 
 /**
@@ -186,7 +186,7 @@ static inline int usbg_f_uac2_get_c_ssize(usbg_f_uac2 *af, int *c_ssize)
 static inline int usbg_f_uac2_set_c_ssize(usbg_f_uac2 *af, int c_ssize)
 {
 	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_C_SSIZE,
-					USBG_F_UAC2_INT_TO_ATTR_VAL(c_ssize));
+					&USBG_F_UAC2_INT_TO_ATTR_VAL(c_ssize));
 }
 
 /**
@@ -210,7 +210,7 @@ static inline int usbg_f_uac2_get_p_chmask(usbg_f_uac2 *af, int *p_chmask)
 static inline int usbg_f_uac2_set_p_chmask(usbg_f_uac2 *af, int p_chmask)
 {
 	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_P_CHMASK,
-					USBG_F_UAC2_INT_TO_ATTR_VAL(p_chmask));
+					&USBG_F_UAC2_INT_TO_ATTR_VAL(p_chmask));
 }
 
 /**
@@ -234,7 +234,7 @@ static inline int usbg_f_uac2_get_p_srate(usbg_f_uac2 *af, int *p_srate)
 static inline int usbg_f_uac2_set_p_srate(usbg_f_uac2 *af, int p_srate)
 {
 	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_P_SRATE,
-					USBG_F_UAC2_INT_TO_ATTR_VAL(p_srate));
+					&USBG_F_UAC2_INT_TO_ATTR_VAL(p_srate));
 }
 
 /**
@@ -258,7 +258,7 @@ static inline int usbg_f_uac2_get_p_ssize(usbg_f_uac2 *af, int *p_ssize)
 static inline int usbg_f_uac2_set_p_ssize(usbg_f_uac2 *af, int p_ssize)
 {
 	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_P_SSIZE,
-					USBG_F_UAC2_INT_TO_ATTR_VAL(p_ssize));
+					&USBG_F_UAC2_INT_TO_ATTR_VAL(p_ssize));
 }
 
 #ifdef __cplusplus

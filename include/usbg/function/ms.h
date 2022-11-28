@@ -157,7 +157,7 @@ int usbg_f_ms_get_lun_attr_val(usbg_f_ms *mf, int lun_id,
  */
 int usbg_f_ms_set_lun_attr_val(usbg_f_ms *mf, int lun_id,
 			       enum usbg_f_ms_lun_attr lattr,
-			       const union usbg_f_ms_lun_attr_val val);
+			       const union usbg_f_ms_lun_attr_val *val);
 
 /**
  * @brief Get the value which determines if lun is visible as a cdrom
@@ -184,7 +184,7 @@ static inline int usbg_f_ms_set_lun_cdrom(usbg_f_ms *mf, int lun_id,
 					  bool cdrom)
 {
 	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_CDROM,
-					  USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(cdrom));
+					  &USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(cdrom));
 }
 
 /**
@@ -210,7 +210,7 @@ static inline int usbg_f_ms_get_lun_ro(usbg_f_ms *mf, int lun_id, bool *ro)
 static inline int usbg_f_ms_set_lun_ro(usbg_f_ms *mf, int lun_id, bool ro)
 {
 	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_RO,
-					  USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(ro));
+					  &USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(ro));
 }
 
 /**
@@ -240,7 +240,7 @@ static inline int usbg_f_ms_set_lun_nofua(usbg_f_ms *mf, int lun_id,
 				bool nofua)
 {
 	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_NOFUA,
-					  USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(nofua));
+					  &USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(nofua));
 }
 
 /**
@@ -268,7 +268,7 @@ static inline int usbg_f_ms_set_lun_removable(usbg_f_ms *mf, int lun_id,
 				bool removable)
 {
 	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_REMOVABLE,
-					  USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(removable));
+					  &USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(removable));
 }
 
 /**
@@ -314,7 +314,7 @@ static inline int usbg_f_ms_set_lun_file(usbg_f_ms *mf, int lun_id,
 			   const char *file)
 {
 	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_FILE,
-					  USBG_F_MS_LUN_CCHAR_PTR_TO_ATTR_VAL(file));
+					  &USBG_F_MS_LUN_CCHAR_PTR_TO_ATTR_VAL(file));
 }
 
 /**

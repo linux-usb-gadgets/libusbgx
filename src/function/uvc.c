@@ -303,7 +303,7 @@ int usbg_f_uvc_get_config_attr_val(usbg_f_uvc *uvcf, enum usbg_f_uvc_config_attr
 }
 
 int usbg_f_uvc_set_config_attr_val(usbg_f_uvc *uvcf, enum usbg_f_uvc_config_attr iattr,
-			       union usbg_f_uvc_config_attr_val val)
+			       const union usbg_f_uvc_config_attr_val *val)
 {
 	char ipath[USBG_MAX_PATH_LENGTH];
 	int nmb;
@@ -314,7 +314,7 @@ int usbg_f_uvc_set_config_attr_val(usbg_f_uvc *uvcf, enum usbg_f_uvc_config_attr
 		return USBG_ERROR_PATH_TOO_LONG;
 
 	return uvc_config_attr[iattr].set(ipath, "",
-				       uvc_config_attr[iattr].name, &val);
+				       uvc_config_attr[iattr].name, val);
 }
 
 int usbg_f_uvc_get_config_attrs(usbg_f_uvc *uvcf, struct usbg_f_uvc_config_attrs *iattrs)
@@ -341,8 +341,8 @@ int usbg_f_uvc_set_config_attrs(usbg_f_uvc *uvcf, const struct usbg_f_uvc_config
 
 	for (i = USBG_F_UVC_FRAME_ATTR_MIN; i < USBG_F_UVC_FRAME_ATTR_MAX; ++i) {
 		ret = usbg_f_uvc_set_config_attr_val(uvcf, i,
-					       *(union usbg_f_uvc_config_attr_val *)
-					       ((char *)iattrs
+					       (const union usbg_f_uvc_config_attr_val *)
+					       ((const char *)iattrs
 						+ uvc_config_attr[i].offset));
 		if (ret)
 			break;
@@ -774,7 +774,7 @@ static int uvc_import_config(struct usbg_f_uvc *uvcf, config_setting_t *root)
 		if (ret < 0)
 			break;
 
-		ret = usbg_f_uvc_set_config_attr_val(uvcf, i, val);
+		ret = usbg_f_uvc_set_config_attr_val(uvcf, i, &val);
 		if (ret)
 			break;
 	}

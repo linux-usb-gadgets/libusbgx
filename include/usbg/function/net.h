@@ -125,7 +125,7 @@ int usbg_f_net_get_attr_val(usbg_f_net *nf, enum usbg_f_net_attr attr,
  * @return 0 on success usbg_error if error occurred.
  */
 int usbg_f_net_set_attr_val(usbg_f_net *nf, enum usbg_f_net_attr attr,
-			    const union usbg_f_net_attr_val val);
+			    const union usbg_f_net_attr_val *val);
 
 /**
  * @brief Get the value of device side MAC address
@@ -150,7 +150,7 @@ static inline int usbg_f_net_set_dev_addr(usbg_f_net *nf,
 			     const struct ether_addr *addr)
 {
 	return usbg_f_net_set_attr_val(nf, USBG_F_NET_DEV_ADDR,
-				       USBG_F_NET_ETHER_ADDR_TO_ATTR_VAL(*addr));
+				       &USBG_F_NET_ETHER_ADDR_TO_ATTR_VAL(*addr));
 }
 
 /**
@@ -176,7 +176,7 @@ static inline int usbg_f_net_set_host_addr(usbg_f_net *nf,
 					   const struct ether_addr *addr)
 {
 	return usbg_f_net_set_attr_val(nf, USBG_F_NET_HOST_ADDR,
-				       USBG_F_NET_ETHER_ADDR_TO_ATTR_VAL(*addr));
+				       &USBG_F_NET_ETHER_ADDR_TO_ATTR_VAL(*addr));
 }
 
 /**
@@ -227,7 +227,7 @@ static inline int usbg_f_net_get_qmult(usbg_f_net *nf, int *qmult)
 static inline int usbg_f_net_set_qmult(usbg_f_net *nf, int qmult)
 {
 	return usbg_f_net_set_attr_val(nf, USBG_F_NET_QMULT,
-				       USBG_F_NET_INT_TO_ATTR_VAL(qmult));
+				       &USBG_F_NET_INT_TO_ATTR_VAL(qmult));
 }
 
 /**
@@ -251,7 +251,7 @@ static inline int usbg_f_net_get_class(usbg_f_net *nf, unsigned int *class_)
 static inline int usbg_f_net_set_class(usbg_f_net *nf, unsigned int class_)
 {
 	return usbg_f_net_set_attr_val(nf, USBG_F_NET_CLASS,
-				       USBG_F_NET_INT_TO_ATTR_VAL(class_));
+				       &USBG_F_NET_INT_TO_ATTR_VAL(class_));
 }
 
 /**
@@ -275,7 +275,7 @@ static inline int usbg_f_net_get_subclass(usbg_f_net *nf, int *subclass)
 static inline int usbg_f_net_set_subclass(usbg_f_net *nf, unsigned int subclass)
 {
 	return usbg_f_net_set_attr_val(nf, USBG_F_NET_SUBCLASS,
-				       USBG_F_NET_INT_TO_ATTR_VAL(subclass));
+				       &USBG_F_NET_INT_TO_ATTR_VAL(subclass));
 }
 
 /**
@@ -299,7 +299,7 @@ static inline int usbg_f_net_get_protocol(usbg_f_net *nf, int *protocol)
 static inline int usbg_f_net_set_protocol(usbg_f_net *nf, unsigned int protocol)
 {
 	return usbg_f_net_set_attr_val(nf, USBG_F_NET_PROTOCOL,
-				       USBG_F_NET_INT_TO_ATTR_VAL(protocol));
+				       &USBG_F_NET_INT_TO_ATTR_VAL(protocol));
 }
 
 #ifdef __cplusplus
