@@ -322,7 +322,7 @@ void usbg_cleanup_function(struct usbg_function *f);
 	}
 
 typedef int (*usbg_attr_get_func)(const char *, const char *, const char *, void *);
-typedef int (*usbg_attr_set_func)(const char *, const char *, const char *, void *);
+typedef int (*usbg_attr_set_func)(const char *, const char *, const char *, const void *);
 
 static inline int usbg_get_dec(const char *path, const char *name,
 			   const char *attr, void *val)
@@ -331,7 +331,7 @@ static inline int usbg_get_dec(const char *path, const char *name,
 }
 
 static inline int usbg_set_dec(const char *path, const char *name,
-			   const char *attr, void *val)
+			   const char *attr, const void *val)
 {
 	return usbg_write_dec(path, name, attr, *((int *)val));
 }
@@ -343,7 +343,7 @@ static inline int usbg_get_bool(const char *path, const char *name,
 }
 
 static inline int usbg_set_bool(const char *path, const char *name,
-			   const char *attr, void *val)
+			   const char *attr, const void *val)
 {
 	return usbg_write_bool(path, name, attr, *((bool *)val));
 }
@@ -355,7 +355,7 @@ static inline int usbg_get_string(const char *path, const char *name,
 }
 
 static inline int usbg_set_string(const char *path, const char *name,
-			      const char *attr, void *val)
+			      const char *attr, const void *val)
 {
 	return usbg_write_string(path, name, attr, *(char **)val);
 }
@@ -364,7 +364,7 @@ int usbg_get_ether_addr(const char *path, const char *name, const char *attr,
 			void *val);
 
 int usbg_set_ether_addr(const char *path, const char *name, const char *attr,
-			void *val);
+			const void *val);
 
 int usbg_get_dev(const char *path, const char *name, const char *attr,
 		 void *val);

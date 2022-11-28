@@ -89,7 +89,7 @@ static int uac2_libconfig_import(struct usbg_function *f,
 		if (ret < 0)
 			break;
 
-		ret = usbg_f_uac2_set_attr_val(af, i, val);
+		ret = usbg_f_uac2_set_attr_val(af, i, &val);
 		if (ret)
 			break;
 	}
@@ -174,8 +174,8 @@ int usbg_f_uac2_set_attrs(usbg_f_uac2 *af,
 
 	for (i = USBG_F_UAC2_ATTR_MIN; i < USBG_F_UAC2_ATTR_MAX; ++i) {
 		ret = usbg_f_uac2_set_attr_val(af, i,
-					       *(union usbg_f_uac2_attr_val *)
-					       ((char *)attrs
+					       (const union usbg_f_uac2_attr_val *)
+					       ((const char *)attrs
 						+ uac2_attr[i].offset));
 		if (ret)
 			break;
@@ -193,8 +193,8 @@ int usbg_f_uac2_get_attr_val(usbg_f_uac2 *af, enum usbg_f_uac2_attr attr,
 }
 
 int usbg_f_uac2_set_attr_val(usbg_f_uac2 *af, enum usbg_f_uac2_attr attr,
-			     union usbg_f_uac2_attr_val val)
+			     const union usbg_f_uac2_attr_val *val)
 {
 	return uac2_attr[attr].set(af->func.path, af->func.name,
-				    uac2_attr[attr].name, &val);
+				    uac2_attr[attr].name, val);
 }
