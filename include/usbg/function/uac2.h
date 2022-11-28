@@ -53,9 +53,6 @@ union usbg_f_uac2_attr_val {
 	int p_ssize;
 };
 
-#define USBG_F_UAC2_INT_TO_ATTR_VAL(WHAT)			\
-	USBG_TO_UNION(usbg_f_uac2_attr_val, c_chmask, WHAT)
-
 /**
  * @brief Cast from generic function to uac2 function
  * @param[in] f function to be converted to uac2 funciton.
@@ -137,8 +134,9 @@ static inline int usbg_f_uac2_get_c_chmask(usbg_f_uac2 *af, int *c_chmask)
  */
 static inline int usbg_f_uac2_set_c_chmask(usbg_f_uac2 *af, int c_chmask)
 {
-	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_C_CHMASK,
-					&USBG_F_UAC2_INT_TO_ATTR_VAL(c_chmask));
+    union usbg_f_uac2_attr_val val = {.c_chmask = c_chmask};
+
+	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_C_CHMASK, &val);
 }
 
 /**
@@ -161,8 +159,9 @@ static inline int usbg_f_uac2_get_c_srate(usbg_f_uac2 *af, int *c_srate)
  */
 static inline int usbg_f_uac2_set_c_srate(usbg_f_uac2 *af, int c_srate)
 {
-	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_C_SRATE,
-					&USBG_F_UAC2_INT_TO_ATTR_VAL(c_srate));
+    union usbg_f_uac2_attr_val val = {.c_srate = c_srate};
+
+	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_C_SRATE, &val);
 }
 
 /**
@@ -185,8 +184,9 @@ static inline int usbg_f_uac2_get_c_ssize(usbg_f_uac2 *af, int *c_ssize)
  */
 static inline int usbg_f_uac2_set_c_ssize(usbg_f_uac2 *af, int c_ssize)
 {
-	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_C_SSIZE,
-					&USBG_F_UAC2_INT_TO_ATTR_VAL(c_ssize));
+    union usbg_f_uac2_attr_val val = {.c_ssize = c_ssize};
+
+	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_C_SSIZE, &val);
 }
 
 /**
@@ -209,8 +209,9 @@ static inline int usbg_f_uac2_get_p_chmask(usbg_f_uac2 *af, int *p_chmask)
  */
 static inline int usbg_f_uac2_set_p_chmask(usbg_f_uac2 *af, int p_chmask)
 {
-	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_P_CHMASK,
-					&USBG_F_UAC2_INT_TO_ATTR_VAL(p_chmask));
+    union usbg_f_uac2_attr_val val = {.p_chmask = p_chmask};
+
+	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_P_CHMASK, &val);
 }
 
 /**
@@ -233,8 +234,9 @@ static inline int usbg_f_uac2_get_p_srate(usbg_f_uac2 *af, int *p_srate)
  */
 static inline int usbg_f_uac2_set_p_srate(usbg_f_uac2 *af, int p_srate)
 {
-	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_P_SRATE,
-					&USBG_F_UAC2_INT_TO_ATTR_VAL(p_srate));
+    union usbg_f_uac2_attr_val val = {.p_srate = p_srate};
+
+	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_P_SRATE, &val);
 }
 
 /**
@@ -257,8 +259,9 @@ static inline int usbg_f_uac2_get_p_ssize(usbg_f_uac2 *af, int *p_ssize)
  */
 static inline int usbg_f_uac2_set_p_ssize(usbg_f_uac2 *af, int p_ssize)
 {
-	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_P_SSIZE,
-					&USBG_F_UAC2_INT_TO_ATTR_VAL(p_ssize));
+    union usbg_f_uac2_attr_val val = {.p_ssize = p_ssize};
+
+	return usbg_f_uac2_set_attr_val(af, USBG_F_UAC2_P_SSIZE, &val);
 }
 
 #ifdef __cplusplus

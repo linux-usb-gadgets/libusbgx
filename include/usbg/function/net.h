@@ -56,12 +56,6 @@ union usbg_f_net_attr_val {
 	unsigned int protocol;
 };
 
-#define USBG_F_NET_ETHER_ADDR_TO_ATTR_VAL(WHAT)		\
-	USBG_TO_UNION(usbg_f_net_attr_val, dev_addr, WHAT)
-
-#define USBG_F_NET_INT_TO_ATTR_VAL(WHAT)		\
-	USBG_TO_UNION(usbg_f_net_attr_val, qmult, WHAT)
-
 /**
  * @brief Cast from generic function to net function
  * @param[in] f function to be converted to net funciton.
@@ -136,7 +130,8 @@ int usbg_f_net_set_attr_val(usbg_f_net *nf, enum usbg_f_net_attr attr,
 static inline int usbg_f_net_get_dev_addr(usbg_f_net *nf,
 					  struct ether_addr *addr)
 {
-	union usbg_f_net_attr_val val = { .dev_addr = *addr, };
+	union usbg_f_net_attr_val val = {.dev_addr = *addr};
+
 	return usbg_f_net_get_attr_val(nf, USBG_F_NET_DEV_ADDR, &val);
 }
 
@@ -149,8 +144,9 @@ static inline int usbg_f_net_get_dev_addr(usbg_f_net *nf,
 static inline int usbg_f_net_set_dev_addr(usbg_f_net *nf,
 			     const struct ether_addr *addr)
 {
-	return usbg_f_net_set_attr_val(nf, USBG_F_NET_DEV_ADDR,
-				       &USBG_F_NET_ETHER_ADDR_TO_ATTR_VAL(*addr));
+    union usbg_f_net_attr_val val = {.dev_addr = *addr};
+
+	return usbg_f_net_set_attr_val(nf, USBG_F_NET_DEV_ADDR, &val);
 }
 
 /**
@@ -175,8 +171,9 @@ static inline int usbg_f_net_get_host_addr(usbg_f_net *nf,
 static inline int usbg_f_net_set_host_addr(usbg_f_net *nf,
 					   const struct ether_addr *addr)
 {
-	return usbg_f_net_set_attr_val(nf, USBG_F_NET_HOST_ADDR,
-				       &USBG_F_NET_ETHER_ADDR_TO_ATTR_VAL(*addr));
+    union usbg_f_net_attr_val val = {.host_addr = *addr};
+
+	return usbg_f_net_set_attr_val(nf, USBG_F_NET_HOST_ADDR, &val);
 }
 
 /**
@@ -226,8 +223,9 @@ static inline int usbg_f_net_get_qmult(usbg_f_net *nf, int *qmult)
  */
 static inline int usbg_f_net_set_qmult(usbg_f_net *nf, int qmult)
 {
-	return usbg_f_net_set_attr_val(nf, USBG_F_NET_QMULT,
-				       &USBG_F_NET_INT_TO_ATTR_VAL(qmult));
+    union usbg_f_net_attr_val val = {.qmult = qmult};
+
+	return usbg_f_net_set_attr_val(nf, USBG_F_NET_QMULT, &val);
 }
 
 /**
@@ -250,8 +248,9 @@ static inline int usbg_f_net_get_class(usbg_f_net *nf, unsigned int *class_)
  */
 static inline int usbg_f_net_set_class(usbg_f_net *nf, unsigned int class_)
 {
-	return usbg_f_net_set_attr_val(nf, USBG_F_NET_CLASS,
-				       &USBG_F_NET_INT_TO_ATTR_VAL(class_));
+    union usbg_f_net_attr_val val = {.class_ = class_};
+
+	return usbg_f_net_set_attr_val(nf, USBG_F_NET_CLASS, &val);
 }
 
 /**
@@ -274,8 +273,9 @@ static inline int usbg_f_net_get_subclass(usbg_f_net *nf, int *subclass)
  */
 static inline int usbg_f_net_set_subclass(usbg_f_net *nf, unsigned int subclass)
 {
-	return usbg_f_net_set_attr_val(nf, USBG_F_NET_SUBCLASS,
-				       &USBG_F_NET_INT_TO_ATTR_VAL(subclass));
+    union usbg_f_net_attr_val val = {.subclass = subclass};
+
+	return usbg_f_net_set_attr_val(nf, USBG_F_NET_SUBCLASS, &val);
 }
 
 /**
@@ -298,8 +298,9 @@ static inline int usbg_f_net_get_protocol(usbg_f_net *nf, int *protocol)
  */
 static inline int usbg_f_net_set_protocol(usbg_f_net *nf, unsigned int protocol)
 {
-	return usbg_f_net_set_attr_val(nf, USBG_F_NET_PROTOCOL,
-				       &USBG_F_NET_INT_TO_ATTR_VAL(protocol));
+    union usbg_f_net_attr_val val = {.protocol = protocol};
+
+	return usbg_f_net_set_attr_val(nf, USBG_F_NET_PROTOCOL, &val);
 }
 
 #ifdef __cplusplus
