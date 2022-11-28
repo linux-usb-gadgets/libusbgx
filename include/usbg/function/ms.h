@@ -154,7 +154,7 @@ int usbg_f_ms_get_lun_attr_val(usbg_f_ms *mf, int lun_id,
  */
 int usbg_f_ms_set_lun_attr_val(usbg_f_ms *mf, int lun_id,
 			       enum usbg_f_ms_lun_attr lattr,
-			       const union usbg_f_ms_lun_attr_val val);
+			       const union usbg_f_ms_lun_attr_val *val);
 
 /**
  * @brief Get the value which determines if lun is visible as a cdrom
@@ -181,7 +181,7 @@ static inline int usbg_f_ms_set_lun_cdrom(usbg_f_ms *mf, int lun_id,
 					  bool cdrom)
 {
 	union usbg_f_ms_lun_attr_val val = {.cdrom = cdrom};
-	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_CDROM, val);
+	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_CDROM, &val);
 }
 
 /**
@@ -207,7 +207,7 @@ static inline int usbg_f_ms_get_lun_ro(usbg_f_ms *mf, int lun_id, bool *ro)
 static inline int usbg_f_ms_set_lun_ro(usbg_f_ms *mf, int lun_id, bool ro)
 {
 	union usbg_f_ms_lun_attr_val val = {.ro = ro};
-	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_RO, val);
+	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_RO, &val);
 }
 
 /**
@@ -237,7 +237,7 @@ static inline int usbg_f_ms_set_lun_nofua(usbg_f_ms *mf, int lun_id,
 				bool nofua)
 {
 	union usbg_f_ms_lun_attr_val val = {.nofua = nofua};
-	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_NOFUA, val);
+	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_NOFUA, &val);
 }
 
 /**
@@ -265,7 +265,7 @@ static inline int usbg_f_ms_set_lun_removable(usbg_f_ms *mf, int lun_id,
 				bool removable)
 {
 	union usbg_f_ms_lun_attr_val val = {.removable = removable};
-	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_REMOVABLE, val);
+	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_REMOVABLE, &val);
 }
 
 /**
@@ -311,7 +311,7 @@ static inline int usbg_f_ms_set_lun_file(usbg_f_ms *mf, int lun_id,
 			   const char *file)
 {
 	union usbg_f_ms_lun_attr_val val = {.file = file};
-	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_FILE, val);
+	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_FILE, &val);
 }
 
 /**
@@ -342,7 +342,7 @@ static inline int usbg_f_ms_set_lun_inquiry_string(usbg_f_ms *mf, int lun_id,
 			   const char *inquiry_string)
 {
 	union usbg_f_ms_lun_attr_val val = {.inquiry_string = inquiry_string};
-	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_INQUIRY_STRING, val);
+	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_INQUIRY_STRING, &val);
 }
 
 /**

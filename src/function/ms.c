@@ -210,7 +210,7 @@ static int ms_import_lun_attrs(struct usbg_f_ms *mf, int lun_id,
 		if (ret < 0)
 			break;
 
-		ret = usbg_f_ms_set_lun_attr_val(mf, lun_id, i, val);
+		ret = usbg_f_ms_set_lun_attr_val(mf, lun_id, i, &val);
 		if (ret)
 			break;
 	}
@@ -608,8 +608,8 @@ int usbg_f_ms_set_lun_attrs(usbg_f_ms *mf, int lun_id,
 
 	for (i = USBG_F_MS_LUN_ATTR_MIN; i < USBG_F_MS_LUN_ATTR_MAX; ++i) {
 		ret = usbg_f_ms_set_lun_attr_val(mf, lun_id, i,
-					       *(union usbg_f_ms_lun_attr_val *)
-					       ((char *)lattrs
+					       (const union usbg_f_ms_lun_attr_val *)
+					       ((const char *)lattrs
 						+ ms_lun_attr[i].offset));
 		if (ret)
 			break;
@@ -636,7 +636,7 @@ int usbg_f_ms_get_lun_attr_val(usbg_f_ms *mf, int lun_id,
 
 int usbg_f_ms_set_lun_attr_val(usbg_f_ms *mf, int lun_id,
 			       enum usbg_f_ms_lun_attr lattr,
-			       union usbg_f_ms_lun_attr_val val)
+			       const union usbg_f_ms_lun_attr_val *val)
 {
 	char lpath[USBG_MAX_PATH_LENGTH];
 	int ret;
@@ -647,7 +647,7 @@ int usbg_f_ms_set_lun_attr_val(usbg_f_ms *mf, int lun_id,
 		return USBG_ERROR_PATH_TOO_LONG;
 
 	return 	ms_lun_attr[lattr].set(lpath, "",
-				       ms_lun_attr[lattr].name, &val);
+				       ms_lun_attr[lattr].name, val);
 }
 
 int usbg_f_ms_get_lun_file_s(usbg_f_ms *mf, int lun_id,
