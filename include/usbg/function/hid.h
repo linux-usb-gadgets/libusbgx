@@ -137,7 +137,7 @@ int usbg_f_hid_get_attr_val(usbg_f_hid *hf, enum usbg_f_hid_attr attr,
  * @return 0 on success usbg_error if error occurred.
  */
 int usbg_f_hid_set_attr_val(usbg_f_hid *hf, enum usbg_f_hid_attr attr,
-			    union usbg_f_hid_attr_val val);
+			    const union usbg_f_hid_attr_val *val);
 
 /**
  * @brief Get the minor and major of corresponding character device
@@ -174,7 +174,7 @@ static inline int usbg_f_hid_set_protocol(usbg_f_hid *hf,
 					  unsigned int protocol)
 {
 	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_PROTOCOL,
-				       USBG_F_HID_UINT_TO_ATTR_VAL(protocol));
+				       &USBG_F_HID_UINT_TO_ATTR_VAL(protocol));
 }
 
 /**
@@ -200,7 +200,7 @@ static inline int usbg_f_hid_set_report_desc(usbg_f_hid *hf,
 					     struct usbg_f_hid_report_desc report_desc)
 {
 	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_REPORT_DESC,
-				       USBG_F_HID_RDESC_TO_ATTR_VAL(report_desc));
+				       &USBG_F_HID_RDESC_TO_ATTR_VAL(report_desc));
 }
 
 /**
@@ -243,7 +243,7 @@ static inline int usbg_f_hid_set_report_desc_raw(usbg_f_hid *hf,
 	};
 
 	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_REPORT_DESC,
-				       USBG_F_HID_RDESC_TO_ATTR_VAL(report_desc));
+				       &USBG_F_HID_RDESC_TO_ATTR_VAL(report_desc));
 }
 
 /**
@@ -269,7 +269,7 @@ static inline int usbg_f_hid_set_report_length(usbg_f_hid *hf,
 					  unsigned int report_length)
 {
 	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_REPORT_LENGTH,
-				       USBG_F_HID_UINT_TO_ATTR_VAL(report_length));
+				       &USBG_F_HID_UINT_TO_ATTR_VAL(report_length));
 }
 
 /**
@@ -295,7 +295,7 @@ static inline int usbg_f_hid_set_subclass(usbg_f_hid *hf,
 					  unsigned int subclass)
 {
 	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_SUBCLASS,
-				       USBG_F_HID_UINT_TO_ATTR_VAL(subclass));
+				       &USBG_F_HID_UINT_TO_ATTR_VAL(subclass));
 }
 
 #ifdef __cplusplus
