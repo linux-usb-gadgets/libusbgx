@@ -12,6 +12,9 @@ See the Doxygen docs and examples for complete details on the
 programming API and INSTALL for installation of the library and
 examples.
 
+The library is licensed under the GNU LGPL-2.1 (or later) and
+the examples are licensed under the GNU GPL-2.0 (or later).
+
 To run the examples:
 
 $ modprobe configfs
