@@ -48,4 +48,9 @@ union usbg_f_printer_attr_val {
 #define USBG_F_PRINTER_INT_TO_ATTR_VAL(WHAT) \
 	USBG_TO_UNION(usbg_f_printer_attr_val, qmult, WHAT)
 
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* USBG_FUNCTION_PRINTER__ */
