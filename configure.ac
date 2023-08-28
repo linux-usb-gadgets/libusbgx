@@ -53,7 +53,6 @@ AM_CONDITIONAL(BUILD_EXAMPLES, [test "x$enable_examples" = xyes])
 AS_IF([test "x$enable_tests" = xyes], [
 	PKG_CHECK_MODULES([CMOCKA], [cmocka >= 1.0.0],
 			  AC_DEFINE(HAS_CMOCKA, 1, [detected cmocka]))
-	AC_CONFIG_FILES([tests/Makefile])
 ])
 AM_CONDITIONAL(BUILD_TESTS, [test "x$enable_tests" = xyes])
 
@@ -62,6 +61,6 @@ AS_IF([test "x$enable_gadget_schemes" = xyes],
 AM_CONDITIONAL(TEST_GADGET_SCHEMES, [test "x$enable_gadget_schemes" != xno])
 
 LT_INIT
-AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile include/usbg/usbg_version.h libusbgx.pc doxygen.cfg LibUsbgxConfig.cmake])
+AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile examples/Makefile include/usbg/usbg_version.h libusbgx.pc doxygen.cfg LibUsbgxConfig.cmake])
 DX_INIT_DOXYGEN([$PACKAGE_NAME],[doxygen.cfg])
 AC_OUTPUT
