@@ -18,6 +18,7 @@ the examples are licensed under the GNU GPL-2.0 (or later).
 To run the examples:
 
 $ modprobe configfs
+$ modprobe libcomposite
 $ mount -t configfs none /sys/kernel/config
 $ gadget-acm-ecm
 $ show-gadgets
