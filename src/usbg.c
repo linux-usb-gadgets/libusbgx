@@ -81,7 +81,7 @@ struct usbg_function_type* function_types[] = {
 	[USBG_F_9PFS] = &usbg_f_type_9pfs,
 };
 
-ARRAY_SIZE_SENTINEL(function_types, USBG_FUNCTION_TYPE_MAX);
+ARRAY_SIZE_SENTINEL(function_types, USBG_FUNCTION_TYPE_MAX)
 
 const char *gadget_attr_names[] =
 {
@@ -95,7 +95,7 @@ const char *gadget_attr_names[] =
 	"bcdDevice"
 };
 
-ARRAY_SIZE_SENTINEL(gadget_attr_names, USBG_GADGET_ATTR_MAX);
+ARRAY_SIZE_SENTINEL(gadget_attr_names, USBG_GADGET_ATTR_MAX)
 
 const char *gadget_str_names[] =
 {
@@ -104,7 +104,7 @@ const char *gadget_str_names[] =
 	"serialnumber",
 };
 
-ARRAY_SIZE_SENTINEL(gadget_str_names, USBG_GADGET_STR_MAX);
+ARRAY_SIZE_SENTINEL(gadget_str_names, USBG_GADGET_STR_MAX)
 
 const char *gadget_os_desc_names[] =
 {
@@ -113,7 +113,7 @@ const char *gadget_os_desc_names[] =
 	"qw_sign",
 };
 
-ARRAY_SIZE_SENTINEL(gadget_os_desc_names, USBG_GADGET_OS_DESC_MAX);
+ARRAY_SIZE_SENTINEL(gadget_os_desc_names, USBG_GADGET_OS_DESC_MAX)
 
 int usbg_lookup_function_type(const char *name)
 {

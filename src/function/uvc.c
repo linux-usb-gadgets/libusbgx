@@ -269,7 +269,8 @@ static inline struct formats *get_formats_mask(struct usbg_f_uvc *uvc)
 	return uvc->formats;
 }
 
-GENERIC_ALLOC_INST(uvc_internal, struct usbg_f_uvc, func);
+GENERIC_ALLOC_INST(uvc_internal, struct usbg_f_uvc, func)
+
 static int uvc_alloc_inst(struct usbg_function_type *type,
 			 usbg_function_type type_code,
 			 const char *instance, const char *path,
@@ -294,7 +295,7 @@ out:
 	return ret;
 }
 
-GENERIC_FREE_INST(uvc, struct usbg_f_uvc, func);
+GENERIC_FREE_INST(uvc, struct usbg_f_uvc, func)
 
 static int uvc_set_attrs(struct usbg_function *f, void *f_attrs)
 {
@@ -308,7 +309,7 @@ static int uvc_get_attrs(struct usbg_function *f, void *f_attrs)
 
 static void uvc_cleanup_attrs(struct usbg_function *f, void *f_attrs)
 {
-	return usbg_f_uvc_cleanup_attrs(f_attrs);
+	usbg_f_uvc_cleanup_attrs(f_attrs);
 }
 
 int usbg_f_uvc_get_config_attr_val(usbg_f_uvc *uvcf, enum usbg_f_uvc_config_attr iattr,
@@ -770,7 +771,7 @@ static int uvc_import_format(struct usbg_f_uvc *uvcf, const char *format, bool *
 
 out:
 	return ret;
-};
+}
 
 static int uvc_import_config(struct usbg_f_uvc *uvcf, config_setting_t *root)
 {
@@ -896,7 +897,7 @@ static int uvc_export_config(struct usbg_f_uvc *uvcf, config_setting_t *root)
 
 out:
 	return ret;
-};
+}
 
 static int uvc_export_format_attrs(struct usbg_f_uvc *uvcf, const char *format,
 				  config_setting_t *root)
@@ -972,7 +973,7 @@ static int uvc_export_frames(struct usbg_f_uvc *uvcf, const char *format,
 
 out:
 	return ret;
-};
+}
 
 static int uvc_libconfig_export(struct usbg_function *f, config_setting_t *root)
 {
@@ -1190,7 +1191,7 @@ static int uvc_remove(struct usbg_function *f, int opts)
 		return USBG_ERROR_PATH_TOO_LONG;
 
 	return ret;
-};
+}
 
 struct usbg_function_type usbg_f_type_uvc = {
 	.name = "uvc",
