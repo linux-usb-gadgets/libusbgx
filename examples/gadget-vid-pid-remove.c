@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 			goto out1;
 		}
 		*cp++ = 0;
-		if (&argv[1])
+		if (argv[1])
 			vendor = strtoul(argv[1], NULL, 16);
 		if (*cp)
 			product = strtoul(cp, NULL, 16);

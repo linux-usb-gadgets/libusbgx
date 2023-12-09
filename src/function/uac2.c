@@ -51,9 +51,9 @@ static struct {
 
 #undef UAC2_DEC_ATTR
 
-GENERIC_ALLOC_INST(uac2, struct usbg_f_uac2, func);
+GENERIC_ALLOC_INST(uac2, struct usbg_f_uac2, func)
 
-GENERIC_FREE_INST(uac2, struct usbg_f_uac2, func);
+GENERIC_FREE_INST(uac2, struct usbg_f_uac2, func)
 
 static int uac2_set_attrs(struct usbg_function *f, void *f_attrs)
 {
