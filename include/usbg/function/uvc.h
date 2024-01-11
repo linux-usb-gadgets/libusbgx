@@ -50,7 +50,7 @@ struct usbg_f_uvc_format_attrs
 	int bDefaultFrameIndex;
 	int bAspectRatioX;
 	int bAspectRatioY;
-	int bmInterfaceFlags;
+	int bmInterlaceFlags;
 	const char *format;
 	struct usbg_f_uvc_frame_attrs **frames;
 };
@@ -86,7 +86,7 @@ enum usbg_f_uvc_frame_attr {
 enum usbg_f_uvc_format_attr {
 	USBG_F_UVC_FORMAT_ATTR_MIN = 0,
 	USBG_F_UVC_FORMAT_CONTROLS = USBG_F_UVC_FORMAT_ATTR_MIN,
-	USBG_F_UVC_FORMAT_INTERFACE_FLAGS,
+	USBG_F_UVC_FORMAT_INTERLACE_FLAGS,
 	USBG_F_UVC_FORMAT_ASPECTRATIO_Y,
 	USBG_F_UVC_FORMAT_ASPECTRATIO_X,
 	USBG_F_UVC_FORMAT_DEFAULT_FRAME_INDEX,
@@ -118,7 +118,7 @@ union usbg_f_uvc_format_attr_val {
 	int bDefaultFrameIndex;
 	int bAspectRatioX;
 	int bAspectRatioY;
-	int bmInterfaceFlags;
+	int bmInterlaceFlags;
 };
 
 /**
