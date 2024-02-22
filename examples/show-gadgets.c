@@ -198,6 +198,7 @@ void show_function(usbg_function *f)
 			fprintf(stdout, "      nofua\t\t%d\n", attrs->luns[i]->nofua);
 			fprintf(stdout, "      removable\t\t%d\n", attrs->luns[i]->removable);
 			fprintf(stdout, "      file\t\t%s\n", attrs->luns[i]->file);
+			fprintf(stdout, "      inquiry_string\t\t%s\n", attrs->luns[i]->inquiry_string);
 		}
 		break;
 	}
