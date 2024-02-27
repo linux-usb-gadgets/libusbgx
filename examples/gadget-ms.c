@@ -65,6 +65,7 @@ int main(int argc, char **argv)
 			.nofua = 0,
 			.removable = 1,
 			.file = "",
+			.inquiry_string = "Empty"
 		}, {
 			.id = -1, /* allows to place in any position */
 			.cdrom = 0,
@@ -72,6 +73,7 @@ int main(int argc, char **argv)
 			.nofua = 0,
 			.removable = 1,
 			.file = argv[1],
+			.inquiry_string = "Non-empty"
 		}
 	};
 

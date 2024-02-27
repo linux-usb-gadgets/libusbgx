@@ -64,6 +64,7 @@ static struct {
 	[USBG_F_MS_LUN_NOFUA] = MS_LUN_BOOL_ATTR(nofua),
 	[USBG_F_MS_LUN_REMOVABLE] = MS_LUN_BOOL_ATTR(removable),
 	[USBG_F_MS_LUN_FILE] = MS_LUN_STRING_ATTR(file),
+	[USBG_F_MS_LUN_INQUIRY_STRING] = MS_LUN_STRING_ATTR(inquiry_string),
 };
 
 static inline int lun_select(const struct dirent *dent)

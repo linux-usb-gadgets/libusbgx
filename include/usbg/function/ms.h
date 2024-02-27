@@ -30,6 +30,7 @@ struct usbg_f_ms_lun_attrs {
 	bool nofua;
 	bool removable;
 	const char *file;
+	const char *inquiry_string;
 };
 
 struct usbg_f_ms_attrs {
@@ -45,6 +46,7 @@ enum usbg_f_ms_lun_attr {
 	USBG_F_MS_LUN_NOFUA,
 	USBG_F_MS_LUN_REMOVABLE,
 	USBG_F_MS_LUN_FILE,
+	USBG_F_MS_LUN_INQUIRY_STRING,
 	USBG_F_MS_LUN_ATTR_MAX
 };
 
@@ -54,6 +56,7 @@ union usbg_f_ms_lun_attr_val {
 	bool nofua;
 	bool removable;
 	const char *file;
+	const char *inquiry_string;
 };
 
 #define USBG_F_MS_LUN_BOOL_TO_ATTR_VAL(WHAT)		\
@@ -132,6 +135,8 @@ static inline void usbg_f_ms_cleanup_lun_attrs(struct usbg_f_ms_lun_attrs *lattr
 	if (lattrs) {
 		free((char *)lattrs->file);
 		lattrs->file = NULL;
+		free((char *)lattrs->inquiry_string);
+		lattrs->inquiry_string = NULL;
 	}
 }
 
@@ -315,6 +320,37 @@ static inline int usbg_f_ms_set_lun_file(usbg_f_ms *mf, int lun_id,
 {
 	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_FILE,
 					  USBG_F_MS_LUN_CCHAR_PTR_TO_ATTR_VAL(file));
+}
+
+/**
+ * @brief Get the inquiry string of LUN which is used as name in SCSI inquiry
+ *         by this LUN into newly allocated storage
+ * @param[in] mf Pointer to ms function
+ * @param[in] lun_id ID of lun
+ * @param[out] inquiry_string Newly allocated string name of LUN used in SCSI
+ *         inquiry
+ * @return 0 on success usbg_error if error occurred.
+ * @note returned inquiry_string should be free() by caller
+ */
+static inline int usbg_f_ms_get_lun_inquiry_string(usbg_f_ms *mf, int lun_id,
+			       char **inquiry_string)
+{
+	return usbg_f_ms_get_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_INQUIRY_STRING,
+					  (union usbg_f_ms_lun_attr_val *)inquiry_string);
+}
+
+/**
+ * @brief Set the inquiry string which is used as name in SCSI inquiry by this LUN
+ * @param[in] mf Pointer to ms function
+ * @param[in] lun_id ID of lun
+ * @param[in] inquiry_string Name of LUN which used in SCSI inquiry
+ * @return 0 on success usbg_error if error occurred.
+ */
+static inline int usbg_f_ms_set_lun_inquiry_string(usbg_f_ms *mf, int lun_id,
+			   const char *inquiry_string)
+{
+	return usbg_f_ms_set_lun_attr_val(mf, lun_id, USBG_F_MS_LUN_INQUIRY_STRING,
+					  USBG_F_MS_LUN_CCHAR_PTR_TO_ATTR_VAL(inquiry_string));
 }
 
 /**
