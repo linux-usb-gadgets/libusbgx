@@ -187,3 +187,34 @@ int usbg_set_config_node_dev(config_setting_t *root,
 	return ret;
 }
 
+int usbg_set_config_node_guid(config_setting_t *root,
+				const char *node_name, void *val)
+{
+	const unsigned char *bin = *(char **)val;
+	const char xa[] = "0123456789abcdef";
+	config_setting_t *node;
+	char guid[GUIDCHARLEN + 1];
+	char *tmp = guid;
+	int ret = 0;
+
+	node = config_setting_add(root, node_name, CONFIG_TYPE_STRING);
+	if (!node)
+		return USBG_ERROR_NO_MEM;
+
+	/* convert binary representation to hex */
+	for (int i = 0; i < GUIDBINLEN; i++, *bin++) {
+
+		/* add the four dashes */
+		if ((i == 4) || (i == 6) || (i == 8) || (i == 10))
+			*tmp++ = '-';
+
+		*tmp++ = xa[((*bin) & 0xf0) >> 4];
+		*tmp++ = xa[((*bin) & 0x0f)];
+	}
+
+	guid[GUIDCHARLEN] = '\0';
+
+	ret = config_setting_set_string(node, guid);
+
+	return ret == CONFIG_TRUE ? 0 : USBG_ERROR_OTHER_ERROR;
+}

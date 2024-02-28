@@ -23,6 +23,63 @@
 #include <unistd.h>
 #include <sys/sysmacros.h>
 
+int h2b(unsigned char c)
+{
+	/* check if char is a number */
+	if ((c >= '0') && (c <= '9'))
+		return c - '0';
+
+	/* check if char is upper case */
+	if ((c >= 'A') && (c <= 'F'))
+		return c - 'A' + 10;
+
+	/* check if char is lower case */
+	if ((c >= 'a') && (c <= 'f'))
+		return c - 'a' + 10;
+
+	return -EINVAL;
+}
+
+int usbg_write_guid(const char *path, const char *name,
+		      const char *file, const char *buf)
+{
+	int ret;
+	char guid[GUIDBINLEN];
+	char *tmp = guid;
+
+	if (strlen(buf) != GUIDCHARLEN)
+		return USBG_ERROR_INVALID_PARAM;
+
+	/* convert hex representation to binary */
+	for (int i = 0; i < GUIDBINLEN; i++) {
+		int hi, lo;
+
+		/* skip the four dashes */
+		if ((i == 4) || (i == 6) || (i == 8) || (i == 10))
+			buf++;
+
+		hi = h2b(*buf);
+		buf++;
+
+		lo = h2b(*buf);
+		buf++;
+
+		if (hi < 0 || lo < 0)
+			return USBG_ERROR_INVALID_PARAM;
+
+		if (hi > 15 || lo > 15)
+			return USBG_ERROR_INVALID_PARAM;
+
+		*tmp++ = (hi << 4) | lo;
+	}
+
+	ret = usbg_write_buf(path, name, file, guid, GUIDBINLEN);
+	if (ret > 0)
+		ret = 0;
+
+	return ret;
+}
+
 int usbg_read_buf_limited(const char *path, const char *name,
 			  const char *file, char *buf, int len)
 {
@@ -139,6 +196,32 @@ int usbg_read_string_alloc(const char *path, const char *name,
 		ret = USBG_ERROR_NO_MEM;
 		goto out;
 	}
+
+	*dest = new_buf;
+out:
+	return ret;
+}
+
+int usbg_read_buf_alloc(const char *path, const char *name,
+			   const char *file, char **dest, int len)
+{
+	char buf[USBG_MAX_FILE_SIZE];
+	char *new_buf = NULL;
+	int ret;
+
+	ret = usbg_read_buf_limited(path, name, file, buf, len);
+	if (ret != len)
+		goto out;
+
+	ret = 0;
+
+	new_buf = malloc(len);
+	if (!new_buf) {
+		ret = USBG_ERROR_NO_MEM;
+		goto out;
+	}
+
+	memcpy(new_buf, buf, len);
 
 	*dest = new_buf;
 out:
