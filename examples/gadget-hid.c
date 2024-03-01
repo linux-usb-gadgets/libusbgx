@@ -15,6 +15,7 @@
  */
 
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <linux/usb/ch9.h>
 #include <usbg/usbg.h>
@@ -23,7 +24,7 @@
 #define VENDOR          0x1d6b
 #define PRODUCT         0x0104
 
-static char report_desc[] = {
+static uint8_t report_desc[] = {
 	0x05, 0x01,	/* USAGE_PAGE (Generic Desktop)	          */
 	0x09, 0x06,	/* USAGE (Keyboard)                       */
 	0xa1, 0x01,	/* COLLECTION (Application)               */
@@ -90,7 +91,7 @@ int main() {
 	struct usbg_f_hid_attrs f_attrs = {
 		.protocol = 1,
 		.report_desc = {
-			.desc = report_desc,
+			.desc = (char *)report_desc,
 			.len = sizeof(report_desc),
 		},
 		.report_length = 8,

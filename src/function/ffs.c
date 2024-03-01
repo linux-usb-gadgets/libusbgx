@@ -23,9 +23,9 @@ struct usbg_f_fs {
 	struct usbg_function func;
 };
 
-GENERIC_ALLOC_INST(ffs, struct usbg_f_fs, func);
+GENERIC_ALLOC_INST(ffs, struct usbg_f_fs, func)
 
-GENERIC_FREE_INST(ffs, struct usbg_f_fs, func);
+GENERIC_FREE_INST(ffs, struct usbg_f_fs, func)
 
 static int ffs_set_attrs(struct usbg_function *f, void *f_attrs)
 {

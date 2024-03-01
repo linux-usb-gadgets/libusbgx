@@ -21,9 +21,9 @@ struct usbg_f_printer {
 	struct usbg_function func;
 };
 
-GENERIC_ALLOC_INST(printer, struct usbg_f_printer, func);
+GENERIC_ALLOC_INST(printer, struct usbg_f_printer, func)
 
-GENERIC_FREE_INST(printer, struct usbg_f_printer, func);
+GENERIC_FREE_INST(printer, struct usbg_f_printer, func)
 
 #define PRINTER_FUNCTION_OPTS			\
 	.alloc_inst = printer_alloc_inst,	\

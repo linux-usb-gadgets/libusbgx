@@ -149,7 +149,8 @@ static inline bool *get_lun_mask(struct usbg_f_ms *ms)
 	return ms->luns;
 }
 
-GENERIC_ALLOC_INST(ms_internal, struct usbg_f_ms, func);
+GENERIC_ALLOC_INST(ms_internal, struct usbg_f_ms, func)
+
 static int ms_alloc_inst(struct usbg_function_type *type,
 			 usbg_function_type type_code,
 			 const char *instance, const char *path,
@@ -171,7 +172,7 @@ out:
 	return ret;
 }
 
-GENERIC_FREE_INST(ms, struct usbg_f_ms, func);
+GENERIC_FREE_INST(ms, struct usbg_f_ms, func)
 
 static int ms_set_attrs(struct usbg_function *f, void *f_attrs)
 {

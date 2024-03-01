@@ -75,9 +75,9 @@ static struct {
 #undef NET_DEC_ATTR
 #undef NET_STRING_ATTR
 
-GENERIC_ALLOC_INST(ether, struct usbg_f_net, func);
+GENERIC_ALLOC_INST(ether, struct usbg_f_net, func)
 
-GENERIC_FREE_INST(ether, struct usbg_f_net, func);
+GENERIC_FREE_INST(ether, struct usbg_f_net, func)
 
 static int ether_set_attrs(struct usbg_function *f, void *f_attrs)
 {

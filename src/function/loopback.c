@@ -33,9 +33,9 @@ static size_t loopback_offsets[USBG_F_LOOPBACK_ATTR_MAX] = {
 	[USBG_F_LOOPBACK_QLEN] = offsetof(struct usbg_f_loopback_attrs, qlen),
 };
 
-GENERIC_ALLOC_INST(loopback, struct usbg_f_loopback, func);
+GENERIC_ALLOC_INST(loopback, struct usbg_f_loopback, func)
 
-GENERIC_FREE_INST(loopback, struct usbg_f_loopback, func);
+GENERIC_FREE_INST(loopback, struct usbg_f_loopback, func)
 
 static int loopback_set_attrs(struct usbg_function *f, void *f_attrs)
 {

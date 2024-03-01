@@ -22,9 +22,9 @@ struct usbg_f_serial {
 	struct usbg_function func;
 };
 
-GENERIC_ALLOC_INST(serial, struct usbg_f_serial, func);
+GENERIC_ALLOC_INST(serial, struct usbg_f_serial, func)
 
-GENERIC_FREE_INST(serial, struct usbg_f_serial, func);
+GENERIC_FREE_INST(serial, struct usbg_f_serial, func)
 
 static int serial_set_attrs(struct usbg_function *f, void *f_attrs)
 {
