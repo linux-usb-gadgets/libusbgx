@@ -337,7 +337,7 @@ int usbg_get_ether_addr(const char *path, const char *name,
 }
 
 int usbg_set_ether_addr(const char *path, const char *name,
-			      const char *attr, void *val)
+			      const char *attr, const void *val)
 {
 	char str_addr[USBG_MAX_STR_LENGTH];
 
