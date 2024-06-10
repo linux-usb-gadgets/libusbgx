@@ -2585,6 +2585,7 @@ static int gen_test_config(FILE *output)
 
 #endif /* HAS_LIBCONFIG */
 
+__attribute__((unused))
 static int lookup_test(const char *name)
 {
 	int i;
@@ -2595,6 +2596,7 @@ static int lookup_test(const char *name)
 	return -1;
 }
 
+__attribute__((unused))
 static void test_skipped(void **state)
 {
 	skip();
