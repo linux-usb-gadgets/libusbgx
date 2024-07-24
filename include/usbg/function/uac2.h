@@ -23,6 +23,8 @@ extern "C" {
 
 struct usbg_f_uac2;
 typedef struct usbg_f_uac2 usbg_f_uac2;
+typedef short aligned_uchar __attribute__((aligned(sizeof(int))));
+typedef short aligned_short __attribute__((aligned(sizeof(int))));
 
 struct usbg_f_uac2_attrs {
 	int c_chmask;
@@ -31,8 +33,8 @@ struct usbg_f_uac2_attrs {
 	int p_chmask;
 	int p_srate;
 	int p_ssize;
-	unsigned char p_hs_bint;
-	unsigned char c_hs_bint;
+	aligned_uchar p_hs_bint;
+	aligned_uchar c_hs_bint;
 
 	const char * c_sync;
 	unsigned int req_number;
@@ -40,15 +42,15 @@ struct usbg_f_uac2_attrs {
 
 	bool p_mute_present;
 	bool p_volume_present;
-	short p_volume_min;
-	short p_volume_max;
-	short p_volume_res;
+	aligned_short p_volume_min;
+	aligned_short p_volume_max;
+	aligned_short p_volume_res;
 
 	bool c_mute_present;
 	bool c_volume_present;
-	short c_volume_min;
-	short c_volume_max;
-	short c_volume_res;
+	aligned_short c_volume_min;
+	aligned_short c_volume_max;
+	aligned_short c_volume_res;
 
 	const char *function_name;
 };
