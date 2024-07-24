@@ -257,6 +257,9 @@ int usbg_write_string(const char *path, const char *name,
 {
 	int ret;
 
+	if (!buf)
+		return USBG_ERROR_INVALID_PARAM;
+
 	ret = usbg_write_buf(path, name, file, buf, strlen(buf));
 	if (ret > 0)
 		ret = 0;
