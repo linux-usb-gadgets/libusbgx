@@ -48,6 +48,9 @@ int usbg_set_config_node_ether_addr(config_setting_t *root,
 int usbg_set_config_node_dev(config_setting_t *root,
 			     const char *node_name, void *val);
 
+int usbg_set_config_node_guid(config_setting_t *root,
+			      const char *node_name, void *val);
+
 #ifdef __cplusplus
 }
 #endif

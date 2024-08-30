@@ -51,6 +51,9 @@ extern "C" {
 #define LANG_US_ENG		0x0409
 #define DEFAULT_CONFIG_LABEL "config"
 
+#define GUID_BIN_LENGTH 16
+#define GUID_CHAR_LENGTH 36 /* 32 bytes + 4 dashes */
+
 /* This one has to be at least 18 bytes to hold network address */
 #define USBG_MAX_STR_LENGTH 256
 #define USBG_MAX_NAME_LENGTH 40

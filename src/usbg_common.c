@@ -23,6 +23,31 @@
 #include <unistd.h>
 #include <sys/sysmacros.h>
 
+int usbg_write_guid(const char *path, const char *name,
+		      const char *file, const char *buf)
+{
+	char guidbin[GUID_BIN_LENGTH];
+	int ret;
+
+	if (strlen(buf) != GUID_CHAR_LENGTH)
+		return USBG_ERROR_INVALID_PARAM;
+
+	ret = sscanf(buf, "%02hhx%02hhx%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
+		     &guidbin[0], &guidbin[1], &guidbin[2], &guidbin[3],
+		     &guidbin[4], &guidbin[5], &guidbin[6], &guidbin[7],
+		     &guidbin[8], &guidbin[9], &guidbin[10], &guidbin[11],
+		     &guidbin[12], &guidbin[13], &guidbin[14], &guidbin[15]);
+
+	if (ret != GUID_BIN_LENGTH)
+		return USBG_ERROR_INVALID_PARAM;
+
+	ret = usbg_write_buf(path, name, file, guidbin, GUID_BIN_LENGTH);
+	if (ret > 0)
+		ret = 0;
+
+	return ret;
+}
+
 int usbg_read_buf_limited(const char *path, const char *name,
 			  const char *file, char *buf, int len)
 {
@@ -139,6 +164,32 @@ int usbg_read_string_alloc(const char *path, const char *name,
 		ret = USBG_ERROR_NO_MEM;
 		goto out;
 	}
+
+	*dest = new_buf;
+out:
+	return ret;
+}
+
+int usbg_read_buf_alloc(const char *path, const char *name,
+			   const char *file, char **dest, int len)
+{
+	char buf[USBG_MAX_FILE_SIZE];
+	char *new_buf = NULL;
+	int ret;
+
+	ret = usbg_read_buf_limited(path, name, file, buf, len);
+	if (ret != len)
+		goto out;
+
+	ret = 0;
+
+	new_buf = malloc(len);
+	if (!new_buf) {
+		ret = USBG_ERROR_NO_MEM;
+		goto out;
+	}
+
+	memcpy(new_buf, buf, len);
 
 	*dest = new_buf;
 out:
