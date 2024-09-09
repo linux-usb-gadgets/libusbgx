@@ -26,6 +26,7 @@ extern "C" {
 #define usbg_set_config_node_string	NULL
 #define usbg_set_config_node_ether_addr NULL
 #define usbg_set_config_node_dev	NULL
+#define usbg_set_config_node_guid	NULL
 
 /*
  * This define comes from libconfig header.
