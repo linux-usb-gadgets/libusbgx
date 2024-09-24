@@ -260,7 +260,7 @@ static inline int usbg_f_net_set_class(usbg_f_net *nf, unsigned int class_)
  * @param[out] subclass Current subclass identification
  * @return 0 on success usbg_error if error occurred.
  */
-static inline int usbg_f_net_get_subclass(usbg_f_net *nf, int *subclass)
+static inline int usbg_f_net_get_subclass(usbg_f_net *nf, unsigned int *subclass)
 {
 	return usbg_f_net_get_attr_val(nf, USBG_F_NET_SUBCLASS,
 				       (union usbg_f_net_attr_val *)subclass);
@@ -284,7 +284,7 @@ static inline int usbg_f_net_set_subclass(usbg_f_net *nf, unsigned int subclass)
  * @param[out] protocol Current protocol identification
  * @return 0 on success usbg_error if error occurred.
  */
-static inline int usbg_f_net_get_protocol(usbg_f_net *nf, int *protocol)
+static inline int usbg_f_net_get_protocol(usbg_f_net *nf, unsigned int *protocol)
 {
 	return usbg_f_net_get_attr_val(nf, USBG_F_NET_PROTOCOL,
 				       (union usbg_f_net_attr_val *)protocol);
