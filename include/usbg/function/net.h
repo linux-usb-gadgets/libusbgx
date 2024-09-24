@@ -183,8 +183,8 @@ static inline int usbg_f_net_set_host_addr(usbg_f_net *nf,
  */
 static inline int usbg_f_net_get_ifname(usbg_f_net *nf, char **ifname)
 {
-	return usbg_f_net_get_attr_val(nf, USBG_F_NET_IFNAME,
-				       (union usbg_f_net_attr_val *)ifname);
+	union usbg_f_net_attr_val val = {.ifname = *ifname,};
+	return usbg_f_net_get_attr_val(nf, USBG_F_NET_IFNAME, &val);
 }
 
 /**
@@ -208,8 +208,8 @@ int usbg_f_net_get_ifname_s(usbg_f_net *nf, char *buf, int len);
  */
 static inline int usbg_f_net_get_qmult(usbg_f_net *nf, unsigned int *qmult)
 {
-	return usbg_f_net_get_attr_val(nf, USBG_F_NET_QMULT,
-				       (union usbg_f_net_attr_val *)qmult);
+	union usbg_f_net_attr_val val = {.qmult = *qmult};
+	return usbg_f_net_get_attr_val(nf, USBG_F_NET_QMULT, &val);
 }
 
 /**
@@ -232,8 +232,8 @@ static inline int usbg_f_net_set_qmult(usbg_f_net *nf, unsigned int qmult)
  */
 static inline int usbg_f_net_get_class(usbg_f_net *nf, unsigned int *class_)
 {
-	return usbg_f_net_get_attr_val(nf, USBG_F_NET_CLASS,
-				       (union usbg_f_net_attr_val *)class_);
+	union usbg_f_net_attr_val val = {.class_ = *class_};
+	return usbg_f_net_get_attr_val(nf, USBG_F_NET_CLASS, &val);
 }
 
 /**
@@ -256,8 +256,8 @@ static inline int usbg_f_net_set_class(usbg_f_net *nf, unsigned int class_)
  */
 static inline int usbg_f_net_get_subclass(usbg_f_net *nf, unsigned int *subclass)
 {
-	return usbg_f_net_get_attr_val(nf, USBG_F_NET_SUBCLASS,
-				       (union usbg_f_net_attr_val *)subclass);
+	union usbg_f_net_attr_val val = {.subclass = *subclass};
+	return usbg_f_net_get_attr_val(nf, USBG_F_NET_SUBCLASS, &val);
 }
 
 /**
@@ -280,8 +280,8 @@ static inline int usbg_f_net_set_subclass(usbg_f_net *nf, unsigned int subclass)
  */
 static inline int usbg_f_net_get_protocol(usbg_f_net *nf, unsigned int *protocol)
 {
-	return usbg_f_net_get_attr_val(nf, USBG_F_NET_PROTOCOL,
-				       (union usbg_f_net_attr_val *)protocol);
+	union usbg_f_net_attr_val val = {.protocol = *protocol};
+	return usbg_f_net_get_attr_val(nf, USBG_F_NET_PROTOCOL, &val);
 }
 
 /**
