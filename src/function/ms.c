@@ -166,7 +166,8 @@ static int ms_alloc_inst(struct usbg_function_type *type,
 		goto out;
 
 	mf = usbg_to_ms_function(*f);
-	memset(mf->luns, 0, sizeof(mf->luns));
+	for (int i = 0; i < MAX_LUNS; i++)
+		mf->luns[i] = 0;
 	mf->luns_initiated = false;
 out:
 	return ret;
