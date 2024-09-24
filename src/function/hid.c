@@ -198,9 +198,9 @@ struct {
 #undef HID_DEV_ATTR_RO
 #undef HID_RD_ATTR
 
-GENERIC_ALLOC_INST(hid, struct usbg_f_hid, func);
+GENERIC_ALLOC_INST(hid, struct usbg_f_hid, func)
 
-GENERIC_FREE_INST(hid, struct usbg_f_hid, func);
+GENERIC_FREE_INST(hid, struct usbg_f_hid, func)
 
 static int hid_set_attrs(struct usbg_function *f, void *f_attrs)
 {

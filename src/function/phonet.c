@@ -23,9 +23,9 @@ struct usbg_f_phonet {
 	struct usbg_function func;
 };
 
-GENERIC_ALLOC_INST(phonet, struct usbg_f_phonet, func);
+GENERIC_ALLOC_INST(phonet, struct usbg_f_phonet, func)
 
-GENERIC_FREE_INST(phonet, struct usbg_f_phonet, func);
+GENERIC_FREE_INST(phonet, struct usbg_f_phonet, func)
 
 static int phonet_set_attrs(struct usbg_function *f, void *f_attrs)
 {
