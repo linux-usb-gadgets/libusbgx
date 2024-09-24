@@ -42,13 +42,6 @@ union usbg_f_printer_attr_val {
 	int q_len;
 };
 
-#define USBG_F_PRINTER_ETHER_ADDR_TO_ATTR_VAL(WHAT) \
-	USBG_TO_UNION(usbg_f_printer_attr_val, dev_addr, WHAT)
-
-#define USBG_F_PRINTER_INT_TO_ATTR_VAL(WHAT) \
-	USBG_TO_UNION(usbg_f_printer_attr_val, qmult, WHAT)
-
-
 #ifdef __cplusplus
 }
 #endif

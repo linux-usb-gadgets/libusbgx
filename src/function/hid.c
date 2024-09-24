@@ -69,9 +69,9 @@ static int hid_get_report(const char *path, const char *name, const char *attr,
 }
 
 static int hid_set_report(const char *path, const char *name, const char *attr,
-			  void *val)
+			  const void *val)
 {
-	struct usbg_f_hid_report_desc *report_desc = val;
+	const struct usbg_f_hid_report_desc *report_desc = val;
 	char *buf = report_desc->desc;
 	int len = report_desc->len;
 	int ret;
@@ -239,7 +239,7 @@ static int hid_libconfig_import(struct usbg_function *f,
 		if (ret < 0)
 			break;
 
-		ret = usbg_f_hid_set_attr_val(hf, i, val);
+		ret = usbg_f_hid_set_attr_val(hf, i, &val);
 		if (ret)
 			break;
 	}
@@ -327,7 +327,7 @@ int usbg_f_hid_set_attrs(usbg_f_hid *hf,
 			continue;
 
 		ret = usbg_f_hid_set_attr_val(hf, i,
-					       *(union usbg_f_hid_attr_val *)
+					       (union usbg_f_hid_attr_val *)
 					       ((char *)attrs
 						+ hid_attr[i].offset));
 		if (ret)
@@ -346,11 +346,11 @@ int usbg_f_hid_get_attr_val(usbg_f_hid *hf, enum usbg_f_hid_attr attr,
 }
 
 int usbg_f_hid_set_attr_val(usbg_f_hid *hf, enum usbg_f_hid_attr attr,
-			    union usbg_f_hid_attr_val val)
+			    const union usbg_f_hid_attr_val *val)
 {
 	return hid_attr[attr].ro ?
 		USBG_ERROR_INVALID_PARAM :
 		hid_attr[attr].set(hf->func.path, hf->func.name,
-				  hid_attr[attr].name, &val);
+				  hid_attr[attr].name, val);
 }
 
