@@ -1049,7 +1049,19 @@ static int uvc_set_frame(char *format_path, const char *format, const struct usb
 	if (ret != USBG_SUCCESS)
 		return ret;
 
-	ret = usbg_write_dec(frame_path, frame_name, "dwMaxVideoFrameBufferSize", attrs->wHeight * attrs->wWidth);
+	ret = usbg_write_dec(frame_path, frame_name, "dwDefaultFrameInterval", attrs->dwDefaultFrameInterval);
+	if (ret != USBG_SUCCESS)
+		return ret;
+
+	ret = usbg_write_dec(frame_path, frame_name, "dwMaxVideoFrameBufferSize", attrs->dwMaxVideoFrameBufferSize);
+	if (ret != USBG_SUCCESS)
+		return ret;
+
+	ret = usbg_write_dec(frame_path, frame_name, "dwMinBitRate", attrs->dwMinBitRate);
+	if (ret != USBG_SUCCESS)
+		return ret;
+
+	ret = usbg_write_dec(frame_path, frame_name, "dwMaxBitRate", attrs->dwMaxBitRate);
 	if (ret != USBG_SUCCESS)
 		return ret;
 
