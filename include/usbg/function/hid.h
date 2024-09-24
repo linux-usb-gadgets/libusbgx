@@ -56,11 +56,6 @@ union usbg_f_hid_attr_val {
 	unsigned int subclass;
 };
 
-#define USBG_F_HID_UINT_TO_ATTR_VAL(WHAT)			\
-	USBG_TO_UNION(usbg_f_hid_attr_val, protocol, WHAT)
-
-#define USBG_F_HID_RDESC_TO_ATTR_VAL(WHAT)			\
-	USBG_TO_UNION(usbg_f_hid_attr_val, report_desc, WHAT)
 /**
  * @brief Cast from generic function to hid function
  * @param[in] f function to be converted to hid funciton.
@@ -173,8 +168,9 @@ static inline int usbg_f_hid_get_protocol(usbg_f_hid *hf,
 static inline int usbg_f_hid_set_protocol(usbg_f_hid *hf,
 					  unsigned int protocol)
 {
-	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_PROTOCOL,
-				       USBG_F_HID_UINT_TO_ATTR_VAL(protocol));
+
+	union usbg_f_hid_attr_val val = {.protocol = protocol};
+	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_PROTOCOL, val);
 }
 
 /**
@@ -199,8 +195,8 @@ static inline int usbg_f_hid_get_report_desc(usbg_f_hid *hf,
 static inline int usbg_f_hid_set_report_desc(usbg_f_hid *hf,
 					     struct usbg_f_hid_report_desc report_desc)
 {
-	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_REPORT_DESC,
-				       USBG_F_HID_RDESC_TO_ATTR_VAL(report_desc));
+	union usbg_f_hid_attr_val val = {.report_desc = report_desc};
+	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_REPORT_DESC, val);
 }
 
 /**
@@ -242,8 +238,8 @@ static inline int usbg_f_hid_set_report_desc_raw(usbg_f_hid *hf,
 		.len = len,
 	};
 
-	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_REPORT_DESC,
-				       USBG_F_HID_RDESC_TO_ATTR_VAL(report_desc));
+	union usbg_f_hid_attr_val val = {.report_desc = report_desc};
+	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_REPORT_DESC, val);
 }
 
 /**
@@ -268,8 +264,8 @@ static inline int usbg_f_hid_get_report_length(usbg_f_hid *hf,
 static inline int usbg_f_hid_set_report_length(usbg_f_hid *hf,
 					  unsigned int report_length)
 {
-	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_REPORT_LENGTH,
-				       USBG_F_HID_UINT_TO_ATTR_VAL(report_length));
+	union usbg_f_hid_attr_val val = {.report_length = report_length};
+	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_REPORT_LENGTH, val);
 }
 
 /**
@@ -294,8 +290,8 @@ static inline int usbg_f_hid_get_subclass(usbg_f_hid *hf,
 static inline int usbg_f_hid_set_subclass(usbg_f_hid *hf,
 					  unsigned int subclass)
 {
-	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_SUBCLASS,
-				       USBG_F_HID_UINT_TO_ATTR_VAL(subclass));
+	union usbg_f_hid_attr_val val = {.subclass = subclass};
+	return usbg_f_hid_set_attr_val(hf, USBG_F_HID_SUBCLASS, val);
 }
 
 #ifdef __cplusplus
