@@ -23,6 +23,26 @@ struct usbg_f_uac2 {
 	struct usbg_function func;
 };
 
+#define UAC2_BOOL_ATTR(_name)						\
+	{								\
+		.name = #_name,						\
+		.offset = offsetof(struct usbg_f_uac2_attrs, _name),    \
+		.get = usbg_get_bool,				        \
+		.set = usbg_set_bool,				        \
+		.import = usbg_get_config_node_bool,	                \
+		.export = usbg_set_config_node_bool,		        \
+	}
+
+#define UAC2_STRING_ATTR(_name)					\
+	{								\
+		.name = #_name,						\
+		.offset = offsetof(struct usbg_f_uac2_attrs, _name),     \
+		.get = usbg_get_string,				        \
+		.set = usbg_set_string,				        \
+		.export = usbg_set_config_node_string,		        \
+		.import = usbg_get_config_node_string,	                \
+	}
+
 #define UAC2_DEC_ATTR(_name)						\
 	{								\
 		.name = #_name,						\
@@ -47,6 +67,22 @@ static struct {
 	[USBG_F_UAC2_P_CHMASK] = UAC2_DEC_ATTR(p_chmask),
 	[USBG_F_UAC2_P_SRATE] = UAC2_DEC_ATTR(p_srate),
 	[USBG_F_UAC2_P_SSIZE] = UAC2_DEC_ATTR(p_ssize),
+	[USBG_F_UAC2_P_HS_BINT] = UAC2_DEC_ATTR(p_hs_bint),
+	[USBG_F_UAC2_C_HS_BINT] = UAC2_DEC_ATTR(c_hs_bint),
+	[USBG_F_UAC2_C_SYNC] = UAC2_STRING_ATTR(c_sync),
+	[USBG_F_UAC2_REQ_NUMBER] = UAC2_DEC_ATTR(req_number),
+	[USBG_F_UAC2_FB_MAX] = UAC2_DEC_ATTR(fb_max),
+	[USBG_F_UAC2_P_MUTE_PRESENT] = UAC2_BOOL_ATTR(p_mute_present),
+	[USBG_F_UAC2_P_VOLUME_PRESENT] = UAC2_BOOL_ATTR(p_volume_present),
+	[USBG_F_UAC2_P_VOLUME_MIN] = UAC2_DEC_ATTR(p_volume_min),
+	[USBG_F_UAC2_P_VOLUME_MAX] = UAC2_DEC_ATTR(p_volume_max),
+	[USBG_F_UAC2_P_VOLUME_RES] = UAC2_DEC_ATTR(p_volume_res),
+	[USBG_F_UAC2_C_MUTE_PRESENT] = UAC2_BOOL_ATTR(c_mute_present),
+	[USBG_F_UAC2_C_VOLUME_PRESENT] = UAC2_BOOL_ATTR(c_volume_present),
+	[USBG_F_UAC2_C_VOLUME_MIN] = UAC2_DEC_ATTR(c_volume_min),
+	[USBG_F_UAC2_C_VOLUME_MAX] = UAC2_DEC_ATTR(c_volume_max),
+	[USBG_F_UAC2_C_VOLUME_RES] = UAC2_DEC_ATTR(c_volume_res),
+	[USBG_F_UAC2_FUNCTION_NAME] = UAC2_STRING_ATTR(function_name),
 };
 
 #undef UAC2_DEC_ATTR

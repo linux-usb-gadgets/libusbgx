@@ -23,6 +23,8 @@ extern "C" {
 
 struct usbg_f_uac2;
 typedef struct usbg_f_uac2 usbg_f_uac2;
+typedef short aligned_uchar __attribute__((aligned(sizeof(int))));
+typedef short aligned_short __attribute__((aligned(sizeof(int))));
 
 struct usbg_f_uac2_attrs {
 	int c_chmask;
@@ -31,6 +33,26 @@ struct usbg_f_uac2_attrs {
 	int p_chmask;
 	int p_srate;
 	int p_ssize;
+	aligned_uchar p_hs_bint;
+	aligned_uchar c_hs_bint;
+
+	const char * c_sync;
+	unsigned int req_number;
+	unsigned int fb_max;
+
+	bool p_mute_present;
+	bool p_volume_present;
+	aligned_short p_volume_min;
+	aligned_short p_volume_max;
+	aligned_short p_volume_res;
+
+	bool c_mute_present;
+	bool c_volume_present;
+	aligned_short c_volume_min;
+	aligned_short c_volume_max;
+	aligned_short c_volume_res;
+
+	const char *function_name;
 };
 
 enum usbg_f_uac2_attr {
@@ -41,6 +63,22 @@ enum usbg_f_uac2_attr {
 	USBG_F_UAC2_P_CHMASK,
 	USBG_F_UAC2_P_SRATE,
 	USBG_F_UAC2_P_SSIZE,
+	USBG_F_UAC2_P_HS_BINT,
+	USBG_F_UAC2_C_HS_BINT,
+	USBG_F_UAC2_C_SYNC,
+	USBG_F_UAC2_REQ_NUMBER,
+	USBG_F_UAC2_FB_MAX,
+	USBG_F_UAC2_P_MUTE_PRESENT,
+	USBG_F_UAC2_P_VOLUME_PRESENT,
+	USBG_F_UAC2_P_VOLUME_MIN,
+	USBG_F_UAC2_P_VOLUME_MAX,
+	USBG_F_UAC2_P_VOLUME_RES,
+	USBG_F_UAC2_C_MUTE_PRESENT,
+	USBG_F_UAC2_C_VOLUME_PRESENT,
+	USBG_F_UAC2_C_VOLUME_MIN,
+	USBG_F_UAC2_C_VOLUME_MAX,
+	USBG_F_UAC2_C_VOLUME_RES,
+	USBG_F_UAC2_FUNCTION_NAME,
 	USBG_F_UAC2_ATTR_MAX
 };
 
@@ -51,6 +89,27 @@ union usbg_f_uac2_attr_val {
 	int p_chmask;
 	int p_srate;
 	int p_ssize;
+
+	char p_hs_bint;
+	char c_hs_bint;
+
+	const char * c_sync;
+	unsigned int req_number;
+	unsigned int fb_max;
+
+	bool p_mute_present;
+	bool p_volume_present;
+	int p_volume_min;
+	int p_volume_max;
+	int p_volume_res;
+
+	bool c_mute_present;
+	bool c_volume_present;
+	int c_volume_min;
+	int c_volume_max;
+	int c_volume_res;
+
+	const char * function_name;
 };
 
 #define USBG_F_UAC2_INT_TO_ATTR_VAL(WHAT)			\

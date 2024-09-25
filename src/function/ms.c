@@ -64,6 +64,7 @@ static struct {
 	[USBG_F_MS_LUN_NOFUA] = MS_LUN_BOOL_ATTR(nofua),
 	[USBG_F_MS_LUN_REMOVABLE] = MS_LUN_BOOL_ATTR(removable),
 	[USBG_F_MS_LUN_FILE] = MS_LUN_STRING_ATTR(file),
+	[USBG_F_MS_LUN_INQUIRY_STRING] = MS_LUN_STRING_ATTR(inquiry_string),
 };
 
 static inline int lun_select(const struct dirent *dent)
@@ -165,7 +166,8 @@ static int ms_alloc_inst(struct usbg_function_type *type,
 		goto out;
 
 	mf = usbg_to_ms_function(*f);
-	memset(mf->luns, 0, sizeof(mf->luns));
+	for (int i = 0; i < MAX_LUNS; i++)
+		mf->luns[i] = 0;
 	mf->luns_initiated = false;
 out:
 	return ret;

@@ -249,6 +249,9 @@ int usbg_read_string_limited(const char *path, const char *name,
 int usbg_read_string_alloc(const char *path, const char *name,
 			   const char *file, char **dest);
 
+int usbg_read_buf_alloc(const char *path, const char *name,
+			const char *file, char **dest, int len);
+
 int usbg_write_buf(const char *path, const char *name,
 		   const char *file, const char *buf, int len);
 
@@ -370,6 +373,9 @@ int usbg_set_ether_addr(const char *path, const char *name, const char *attr,
 
 int usbg_get_dev(const char *path, const char *name, const char *attr,
 		 void *val);
+
+int usbg_write_guid(const char *path, const char *name,
+		    const char *file, const char *buf);
 
 /*
  * return:

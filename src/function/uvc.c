@@ -87,6 +87,7 @@ struct {
 };
 
 #undef UVC_DEC_ATTR
+#undef UVC_STRING_ATTR
 
 #define UVC_DEC_ATTR(_name)						\
 	{								\
@@ -138,6 +139,28 @@ struct {
 		.export = usbg_set_config_node_int,		        \
 	}
 
+static inline int usbg_get_guid(const char *path, const char *name,
+			      const char *attr, void *val)
+{
+	return usbg_read_buf_alloc(path, name, attr, (char **)val, GUID_BIN_LENGTH);
+}
+
+static inline int usbg_set_guid(const char *path, const char *name,
+			      const char *attr, void *val)
+{
+	return usbg_write_guid(path, name, attr, *(char **)val);
+}
+
+#define UVC_GUID_ATTR(_name)					\
+	{								\
+		.name = #_name,						\
+		.offset = offsetof(struct usbg_f_uvc_format_attrs, _name),     \
+		.get = usbg_get_guid,					\
+		.set = usbg_set_guid,					\
+		.export = usbg_set_config_node_guid,			\
+		.import = usbg_get_config_node_string,			\
+	}
+
 struct {
 	const char *name;
 	size_t offset;
@@ -148,10 +171,12 @@ struct {
 	usbg_export_node_func export;
 } uvc_format_attr[USBG_F_UVC_FORMAT_ATTR_MAX] = {
 	[USBG_F_UVC_FORMAT_CONTROLS] = UVC_DEC_ATTR_RO(bmaControls),
-	[USBG_F_UVC_FORMAT_INTERFACE_FLAGS] = UVC_DEC_ATTR_RO(bmInterfaceFlags),
+	[USBG_F_UVC_FORMAT_INTERLACE_FLAGS] = UVC_DEC_ATTR_RO(bmInterlaceFlags),
 	[USBG_F_UVC_FORMAT_ASPECTRATIO_X] = UVC_DEC_ATTR_RO(bAspectRatioX),
 	[USBG_F_UVC_FORMAT_ASPECTRATIO_Y] = UVC_DEC_ATTR_RO(bAspectRatioY),
 	[USBG_F_UVC_FORMAT_DEFAULT_FRAME_INDEX] = UVC_DEC_ATTR(bDefaultFrameIndex),
+	[USBG_F_UVC_FORMAT_GUID_FORMAT] = UVC_GUID_ATTR(guidFormat),
+	[USBG_F_UVC_FORMAT_BITS_PER_PIXEL] = UVC_DEC_ATTR(bBitsPerPixel),
 	[USBG_F_UVC_FORMAT_FORMAT_INDEX] = UVC_DEC_ATTR_RO(bFormatIndex),
 };
 
@@ -1025,7 +1050,19 @@ static int uvc_set_frame(char *format_path, const char *format, const struct usb
 	if (ret != USBG_SUCCESS)
 		return ret;
 
-	ret = usbg_write_dec(frame_path, frame_name, "dwMaxVideoFrameBufferSize", attrs->wHeight * attrs->wWidth);
+	ret = usbg_write_dec(frame_path, frame_name, "dwDefaultFrameInterval", attrs->dwDefaultFrameInterval);
+	if (ret != USBG_SUCCESS)
+		return ret;
+
+	ret = usbg_write_dec(frame_path, frame_name, "dwMaxVideoFrameBufferSize", attrs->dwMaxVideoFrameBufferSize);
+	if (ret != USBG_SUCCESS)
+		return ret;
+
+	ret = usbg_write_dec(frame_path, frame_name, "dwMinBitRate", attrs->dwMinBitRate);
+	if (ret != USBG_SUCCESS)
+		return ret;
+
+	ret = usbg_write_dec(frame_path, frame_name, "dwMaxBitRate", attrs->dwMaxBitRate);
 	if (ret != USBG_SUCCESS)
 		return ret;
 

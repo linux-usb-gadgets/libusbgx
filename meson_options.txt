@@ -1,0 +1,4 @@
+option('examples', type: 'boolean', value: false, description: 'Build examples')
+option('tests', type: 'feature', value: 'auto', description: 'Build unit tests')
+option('gadget-schemes', type: 'feature', value: 'auto', description: 'Enable gadget schemes')
+option('doxygen', type: 'feature', value: 'auto', description: 'Build documentation')

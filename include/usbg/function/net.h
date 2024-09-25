@@ -50,7 +50,7 @@ union usbg_f_net_attr_val {
 	struct ether_addr dev_addr;
 	struct ether_addr host_addr;
 	const char *ifname;
-	int qmult;
+	unsigned int qmult;
 	unsigned int class_;
 	unsigned int subclass;
 	unsigned int protocol;
@@ -212,7 +212,7 @@ int usbg_f_net_get_ifname_s(usbg_f_net *nf, char *buf, int len);
  * @param[out] qmult Current multiplier of queue len
  * @return 0 on success usbg_error if error occurred.
  */
-static inline int usbg_f_net_get_qmult(usbg_f_net *nf, int *qmult)
+static inline int usbg_f_net_get_qmult(usbg_f_net *nf, unsigned int *qmult)
 {
 	return usbg_f_net_get_attr_val(nf, USBG_F_NET_QMULT,
 				       (union usbg_f_net_attr_val *)qmult);
@@ -224,7 +224,7 @@ static inline int usbg_f_net_get_qmult(usbg_f_net *nf, int *qmult)
  * @param[in] qmult Multiplier of queue len which should be set
  * @return 0 on success usbg_error if error occurred.
  */
-static inline int usbg_f_net_set_qmult(usbg_f_net *nf, int qmult)
+static inline int usbg_f_net_set_qmult(usbg_f_net *nf, unsigned int qmult)
 {
 	return usbg_f_net_set_attr_val(nf, USBG_F_NET_QMULT,
 				       USBG_F_NET_INT_TO_ATTR_VAL(qmult));
