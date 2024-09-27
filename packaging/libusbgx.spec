@@ -1,5 +1,5 @@
 Name:           libusbgx
-Version:        0.2.0
+Version:        0.3.0
 Release:        0
 License:        LGPL-2.1+ and GPL-2.0+
 Summary:        USB gadget with ConfigFS Library
