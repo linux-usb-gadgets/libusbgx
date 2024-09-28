@@ -37,10 +37,9 @@ extern "C" {
 #endif /* offsetof */
 
 #ifndef container_of
-#define container_of(ptr, type, field) ({                               \
-                        const typeof(((type *)0)->field) *member = (ptr); \
-                        (type *)( (char *)member - offsetof(type, field) ); \
-                })
+#define container_of(ptr, type, field) (                               \
+                        (type *)( (char *)(ptr) - offsetof(type, field) ) \
+                )
 #endif /* container_of */
 
 #define USBG_MAX_PATH_LENGTH PATH_MAX
@@ -160,6 +159,8 @@ struct usbg_udc
 
 #define ARRAY_SIZE(array) (sizeof(array)/sizeof(*array))
 
+#define ARRAY_SIZE_SENTINEL(array, size)				
+#if 0
 #define ARRAY_SIZE_SENTINEL(array, size)				\
 	static void __attribute__ ((unused)) array##_size_sentinel()				\
 	{								\
@@ -171,6 +172,7 @@ struct usbg_udc
 			(int)(size - ARRAY_SIZE(array))]		\
 			__attribute__ ((unused));			\
 	}
+#endif
 
 #define ERROR(msg, ...) do {\
                         fprintf(stderr, "%s()  "msg" \n", \
