@@ -124,7 +124,7 @@ static int ether_libconfig_import(struct usbg_function *f,
 		if (ret < 0)
 			break;
 
-		ret = usbg_f_net_set_attr_val(nf, i, val);
+		ret = usbg_f_net_set_attr_val(nf, i, &val);
 		if (ret)
 			break;
 	}
@@ -258,8 +258,8 @@ int usbg_f_net_set_attrs(usbg_f_net *nf,
 			continue;
 
 		ret = usbg_f_net_set_attr_val(nf, i,
-					       *(union usbg_f_net_attr_val *)
-					       ((char *)attrs
+					       (const union usbg_f_net_attr_val *)
+					       ((const char *)attrs
 						+ net_attr[i].offset));
 		if (ret)
 			break;
@@ -277,12 +277,12 @@ int usbg_f_net_get_attr_val(usbg_f_net *nf, enum usbg_f_net_attr attr,
 }
 
 int usbg_f_net_set_attr_val(usbg_f_net *nf, enum usbg_f_net_attr attr,
-			    union usbg_f_net_attr_val val)
+			    const union usbg_f_net_attr_val *val)
 {
 	return net_attr[attr].ro ?
 		USBG_ERROR_INVALID_PARAM :
 		net_attr[attr].set(nf->func.path, nf->func.name,
-				   net_attr[attr].name, &val);
+				   net_attr[attr].name, val);
 }
 
 int usbg_f_net_get_ifname_s(usbg_f_net *nf, char *buf, int len)

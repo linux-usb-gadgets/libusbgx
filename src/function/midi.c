@@ -100,7 +100,7 @@ static int midi_libconfig_import(struct usbg_function *f,
 		if (ret < 0)
 			break;
 
-		ret = usbg_f_midi_set_attr_val(mf, i, val);
+		ret = usbg_f_midi_set_attr_val(mf, i, &val);
 		if (ret)
 			break;
 	}
@@ -185,8 +185,8 @@ int usbg_f_midi_set_attrs(usbg_f_midi *mf,
 
 	for (i = USBG_F_MIDI_ATTR_MIN; i < USBG_F_MIDI_ATTR_MAX; ++i) {
 		ret = usbg_f_midi_set_attr_val(mf, i,
-					       *(union usbg_f_midi_attr_val *)
-					       ((char *)attrs
+					       (const union usbg_f_midi_attr_val *)
+					       ((const char *)attrs
 						+ midi_attr[i].offset));
 		if (ret)
 			break;
@@ -204,10 +204,10 @@ int usbg_f_midi_get_attr_val(usbg_f_midi *mf, enum usbg_f_midi_attr attr,
 }
 
 int usbg_f_midi_set_attr_val(usbg_f_midi *mf, enum usbg_f_midi_attr attr,
-			    union usbg_f_midi_attr_val val)
+			    const union usbg_f_midi_attr_val *val)
 {
 	return midi_attr[attr].set(mf->func.path, mf->func.name,
-				    midi_attr[attr].name, &val);
+				    midi_attr[attr].name, val);
 }
 
 int usbg_f_midi_get_id_s(usbg_f_midi *mf, char *buf, int len)
