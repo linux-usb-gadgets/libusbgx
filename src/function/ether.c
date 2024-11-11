@@ -23,16 +23,17 @@ struct usbg_f_net {
 	struct usbg_function func;
 };
 
-#define NET_DEC_ATTR(_name)						\
+#define NET_DEC_ATTR_(_name,_elname)					\
 	{								\
 		.name = #_name,						\
 		.ro = false,					        \
-		.offset = offsetof(struct usbg_f_net_attrs, _name),     \
+		.offset = offsetof(struct usbg_f_net_attrs, _elname),   \
 		.get = usbg_get_dec,				        \
 		.set = usbg_set_dec,				        \
 		.import = usbg_get_config_node_int,	                \
 		.export = usbg_set_config_node_int,		        \
 	}
+#define NET_DEC_ATTR(_name) NET_DEC_ATTR_(_name,_name)			\
 
 #define NET_RO_STRING_ATTR(_name)					\
 	{								\
@@ -67,7 +68,7 @@ static struct {
 	[USBG_F_NET_HOST_ADDR] = NET_ETHER_ADDR_ATTR(host_addr),
 	[USBG_F_NET_IFNAME] = NET_RO_STRING_ATTR(ifname),
 	[USBG_F_NET_QMULT] = NET_DEC_ATTR(qmult),
-	[USBG_F_NET_CLASS] = NET_DEC_ATTR(class_),
+	[USBG_F_NET_CLASS] = NET_DEC_ATTR_(class, class_),
 	[USBG_F_NET_SUBCLASS] = NET_DEC_ATTR(subclass),
 	[USBG_F_NET_PROTOCOL] = NET_DEC_ATTR(protocol)
 };
