@@ -528,7 +528,10 @@ static int usbg_parse_config_attrs(const char *path, const char *name,
 
 	ret = usbg_read_dec(path, name, "MaxPower", &buf);
 	if (ret == USBG_SUCCESS) {
-		c_attrs->bMaxPower = (uint8_t)buf;
+		// Convert from kernel raw value to High-Speed descriptor value.
+		// This maintains the bMaxPower API but fails to represent
+		// higher max power values for SuperSpeed devices.
+		c_attrs->bMaxPower = (uint8_t)(buf >> 1);
 
 		ret = usbg_read_hex(path, name, "bmAttributes", &buf);
 		if (ret == USBG_SUCCESS)
@@ -2294,7 +2297,7 @@ int usbg_set_config_attrs(usbg_config *c,
 	if (!c || !c_attrs)
 		goto out;
 
-	ret = usbg_write_dec(c->path, c->name, "MaxPower", c_attrs->bMaxPower);
+	ret = usbg_write_dec(c->path, c->name, "MaxPower", c_attrs->bMaxPower << 1);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
@@ -2316,7 +2319,7 @@ int usbg_get_config_attrs(usbg_config *c,
 
 int usbg_set_config_max_power(usbg_config *c, int bMaxPower)
 {
-	return c ? usbg_write_dec(c->path, c->name, "MaxPower", bMaxPower)
+	return c ? usbg_write_dec(c->path, c->name, "MaxPower", bMaxPower << 1)
 			: USBG_ERROR_INVALID_PARAM;
 }
 
