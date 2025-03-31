@@ -53,7 +53,7 @@ int usbg_get_config_node_bool(config_setting_t *root,
 		return USBG_ERROR_INVALID_TYPE;
 	}
 
-	return 0;
+	return 1;
 }
 
 int usbg_get_config_node_string(config_setting_t *root,
