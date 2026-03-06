@@ -208,6 +208,7 @@ struct usbg_udc
 #define FUNCTIONS_DIR "functions"
 #define GADGETS_DIR "usb_gadget"
 #define OS_DESC_DIR "os_desc"
+#define WEBUSB_DIR "webusb"
 
 static inline int file_select(const struct dirent *dent)
 {

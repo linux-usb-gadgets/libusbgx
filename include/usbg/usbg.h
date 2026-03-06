@@ -183,6 +183,31 @@ typedef enum {
 	USBG_GADGET_OS_DESC_MAX,
 } usbg_gadget_os_desc_strs;
 
+
+/**
+ * @brief USB gadget WebUSB Descriptors
+ */
+struct usbg_gadget_webusbs
+{
+	bool use;
+	uint8_t b_vendor_code;
+	uint16_t bcd_version;
+	char *landing_page;
+};
+
+/**
+ * @typedef usbg_gadget_webusb_strs
+ * @brief WebUSB Descriptor strings
+ */
+typedef enum {
+	USBG_GADGET_WEBUSB_MIN = 0,
+	WEBUSB_USE = USBG_GADGET_WEBUSB_MIN,
+	WEBUSB_BVENDORCODE,
+	WEBUSB_BCDVERSION,
+	WEBUSB_LANDINGPAGE,
+	USBG_GADGET_WEBUSB_MAX,
+} usbg_gadget_webusb_strs;
+
 /**
  * @brief USB configuration attributes
  */
@@ -474,6 +499,13 @@ extern const char *usbg_get_gadget_str_name(usbg_gadget_str str);
 extern const char *usbg_get_gadget_os_desc_name(usbg_gadget_os_desc_strs str);
 
 /**
+ * @brief Get name of selected WebUSB string
+ * @param str WebUSB string code
+ * @return Name of WebUSB attribute associated with this code
+ */
+extern const char *usbg_get_gadget_webusb_name(usbg_gadget_webusb_strs str);
+
+/**
  * @brief Set selected attribute to value
  * @param g Pointer to gadget
  * @param attr Code of selected attribute
@@ -721,6 +753,39 @@ static inline void usbg_free_gadget_os_desc(
 
 extern int usbg_set_gadget_os_descs(usbg_gadget *g,
 		const struct usbg_gadget_os_descs *g_os_descs);
+
+/**
+ * @brief Get the USB gadget WebUSB Descriptor
+ * @param g Pointer to gadget
+ * @param g_webusbs Structure to be filled
+ * @return 0 on success usbg_error if error occurred
+ */
+extern int usbg_get_gadget_webusbs(usbg_gadget *g,
+		struct usbg_gadget_webusbs *g_webusbs);
+
+/**
+ * @brief Free WebUSB Descriptor attributes
+ * @details This function releases the memory allocated for USB
+ *          gadget WebUSB Descriptor attributes.
+ * @param g_webusbs WebUSB Descriptor attributes to be released
+ */
+static inline void usbg_free_gadget_webusb(
+			struct usbg_gadget_webusbs *g_webusbs)
+{
+	if (!g_webusbs)
+		return;
+
+	free(g_webusbs->landing_page);
+}
+
+/**
+ * @brief Set the USB gadget WebUSB Descriptor
+ * @param g Pointer to gadget
+ * @param g_webusbs Structure with values to set
+ * @return 0 on success usbg_error if error occurred
+ */
+extern int usbg_set_gadget_webusbs(usbg_gadget *g,
+		const struct usbg_gadget_webusbs *g_webusbs);
 
 /* USB function allocation and configuration */
 

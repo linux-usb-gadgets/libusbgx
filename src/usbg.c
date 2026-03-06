@@ -115,6 +115,16 @@ const char *gadget_os_desc_names[] =
 
 ARRAY_SIZE_SENTINEL(gadget_os_desc_names, USBG_GADGET_OS_DESC_MAX)
 
+const char *gadget_webusb_names[] =
+{
+	"use",
+	"bVendorCode",
+	"bcdVersion",
+	"landingPage",
+};
+
+ARRAY_SIZE_SENTINEL(gadget_webusb_names, USBG_GADGET_WEBUSB_MAX)
+
 int usbg_lookup_function_type(const char *name)
 {
 	int i = USBG_FUNCTION_TYPE_MIN;
@@ -189,6 +199,13 @@ const char *usbg_get_gadget_os_desc_name(usbg_gadget_os_desc_strs str)
 	return str >= USBG_GADGET_OS_DESC_MIN &&
 		str < USBG_GADGET_OS_DESC_MAX ?
 		gadget_os_desc_names[str] : NULL;
+}
+
+const char *usbg_get_gadget_webusb_name(usbg_gadget_webusb_strs str)
+{
+	return str >= USBG_GADGET_WEBUSB_MIN &&
+		str < USBG_GADGET_WEBUSB_MAX ?
+		gadget_webusb_names[str] : NULL;
 }
 
 static int usbg_split_function_instance_type(const char *full_name,
@@ -933,6 +950,47 @@ static int usbg_parse_gadget_os_descs(const char *path, const char *name,
 		goto out;
 
 	g_os_descs->use = val ? true : false;
+out:
+	return ret;
+}
+
+static int usbg_parse_gadget_webusbs(const char *path, const char *name,
+		struct usbg_gadget_webusbs *g_webusbs)
+{
+	int ret;
+	int nmb;
+	char spath[USBG_MAX_PATH_LENGTH];
+	int val;
+
+	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s", path, name,
+			WEBUSB_DIR);
+	if (nmb >= sizeof(spath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	ret = usbg_read_string_alloc(spath, "", "landingPage",
+				     &g_webusbs->landing_page);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_read_hex(spath, "", "bVendorCode", &val);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	g_webusbs->b_vendor_code = (unsigned char)val;
+
+	ret = usbg_read_hex(spath, "", "bcdVersion", &val);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	g_webusbs->bcd_version = (uint16_t)val;
+
+	ret = usbg_read_int(spath, "", "use", 10, &val);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	g_webusbs->use = val ? true : false;
 out:
 	return ret;
 }
@@ -2041,6 +2099,51 @@ int usbg_set_gadget_os_descs(usbg_gadget *g,
 		goto out;
 
 	ret = usbg_write_dec(spath, "", "use", g_os_descs->use);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+out:
+	return ret;
+}
+
+int usbg_get_gadget_webusbs(usbg_gadget *g, struct usbg_gadget_webusbs *g_webusbs)
+{
+	return g && g_webusbs ?
+			usbg_parse_gadget_webusbs(g->path, g->name, g_webusbs)
+			: USBG_ERROR_INVALID_PARAM;
+}
+
+int usbg_set_gadget_webusbs(usbg_gadget *g,
+			    const struct usbg_gadget_webusbs *g_webusbs)
+{
+	int ret;
+	int nmb;
+	char spath[USBG_MAX_PATH_LENGTH];
+
+	nmb = snprintf(spath, sizeof(spath), "%s/%s/%s", g->path, g->name,
+			WEBUSB_DIR);
+	if (nmb >= sizeof(spath)) {
+		ret = USBG_ERROR_PATH_TOO_LONG;
+		goto out;
+	}
+
+	ret = usbg_check_dir(spath);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_string(spath, "", "landingPage", g_webusbs->landing_page);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_hex8(spath, "", "bVendorCode", g_webusbs->b_vendor_code);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_hex16(spath, "", "bcdVersion", g_webusbs->bcd_version);
+	if (ret != USBG_SUCCESS)
+		goto out;
+
+	ret = usbg_write_dec(spath, "", "use", g_webusbs->use);
 	if (ret != USBG_SUCCESS)
 		goto out;
 
