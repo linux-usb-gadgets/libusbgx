@@ -27,30 +27,33 @@ typedef struct usbg_f_net usbg_f_net;
 struct usbg_f_net_attrs {
 	struct ether_addr dev_addr;
 	struct ether_addr host_addr;
-	const char *ifname;
 	int qmult;
-	unsigned int class_;
-	unsigned int subclass;
-	unsigned int protocol;
+	const char *ifname;
+	int max_segment_size;  /* NCM only */
+	unsigned int class_;   /* RNDIS only */
+	unsigned int subclass; /* RNDIS only */
+	unsigned int protocol; /* RNDIS only */
 };
 
 enum usbg_f_net_attr {
 	USBG_F_NET_ATTR_MIN = 0,
 	USBG_F_NET_DEV_ADDR = USBG_F_NET_ATTR_MIN,
 	USBG_F_NET_HOST_ADDR,
-	USBG_F_NET_IFNAME,
 	USBG_F_NET_QMULT,
-	USBG_F_NET_CLASS,
-	USBG_F_NET_SUBCLASS,
-	USBG_F_NET_PROTOCOL,
+	USBG_F_NET_IFNAME,
+	USBG_F_NET_MAX_SEGMENT_SIZE, /* NCM only */
+	USBG_F_NET_CLASS,            /* RNDIS only */
+	USBG_F_NET_SUBCLASS,         /* RNDIS only */
+	USBG_F_NET_PROTOCOL,         /* RNDIS only */
 	USBG_F_NET_ATTR_MAX
 };
 
 union usbg_f_net_attr_val {
 	struct ether_addr dev_addr;
 	struct ether_addr host_addr;
-	const char *ifname;
 	unsigned int qmult;
+	const char *ifname;
+	unsigned int max_segment_size;
 	unsigned int class_;
 	unsigned int subclass;
 	unsigned int protocol;
@@ -231,7 +234,31 @@ static inline int usbg_f_net_set_qmult(usbg_f_net *nf, unsigned int qmult)
 }
 
 /**
- * @brief Get the value of usb function class
+ * @brief Get the value of NCM max segment size
+ * @param[in] nf Pointer to net function
+ * @param[out] max_segment_size Current max segment size
+ * @return 0 on success usbg_error if error occurred.
+ */
+static inline int usbg_f_net_get_max_segment_size(usbg_f_net *nf, unsigned int *max_segment_size)
+{
+	return usbg_f_net_get_attr_val(nf, USBG_F_NET_MAX_SEGMENT_SIZE,
+				       (union usbg_f_net_attr_val *)max_segment_size);
+}
+
+/**
+ * @brief Set the value of NCM max segment size
+ * @param[in] nf Pointer to net function
+ * @param[in] max_segment_size Max segment size to set
+ * @return 0 on success usbg_error if error occurred.
+ */
+static inline int usbg_f_net_set_max_segment_size(usbg_f_net *nf, unsigned int max_segment_size)
+{
+	union usbg_f_net_attr_val val = {.max_segment_size = max_segment_size};
+	return usbg_f_net_set_attr_val(nf, USBG_F_NET_MAX_SEGMENT_SIZE, &val);
+}
+
+/**
+ * @brief Get the value of RNDIS class
  * @param[in] nf Pointer to net function
  * @param[out] class_ Current class identification
  * @return 0 on success usbg_error if error occurred.
@@ -243,7 +270,7 @@ static inline int usbg_f_net_get_class(usbg_f_net *nf, unsigned int *class_)
 }
 
 /**
- * @brief Set the value of usb function class
+ * @brief Set the value of RNDIS class
  * @param[in] nf Pointer to net function
  * @param[in] class_ Class identification
  * @return 0 on success usbg_error if error occurred.
@@ -255,19 +282,19 @@ static inline int usbg_f_net_set_class(usbg_f_net *nf, unsigned int class_)
 }
 
 /**
- * @brief Get the value of usb function subclass
+ * @brief Get the value of RNDIS subclass
  * @param[in] nf Pointer to net function
  * @param[out] subclass Current subclass identification
  * @return 0 on success usbg_error if error occurred.
  */
-static inline int usbg_f_net_get_subclass(usbg_f_net *nf, int *subclass)
+static inline int usbg_f_net_get_subclass(usbg_f_net *nf, unsigned int *subclass)
 {
 	return usbg_f_net_get_attr_val(nf, USBG_F_NET_SUBCLASS,
 				       (union usbg_f_net_attr_val *)subclass);
 }
 
 /**
- * @brief Set the value of usb function subclass
+ * @brief Set the value of RNDIS subclass
  * @param[in] nf Pointer to net function
  * @param[in] subclass Subclass identification
  * @return 0 on success usbg_error if error occurred.
@@ -279,21 +306,21 @@ static inline int usbg_f_net_set_subclass(usbg_f_net *nf, unsigned int subclass)
 }
 
 /**
- * @brief Get the value of usb function protocol
+ * @brief Get the value of RNDIS protocol
  * @param[in] nf Pointer to net function
  * @param[out] protocol Current protocol identification
  * @return 0 on success usbg_error if error occurred.
  */
-static inline int usbg_f_net_get_protocol(usbg_f_net *nf, int *protocol)
+static inline int usbg_f_net_get_protocol(usbg_f_net *nf, unsigned int *protocol)
 {
 	return usbg_f_net_get_attr_val(nf, USBG_F_NET_PROTOCOL,
 				       (union usbg_f_net_attr_val *)protocol);
 }
 
 /**
- * @brief Set the value of usb function protocol
+ * @brief Set the value of RNDIS protocol
  * @param[in] nf Pointer to net function
- * @param[in] protocol protocol identification
+ * @param[in] protocol Protocol identification
  * @return 0 on success usbg_error if error occurred.
  */
 static inline int usbg_f_net_set_protocol(usbg_f_net *nf, unsigned int protocol)

@@ -23,16 +23,20 @@ struct usbg_f_net {
 	struct usbg_function func;
 };
 
-#define NET_DEC_ATTR(_name)						\
+/* File name differs from C field name (_fname vs _cname) */
+#define NET_DEC_ATTR_NAMED(_fname, _cname)				\
 	{								\
-		.name = #_name,						\
+		.name = _fname,						\
 		.ro = false,					        \
-		.offset = offsetof(struct usbg_f_net_attrs, _name),     \
+		.offset = offsetof(struct usbg_f_net_attrs, _cname),    \
 		.get = usbg_get_dec,				        \
 		.set = usbg_set_dec,				        \
 		.import = usbg_get_config_node_int,	                \
 		.export = usbg_set_config_node_int,		        \
 	}
+
+/* File name matches the C field name */
+#define NET_DEC_ATTR(_name) NET_DEC_ATTR_NAMED(#_name, _name)
 
 #define NET_RO_STRING_ATTR(_name)					\
 	{								\
@@ -54,7 +58,7 @@ struct usbg_f_net {
 		.export = usbg_set_config_node_ether_addr,	        \
 	}
 
-static struct {
+static struct net_attr_entry {
 	const char *name;
 	bool ro;
 	size_t offset;
@@ -62,18 +66,39 @@ static struct {
 	usbg_attr_set_func set;
 	usbg_import_node_func import;
 	usbg_export_node_func export;
-} net_attr[USBG_F_NET_ATTR_MAX] = {
-	[USBG_F_NET_DEV_ADDR] = NET_ETHER_ADDR_ATTR(dev_addr),
+}
+net_attr_base[USBG_F_NET_ATTR_MAX] = {
+	[USBG_F_NET_DEV_ADDR]  = NET_ETHER_ADDR_ATTR(dev_addr),
 	[USBG_F_NET_HOST_ADDR] = NET_ETHER_ADDR_ATTR(host_addr),
-	[USBG_F_NET_IFNAME] = NET_RO_STRING_ATTR(ifname),
-	[USBG_F_NET_QMULT] = NET_DEC_ATTR(qmult),
-	[USBG_F_NET_CLASS] = NET_DEC_ATTR(class_),
-	[USBG_F_NET_SUBCLASS] = NET_DEC_ATTR(subclass),
-	[USBG_F_NET_PROTOCOL] = NET_DEC_ATTR(protocol)
+	[USBG_F_NET_QMULT]     = NET_DEC_ATTR(qmult),
+	[USBG_F_NET_IFNAME]    = NET_RO_STRING_ATTR(ifname),
+	/* MAX_SEGMENT_SIZE, CLASS, SUBCLASS, PROTOCOL: N/A — zero-initialized */
+},
+
+net_attr_ncm[USBG_F_NET_ATTR_MAX] = {
+	[USBG_F_NET_DEV_ADDR]          = NET_ETHER_ADDR_ATTR(dev_addr),
+	[USBG_F_NET_HOST_ADDR]         = NET_ETHER_ADDR_ATTR(host_addr),
+	[USBG_F_NET_QMULT]             = NET_DEC_ATTR(qmult),
+	[USBG_F_NET_IFNAME]            = NET_RO_STRING_ATTR(ifname),
+	[USBG_F_NET_MAX_SEGMENT_SIZE]  = NET_DEC_ATTR(max_segment_size),
+	/* CLASS, SUBCLASS, PROTOCOL: N/A — zero-initialized */
+},
+
+net_attr_rndis[USBG_F_NET_ATTR_MAX] = {
+	[USBG_F_NET_DEV_ADDR]  = NET_ETHER_ADDR_ATTR(dev_addr),
+	[USBG_F_NET_HOST_ADDR] = NET_ETHER_ADDR_ATTR(host_addr),
+	[USBG_F_NET_QMULT]     = NET_DEC_ATTR(qmult),
+	[USBG_F_NET_IFNAME]    = NET_RO_STRING_ATTR(ifname),
+	/* MAX_SEGMENT_SIZE: N/A — zero-initialized */
+	[USBG_F_NET_CLASS]     = NET_DEC_ATTR_NAMED("class", class_),
+	[USBG_F_NET_SUBCLASS]  = NET_DEC_ATTR(subclass),
+	[USBG_F_NET_PROTOCOL]  = NET_DEC_ATTR(protocol),
 };
 
 #undef NET_DEC_ATTR
-#undef NET_STRING_ATTR
+#undef NET_DEC_ATTR_NAMED
+#undef NET_RO_STRING_ATTR
+#undef NET_ETHER_ADDR_ATTR
 
 GENERIC_ALLOC_INST(ether, struct usbg_f_net, func)
 
@@ -102,21 +127,24 @@ static void ether_cleanup_attrs(struct usbg_function *f, void *f_attrs)
 	usbg_f_net_cleanup_attrs(f_attrs);
 }
 
+static struct net_attr_entry *ether_get_attr_table(usbg_f_net *nf);
+
 #ifdef HAS_GADGET_SCHEMES
 
 static int ether_libconfig_import(struct usbg_function *f,
 				  config_setting_t *root)
 {
 	struct usbg_f_net *nf = usbg_to_net_function(f);
+	struct net_attr_entry *tbl = ether_get_attr_table(nf);
 	union usbg_f_net_attr_val val;
 	int i;
 	int ret = 0;
 
 	for (i = USBG_F_NET_ATTR_MIN; i < USBG_F_NET_ATTR_MAX; ++i) {
-		if (net_attr[i].ro)
+		if (!tbl[i].name || tbl[i].ro)
 			continue;
 
-		ret = net_attr[i].import(root, net_attr[i].name, &val);
+		ret = tbl[i].import(root, tbl[i].name, &val);
 		/* node not  found */
 		if (ret == 0)
 			continue;
@@ -136,19 +164,20 @@ static int ether_libconfig_export(struct usbg_function *f,
 				  config_setting_t *root)
 {
 	struct usbg_f_net *nf = usbg_to_net_function(f);
+	struct net_attr_entry *tbl = ether_get_attr_table(nf);
 	union usbg_f_net_attr_val val;
 	int i;
 	int ret = 0;
 
 	for (i = USBG_F_NET_ATTR_MIN; i < USBG_F_NET_ATTR_MAX; ++i) {
-		if (net_attr[i].ro)
+		if (!tbl[i].name || tbl[i].ro)
 			continue;
 
 		ret = usbg_f_net_get_attr_val(nf, i, &val);
 		if (ret)
 			break;
 
-		ret = net_attr[i].export(root, net_attr[i].name, &val);
+		ret = tbl[i].export(root, tbl[i].name, &val);
 		if (ret)
 			break;
 	}
@@ -213,6 +242,15 @@ struct usbg_function_type usbg_f_type_rndis = {
 
 /* API implementation */
 
+static struct net_attr_entry *ether_get_attr_table(usbg_f_net *nf)
+{
+	if (nf->func.ops == &usbg_f_type_ncm)
+		return net_attr_ncm;
+	if (nf->func.ops == &usbg_f_type_rndis)
+		return net_attr_rndis;
+	return net_attr_base;
+}
+
 usbg_f_net *usbg_to_net_function(usbg_function *f)
 {
 	return f->ops == &usbg_f_type_ecm
@@ -231,14 +269,17 @@ usbg_function *usbg_from_net_function(usbg_f_net *nf)
 int usbg_f_net_get_attrs(usbg_f_net *nf,
 			  struct usbg_f_net_attrs *attrs)
 {
+	struct net_attr_entry *tbl = ether_get_attr_table(nf);
 	int i;
 	int ret = 0;
 
 	for (i = USBG_F_NET_ATTR_MIN; i < USBG_F_NET_ATTR_MAX; ++i) {
+		if (!tbl[i].name)
+			continue;
 		ret = usbg_f_net_get_attr_val(nf, i,
 					       (union usbg_f_net_attr_val *)
 					       ((char *)attrs
-						+ net_attr[i].offset));
+						+ tbl[i].offset));
 		if (ret)
 			break;
 	}
@@ -250,17 +291,18 @@ int usbg_f_net_get_attrs(usbg_f_net *nf,
 int usbg_f_net_set_attrs(usbg_f_net *nf,
 			 const struct usbg_f_net_attrs *attrs)
 {
+	struct net_attr_entry *tbl = ether_get_attr_table(nf);
 	int i;
 	int ret = 0;
 
 	for (i = USBG_F_NET_ATTR_MIN; i < USBG_F_NET_ATTR_MAX; ++i) {
-		if (net_attr[i].ro)
+		if (!tbl[i].name || tbl[i].ro)
 			continue;
 
 		ret = usbg_f_net_set_attr_val(nf, i,
 					       *(union usbg_f_net_attr_val *)
 					       ((char *)attrs
-						+ net_attr[i].offset));
+						+ tbl[i].offset));
 		if (ret)
 			break;
 	}
@@ -272,17 +314,29 @@ int usbg_f_net_set_attrs(usbg_f_net *nf,
 int usbg_f_net_get_attr_val(usbg_f_net *nf, enum usbg_f_net_attr attr,
 			    union usbg_f_net_attr_val *val)
 {
-	return net_attr[attr].get(nf->func.path, nf->func.name,
-				    net_attr[attr].name, val);
+	struct net_attr_entry *tbl = ether_get_attr_table(nf);
+
+	if (attr < USBG_F_NET_ATTR_MIN || attr >= USBG_F_NET_ATTR_MAX)
+		return USBG_ERROR_INVALID_PARAM;
+	if (!tbl[attr].name)
+		return USBG_ERROR_NOT_FOUND;
+
+	return tbl[attr].get(nf->func.path, nf->func.name, tbl[attr].name, val);
 }
 
 int usbg_f_net_set_attr_val(usbg_f_net *nf, enum usbg_f_net_attr attr,
 			    union usbg_f_net_attr_val val)
 {
-	return net_attr[attr].ro ?
-		USBG_ERROR_INVALID_PARAM :
-		net_attr[attr].set(nf->func.path, nf->func.name,
-				   net_attr[attr].name, &val);
+	struct net_attr_entry *tbl = ether_get_attr_table(nf);
+
+	if (attr < USBG_F_NET_ATTR_MIN || attr >= USBG_F_NET_ATTR_MAX)
+		return USBG_ERROR_INVALID_PARAM;
+	if (!tbl[attr].name)
+		return USBG_ERROR_NOT_FOUND;
+	if (tbl[attr].ro)
+		return USBG_ERROR_INVALID_PARAM;
+
+	return tbl[attr].set(nf->func.path, nf->func.name, tbl[attr].name, val);
 }
 
 int usbg_f_net_get_ifname_s(usbg_f_net *nf, char *buf, int len)
